@@ -1,17 +1,24 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div id="kline_container"></div>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue';
+
+import Kline from './kline/entry';
 
 export default {
   name: 'app',
-  components: {
-    HelloWorld,
+  mounted() {
+    const kline = new Kline({
+      element: '#kline_container',
+      width: 1200,
+      height: 650,
+    });
+    console.log(kline);
+  },
+  methods: {
   },
 };
 </script>
@@ -25,4 +32,9 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
+
+#kline_container {
+  margin: auto;
+}
+
 </style>
