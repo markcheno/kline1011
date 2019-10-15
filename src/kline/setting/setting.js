@@ -6,6 +6,6 @@ export default class Setting {
       left: 0,
       right: 0,
     };
-    this.timeLineAreaHeight = 30;
+    this.timelineAreaHeight = 30;
   }
 }

@@ -1,4 +1,4 @@
-import { Area, ChartArea, RangeArea } from './area';
+import { Area, ChartArea, RangeArea, TimelineArea } from './area';
 import Manager from '../manage/manager';
 
 class Layout extends Area {
@@ -19,8 +19,10 @@ class LandscapeLayout extends Layout {
   // 初始化
   initLayout() {
     const { name } = this;
-    this.setChartArea(new ChartArea(`${name}Area`));
-    if (name !== 'timeLine') {
+    if (name === 'timeline') {
+      this.setChartArea(new TimelineArea());
+    } else {
+      this.setChartArea(new ChartArea(`${name}Area`));
       this.setRangeArea(new RangeArea(`${name}Range`));
     }
   }
@@ -29,12 +31,12 @@ class LandscapeLayout extends Layout {
   updateLayout(place) {
     const { left, right, top, bottom } = place;
     this.layout(place);
+    const rangeWidth = 100;
     if (this.rangeArea) {
-      const rangeWidth = 100;
       this.chartArea.layout({ left, right: right - rangeWidth, top, bottom });
       this.rangeArea.layout({ left: right - rangeWidth, right, top, bottom });
     } else {
-      this.chartArea.layout(place);
+      this.chartArea.layout({ left, right: right - rangeWidth, top, bottom });
     }
   }
 
@@ -60,9 +62,9 @@ export default class MainLayout extends Layout {
   // 初始化布局
   initLayout() {
     // 时间线
-    const timeLineLandscapeLayout = new LandscapeLayout('timeLine');
-    timeLineLandscapeLayout.initLayout();
-    this.addLayout(timeLineLandscapeLayout);
+    const timelineLandscapeLayout = new LandscapeLayout('timeline');
+    timelineLandscapeLayout.initLayout();
+    this.addLayout(timelineLandscapeLayout);
     // 主视图
     const mainLandscapeLayout = new LandscapeLayout('main');
     mainLandscapeLayout.initLayout();
@@ -77,20 +79,23 @@ export default class MainLayout extends Layout {
   // 调整layout布局
   updateLayout(place) {
     const { left, right, top, bottom } = place;
+    Manager.instance.dataSource.updateMaxCountInArea(right - left);
     this.layout(place);
-    const { timeLineAreaHeight } = Manager.instance.setting;
-    let toTalheight = bottom - top;
+    const { timelineAreaHeight } = Manager.instance.setting;
+    let nowBottom = bottom - top;
+    let lastBottom = bottom;
     let height = 0;
     this.landscapeLayout.forEach((item, index) => {
       if (index === 0) {
-        height = timeLineAreaHeight;
+        height = timelineAreaHeight;
       } else if (index === this.landscapeLayout.length - 1) {
-        height = toTalheight;
+        height = nowBottom;
       } else {
         height = (bottom - top) / 5;
       }
-      toTalheight -= height;
-      item.updateLayout({ left, right, top: toTalheight, bottom });
+      nowBottom -= height;
+      item.updateLayout({ left, right, top: nowBottom, bottom: lastBottom });
+      lastBottom = nowBottom;
     });
   }
 }

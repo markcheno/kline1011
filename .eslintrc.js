@@ -2,7 +2,7 @@ module.exports = {
   root: true,
   env: {
     node: true,
-    jquery: true
+    jquery: true,
   },
   extends: [
     'plugin:vue/essential',
@@ -19,6 +19,9 @@ module.exports = {
     'no-useless-constructor': 'off',
     'object-curly-newline': 'off',
     'import/no-cycle': 'off',
+    'no-plusplus': 'off',
+    'no-restricted-properties': 'off',
+    'operator-assignment': 'off',
   },
   parserOptions: {
     parser: 'babel-eslint',

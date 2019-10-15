@@ -10,6 +10,7 @@ export default class DataSource {
   static candleStick = {
     itemWidth: [1, 3, 3, 5, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29],
     spaceWidth: [1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 7, 7, 7],
+    scale: 10,
   }
 
   constructor() {
@@ -26,38 +27,32 @@ export default class DataSource {
     this.maxCountInArea = -1;
   }
 
-  getFirstIndex() {
-    return this.firstIndex;
+  // 计算最大蜡烛图个数
+  updateMaxCountInArea(width) {
+    const candleStickMode = DataSource.candleStick;
+    const columnWidth = candleStickMode.itemWidth[candleStickMode.scale] + candleStickMode.spaceWidth[candleStickMode.scale];
+    this.maxCountInArea = Math.ceil(width / columnWidth);
   }
 
-  getLastIndex() {
-    return this.lastIndex;
+  updateData(data) {
+    this.data = data;
+    this.updateCurrentData();
   }
 
-  setFirstIndex(index) {
-    this.firstIndex = index;
+  getDataByIndex(index) {
+    return this.data[index];
   }
 
-  setLastIndex(index) {
-    this.lastIndex = index;
-  }
-
-  // 更新数据
-  updateData(data, mode) {
-    console.log(data, mode);
-    this.data = data.map(item => ({
-      date: Number(item.ts),
-      open: Number(item.o),
-      high: Number(item.h),
-      low: Number(item.l),
-      close: Number(item.c),
-      volume: Number(item.v),
-    }));
+  // 更新当前视图数据
+  updateCurrentData() {
+    this.lastIndex = this.data.length - 1;
+    this.firstIndex = this.lastIndex - this.maxCountInArea;
+    this.setCurrentMaxAndMin();
   }
 
   // 获取当前视图数据
   getCurrentData() {
-    return this.data.splice(this.getFirstIndex(), this.getLastIndex());
+    return [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex);
   }
 
   // 设置当前视图中的最大最小值

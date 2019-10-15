@@ -6,6 +6,7 @@ export default class Kline {
     this.element = '#kline_container';
     this.width = 1200;
     this.height = 650;
+    this.datafeed = {};
     Object.assign(this, option);
     this.init();
     return this;
@@ -20,7 +21,7 @@ export default class Kline {
     manager.onSize(this.width, this.height);
     manager.registerMouseEvent();
     manager.initLayout();
-    console.log(manager);
+    manager.startDraw();
   }
 
   // 初始化模板

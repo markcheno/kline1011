@@ -1,3 +1,6 @@
+import Range from '../range/range';
+import Timeline from '../range/timeline';
+
 export class Area {
   constructor(name) {
     this.name = name;
@@ -23,12 +26,25 @@ export class Area {
     return this.bottom;
   }
 
+  getCenter() {
+    return (this.right + this.left) / 2;
+  }
+
   getWidth() {
     return this.right - this.left;
   }
 
   getHeight() {
     return this.bottom - this.top;
+  }
+
+  getPlace() {
+    return {
+      left: this.getLeft(),
+      top: this.getTop(),
+      right: this.getRight(),
+      bottom: this.getBottom(),
+    };
   }
 
   getRect() {
@@ -74,6 +90,11 @@ export class ChartArea extends Area {
 export class RangeArea extends Area {
   constructor(name) {
     super(name);
+    this.range = new Range(name);
+  }
+
+  getRange() {
+    return this.range;
   }
 
   onMouseMove() {
@@ -81,12 +102,13 @@ export class RangeArea extends Area {
   }
 }
 
-export class TimeLineArea extends Area {
+export class TimelineArea extends Area {
   constructor(name) {
     super(name);
+    this.timeline = new Timeline();
   }
 
   onMouseMove() {
-    console.log('TimeLineArea onMouseMove');
+    console.log('TimelineArea onMouseMove');
   }
 }

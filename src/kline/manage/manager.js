@@ -1,5 +1,8 @@
 import MainLayout from '../layout/layout';
 import Setting from '../setting/setting';
+import Theme from '../setting/themes';
+import DataSource from '../data/dataSource';
+import * as Plotters from '../plotters/plotters';
 // 保存kline的实例
 export default class Manager {
   static instance
@@ -9,6 +12,8 @@ export default class Manager {
     this.layout = {};
     this.setting = new Setting();
     this.option = {};
+    this.dataSource = new DataSource();
+    this.theme = new Theme();
     Manager.instance = this;
   }
 
@@ -98,5 +103,40 @@ export default class Manager {
     this.canvas.mainCanvas.height = height;
     this.canvas.overlayCanvas.width = width;
     this.canvas.overlayCanvas.height = height;
+  }
+
+
+  redraw() {
+    const areas = this.layout.landscapeLayout;
+    new Plotters.BackgroundPlotter('background').draw();
+    areas.forEach(item => {
+      if (item.name === 'timeline') {
+        item.chartArea.timeline.updateTimeline(item.chartArea);
+        new Plotters.TimelinePlotter('timeline').draw(item.chartArea);
+      } else {
+        item.rangeArea.range.updateRange(item.rangeArea);
+        new Plotters.CandlestickPlotter('main').draw(item.chartArea);
+        new Plotters.RangePlotter('mainRange').draw(item.rangeArea);
+      }
+    });
+  }
+
+  // 开始绘制
+  startDraw() {
+    this.requestData();
+  }
+
+  // 请求数据
+  requestData() {
+    const { datafeed } = this.getOption();
+    datafeed.getBars(this.onHistoryCallback);
+  }
+
+  // 请求历史数据处理
+  onHistoryCallback(data) {
+    const that = Manager.instance;
+    const { dataSource } = that;
+    dataSource.updateData(data);
+    that.redraw();
   }
 }

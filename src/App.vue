@@ -8,6 +8,28 @@
 
 import Kline from './kline/entry';
 
+class Datafeed {
+  getBars(onHistoryCallback) {
+    $.ajax({
+      type: 'GET',
+      url: 'http://192.168.1.62:8080/officialNetworkApi/CandleStickV2?qid=6&type=6',
+      dataType: 'json',
+      timeout: 30000,
+      success(res) {
+        const candle = res.data.candle.map(item => ({
+          open: Number(item.o),
+          high: Number(item.h),
+          low: Number(item.l),
+          close: Number(item.c),
+          time: item.ts,
+          volume: Number(item.v),
+        }));
+        onHistoryCallback(candle);
+      },
+    });
+  }
+}
+
 export default {
   name: 'app',
   mounted() {
@@ -15,6 +37,7 @@ export default {
       element: '#kline_container',
       width: 1200,
       height: 650,
+      datafeed: new Datafeed(),
     });
     console.log(kline);
   },
