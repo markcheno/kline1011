@@ -22,15 +22,26 @@ export default class DataSource {
       min: Number.MAX_SAFE_INTEGER,
       max: Number.MIN_SAFE_INTEGER,
     };
+    // 两边留白策略
+    this.boundaryGap = ['10%', '10%'];
     this.firstIndex = -1;
     this.lastIndex = -1;
     this.maxCountInArea = -1;
   }
 
+  getColumnWidth() {
+    const candleStickMode = DataSource.candleStick;
+    return candleStickMode.itemWidth[candleStickMode.scale] + candleStickMode.spaceWidth[candleStickMode.scale];
+  }
+
+  getColumnCenter() {
+    const candleStickMode = DataSource.candleStick;
+    return candleStickMode.itemWidth[candleStickMode.scale] / 2;
+  }
+
   // 计算最大蜡烛图个数
   updateMaxCountInArea(width) {
-    const candleStickMode = DataSource.candleStick;
-    const columnWidth = candleStickMode.itemWidth[candleStickMode.scale] + candleStickMode.spaceWidth[candleStickMode.scale];
+    const columnWidth = this.getColumnWidth();
     this.maxCountInArea = Math.ceil(width / columnWidth);
   }
 
@@ -61,10 +72,13 @@ export default class DataSource {
     let min = Number.MAX_SAFE_INTEGER;
     let max = Number.MIN_SAFE_INTEGER;
     currentData.forEach(item => {
-      if (min > item.close) min = item.close;
-      if (max < item.close) max = item.close;
+      if (min > item.low) min = item.low;
+      if (max < item.high) max = item.high;
     });
-    this.currentMaxAndMin = { min, max };
+    const top = this.boundaryGap[0].split('%')[0] / 100;
+    const bottom = this.boundaryGap[1].split('%')[0] / 100;
+    const reduce = max - min;
+    this.currentMaxAndMin = { min: min - reduce * bottom, max: max + reduce * top };
   }
 
   // 获取当前视图中的最大最小值

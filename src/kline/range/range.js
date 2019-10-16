@@ -35,7 +35,8 @@ export default class Range {
   }
 
   // 更新range
-  updateRange(area) {
+  updateRange(layout) {
+    const area = layout.rangeArea;
     const { dataSource } = Manager.instance;
     const { min, max } = dataSource.getCurrentMaxAndMin();
     const top = area.getTop();

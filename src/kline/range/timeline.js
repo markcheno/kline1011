@@ -16,7 +16,8 @@ export default class Timeline {
     };
   }
 
-  updateTimeline(area) {
+  updateTimeline(layout) {
+    const area = layout.timelineArea;
     const { dataSource } = Manager.instance;
     const minDate = dataSource.getDataByIndex(dataSource.firstIndex).time;
     const maxDate = dataSource.getDataByIndex(dataSource.lastIndex).time;

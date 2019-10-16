@@ -27,13 +27,13 @@ export class Plotter {
 
   drawReact(context, place) {
     const { x, y, width, height } = place;
-    context.rect(x, y, width, height);
+    context.fillRect(x, y, width, height);
   }
 
   drawReacts(context, places) {
     places.forEach(item => {
       const { x, y, width, height } = item;
-      context.rect(x, y, width, height);
+      context.fillRect(x, y, width, height);
     });
   }
 }
@@ -46,8 +46,7 @@ export class BackgroundPlotter extends Plotter {
     this.color = theme.Color.Background;
   }
 
-  draw() {
-    const { layout } = this.manager;
+  draw(layout) {
     const context = this.mainContext;
     context.fillStyle = this.color;
     context.fillRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
@@ -67,12 +66,54 @@ export class CandlestickPlotter extends Plotter {
     return this.top + Math.floor((this.maxValue - value) * this.ratio);
   }
 
-  draw(area) {
+  draw(layout) {
+    const { range, chartArea } = layout;
+    const { dataSource } = this.manager;
     const context = this.mainContext;
-    const { dataSource } = Manager.instance;
     const currentData = dataSource.getCurrentData();
-    const { min, max } = dataSource.getCurrentMaxAndMin();
-    const { left, right, top, bottom } = area.getPlace();
+    const columnWidth = dataSource.getColumnWidth();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let columnRight = chartArea.getRight() - columnWidth;
+    // 从后往前绘制
+    const fillPosLines = [];
+    const fillPosRects = [];
+    const fillNegRects = [];
+    const fillNegLines = [];
+    for (let i = currentData.length - 1; i >= 0; i--) {
+      const data = currentData[i];
+      const { open, close } = data;
+      const highPlace = range.toY(data.high);
+      const lowPlace = range.toY(data.low);
+      const closePlace = range.toY(data.close);
+      const openPlace = range.toY(data.open);
+      // 涨
+      if (close >= open) {
+        fillPosRects.push({ x: columnRight, y: closePlace, width: 2 * itemCenterOffset, height: Math.max(openPlace - closePlace, 1) });
+        fillPosLines.push({ x: columnRight + itemCenterOffset, y: highPlace, width: 1, height: closePlace - highPlace });
+        fillPosLines.push({ x: columnRight + itemCenterOffset, y: openPlace, width: 1, height: lowPlace - openPlace });
+      } else if (close < open) {
+        fillNegRects.push({ x: columnRight, y: openPlace, width: 2 * itemCenterOffset, height: Math.max(closePlace - openPlace, 1) });
+        fillNegLines.push({ x: columnRight + itemCenterOffset, y: highPlace, width: 1, height: openPlace - highPlace });
+        fillNegLines.push({ x: columnRight + itemCenterOffset, y: closePlace, width: 1, height: lowPlace - closePlace });
+      }
+      columnRight -= columnWidth;
+    }
+    if (fillPosLines.length > 0) {
+      context.fillStyle = this.PositiveColor;
+      this.drawReacts(context, fillPosLines);
+    }
+    if (fillPosRects.length > 0) {
+      context.fillStyle = this.PositiveColor;
+      this.drawReacts(context, fillPosRects);
+    }
+    if (fillNegLines.length > 0) {
+      context.fillStyle = this.NegativeColor;
+      this.drawReacts(context, fillNegLines);
+    }
+    if (fillNegRects.length > 0) {
+      context.fillStyle = this.NegativeColor;
+      this.drawReacts(context, fillNegRects);
+    }
   }
 }
 
@@ -84,9 +125,10 @@ export class TimelinePlotter extends Plotter {
     this.Font = theme.Font.Default;
   }
 
-  draw(area) {
+  draw(layout) {
+    const area = layout.timelineArea;
+    const data = layout.timeline.getData();
     const context = this.mainContext;
-    const data = area.timeline.getData();
     let { left, right, top, bottom } = area.getPlace();
     const middle = (top + bottom) / 2 + 0.5;
     left += 0.5;
@@ -113,9 +155,10 @@ export class RangePlotter extends Plotter {
     this.Font = theme.Font.Default;
   }
 
-  draw(area) {
+  draw(layout) {
+    const area = layout.rangeArea;
     const context = this.mainContext;
-    const gradations = area.getRange().getGradations();
+    const gradations = layout.range.getGradations();
     let { left, right, top, bottom } = area.getPlace();
     const center = area.getCenter() + 0.5;
     left += 0.5;

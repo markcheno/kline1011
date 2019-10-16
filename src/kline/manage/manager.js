@@ -107,16 +107,16 @@ export default class Manager {
 
 
   redraw() {
-    const areas = this.layout.landscapeLayout;
-    new Plotters.BackgroundPlotter('background').draw();
-    areas.forEach(item => {
-      if (item.name === 'timeline') {
-        item.chartArea.timeline.updateTimeline(item.chartArea);
-        new Plotters.TimelinePlotter('timeline').draw(item.chartArea);
+    new Plotters.BackgroundPlotter().draw(this.layout);
+    const { layouts } = this.layout;
+    layouts.forEach(item => {
+      if (item.timelineArea) {
+        item.timeline.updateTimeline(item);
+        new Plotters.TimelinePlotter().draw(item);
       } else {
-        item.rangeArea.range.updateRange(item.rangeArea);
-        new Plotters.CandlestickPlotter('main').draw(item.chartArea);
-        new Plotters.RangePlotter('mainRange').draw(item.rangeArea);
+        item.range.updateRange(item);
+        new Plotters.CandlestickPlotter().draw(item);
+        new Plotters.RangePlotter().draw(item);
       }
     });
   }
