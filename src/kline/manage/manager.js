@@ -36,43 +36,6 @@ export default class Manager {
     this.canvas.overlayContext = overlayContext;
   }
 
-  // 注册鼠标事件
-  registerMouseEvent() {
-    // 获取当前鼠标所在位置
-    const getMouesePlace = e => {
-      const rect = e.target.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      return { x, y };
-    };
-    $(this.canvas.overlayCanvas).bind('contextmenu', e => {
-      // 注册鼠标右键事件
-      e.cancelBubble = true;
-      e.returnValue = false;
-      e.preventDefault();
-      e.stopPropagation();
-      return false;
-    }).mousedown(e => {
-      // 注册左键按下事件
-      if (e.which !== 1) return;
-      const place = getMouesePlace(e);
-      console.log(place);
-    }).mousemove(e => {
-      // 注册鼠标移动事件
-      const place = getMouesePlace(e);
-      console.log(place);
-    }).mouseleave(e => {
-      // 注册鼠标离开区域事件
-      const place = getMouesePlace(e);
-      console.log(place);
-    }).mouseup(e => {
-      // 注册鼠标左键抬起事件
-      if (e.which !== 1) return;
-      const place = getMouesePlace(e);
-      console.log(place);
-    });
-  }
-
   // 初始化布局
   initLayout() {
     this.layout = new MainLayout('mainLayout');
@@ -130,5 +93,13 @@ export default class Manager {
     const { dataSource } = that;
     dataSource.updateData(data);
     that.redraw();
+  }
+
+  onMouseDown(place) {
+    this.layout.onMouseDown(place);
+  }
+
+  onMouseMove(place, leftMouseDownStatus) {
+    this.layout.onMouseMove(place, leftMouseDownStatus);
   }
 }

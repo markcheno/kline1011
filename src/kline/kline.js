@@ -1,4 +1,5 @@
 import Manager from './manage/manager';
+import Control from './manage/control';
 import MainTpl from './view/mainTpl';
 import './style/main.scss';
 
@@ -20,7 +21,7 @@ export default class Kline {
     manager.setOption(this);
     manager.bindCanvas();
     manager.onSize(this.width, this.height);
-    manager.registerMouseEvent();
+    Control.registerMouseEvent();
     manager.initLayout();
     manager.startDraw();
   }

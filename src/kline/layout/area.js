@@ -1,3 +1,5 @@
+import Control from '../manage/control';
+
 export class Area {
   constructor(name) {
     this.name = name;
@@ -6,6 +8,7 @@ export class Area {
     this.top = 0;
     this.bottom = 0;
     this.rangeWidth = 100;
+    this.oldPlace = {};
   }
 
   getName() {
@@ -84,8 +87,16 @@ export class ChartArea extends Area {
     super(name);
   }
 
-  onMouseMove() {
-    console.log('ChartArea onMouseMove');
+  onMouseDown(place) {
+    this.oldPlace = place;
+    Control.showCursor('move');
+  }
+
+  onMouseMove(place, status) {
+    if (status) {
+      Control.showCursor('move');
+      console.log('ChartArea', place.x - this.oldPlace.x);
+    }
   }
 }
 
@@ -94,8 +105,11 @@ export class RangeArea extends Area {
     super(name);
   }
 
-  onMouseMove() {
-    console.log('RangeArea onMouseMove');
+  onMouseMove(place, status) {
+    if (status) {
+      Control.showCursor();
+      console.log('RangeArea onMouseMove');
+    }
   }
 }
 
@@ -104,7 +118,10 @@ export class TimelineArea extends Area {
     super(name);
   }
 
-  onMouseMove() {
-    console.log('TimelineArea onMouseMove');
+  onMouseMove(place, status) {
+    if (status) {
+      Control.showCursor('move');
+      console.log('TimelineArea onMouseMove');
+    }
   }
 }

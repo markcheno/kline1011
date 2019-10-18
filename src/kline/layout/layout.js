@@ -30,6 +30,16 @@ class TimelineLayout extends Area {
   updateTimelineArea(area) {
     this.timelineArea = area;
   }
+
+  onMouseDown(place) {
+    const { x, y } = place;
+    if (this.timelineArea.contains(x, y)) this.timelineArea.onMouseDown(place);
+  }
+
+  onMouseMove(place, leftMouseDownStatus) {
+    const { x, y } = place;
+    if (this.timelineArea.contains(x, y)) this.timelineArea.onMouseMove(place, leftMouseDownStatus);
+  }
 }
 
 class ChartLayout extends Area {
@@ -78,6 +88,18 @@ class ChartLayout extends Area {
   // 设置rangeArea
   updateRangeArea(area) {
     this.rangeArea = area;
+  }
+
+  onMouseDown(place) {
+    const { x, y } = place;
+    if (this.chartArea.contains(x, y)) this.chartArea.onMouseDown(place);
+    if (this.rangeArea.contains(x, y)) this.rangeArea.onMouseDown(place);
+  }
+
+  onMouseMove(place, leftMouseDownStatus) {
+    const { x, y } = place;
+    if (this.chartArea.contains(x, y)) this.chartArea.onMouseMove(place, leftMouseDownStatus);
+    if (this.rangeArea.contains(x, y)) this.rangeArea.onMouseMove(place, leftMouseDownStatus);
   }
 }
 
@@ -145,5 +167,23 @@ export default class MainLayout extends Area {
       item.updateLayout({ left, right, top: nowBottom, bottom: lastBottom });
       lastBottom = nowBottom;
     });
+  }
+
+  onMouseDown(place) {
+    const { x, y } = place;
+    if (this.contains(x, y)) {
+      this.layouts.forEach(item => {
+        item.onMouseDown(place);
+      });
+    }
+  }
+
+  onMouseMove(place, leftMouseDownStatus) {
+    const { x, y } = place;
+    if (this.contains(x, y)) {
+      this.layouts.forEach(item => {
+        item.onMouseMove(place, leftMouseDownStatus);
+      });
+    }
   }
 }
