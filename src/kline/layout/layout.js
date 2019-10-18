@@ -2,6 +2,7 @@ import { Area, ChartArea, RangeArea, TimelineArea } from './area';
 import Timeline from '../range/timeline';
 import Range from '../range/range';
 import Manager from '../manage/manager';
+import * as Plotters from '../plotters/plotters';
 
 class TimelineLayout extends Area {
   constructor(name) {
@@ -9,6 +10,11 @@ class TimelineLayout extends Area {
     this.timelineArea = {};
     this.timeline = new Timeline('timeline');
     this.initLayout();
+  }
+
+  drawChartLayout() {
+    this.timeline.updateTimeline(this);
+    new Plotters.TimelinePlotter().draw(this);
   }
 
   initLayout() {
@@ -27,12 +33,27 @@ class TimelineLayout extends Area {
 }
 
 class ChartLayout extends Area {
-  constructor(name) {
-    super(name);
+  constructor(option) {
+    super(option.name);
     this.chartArea = {};
     this.rangeArea = {};
-    this.range = new Range(`${name}Range`);
+    this.chartPlotters = option.chartPlotters;
+    this.range = new Range({
+      name: `${option.name}Range`,
+      boundaryGap: option.boundaryGap,
+      indicator: option.indicator,
+    });
     this.initLayout();
+  }
+
+  drawChartLayout() {
+    // 更新chart的range
+    this.range.updateRange(this);
+    new Plotters.BackgroundGridPlotter().draw(this);
+    // 绘制range
+    new Plotters.RangePlotter().draw(this);
+    // 绘制主视图
+    new Plotters[this.chartPlotters]().draw(this);
   }
 
   // 初始化
@@ -72,8 +93,29 @@ export default class MainLayout extends Area {
   initLayout() {
     // 时间线
     this.addLayout(new TimelineLayout('timelineLayout'));
+    this.addLayout(new ChartLayout({
+      chartPlotters: 'VolumePlotter',
+      name: 'volumeChartLayout',
+      boundaryGap: ['10%', '0%'],
+      indicator: {
+        min: 0,
+        max: 'volume',
+      },
+    }));
     // 主视图
-    this.addLayout(new ChartLayout('mainChartLayout'));
+    this.addLayout(new ChartLayout({
+      chartPlotters: 'CandlestickPlotter',
+      name: 'mainChartLayout',
+      boundaryGap: ['10%', '10%'],
+      indicator: {
+        min: 'low',
+        max: 'high',
+      },
+    }));
+  }
+
+  drawChartLayout() {
+    new Plotters.BackgroundPlotter().draw(this);
   }
 
   // 添加layout

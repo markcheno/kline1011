@@ -6,6 +6,7 @@ export default class Theme {
       Background: '#fff',
       BackgroundGrid: '#333',
       Grid: '#333',
+      BackgroundGridColor: '#eee',
     };
     this.Font = {
       Default: '12px Tahoma',

@@ -19,8 +19,8 @@ export class Plotter {
     context.beginPath();
     places.forEach(item => {
       const { from, to } = item;
-      item.moveTo(from.x, from.y);
-      item.lineTo(to.x, to.y);
+      context.moveTo(from.x, from.y);
+      context.lineTo(to.x, to.y);
     });
     context.stroke();
   }
@@ -53,17 +53,40 @@ export class BackgroundPlotter extends Plotter {
   }
 }
 
+// chart视图背景网格
+export class BackgroundGridPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.BackgroundGridColor = theme.Color.BackgroundGridColor;
+  }
+
+  draw(layout) {
+    const area = layout.chartArea;
+    const context = this.mainContext;
+    const { left, right } = area.getPlace();
+    const gradations = layout.range.getGradations();
+    const grids = gradations.map(item => ({
+      from: {
+        x: left + 0.5,
+        y: item.y,
+      },
+      to: {
+        x: right + 0.5,
+        y: item.y,
+      },
+    }));
+    context.strokeStyle = this.BackgroundGridColor;
+    this.drawLines(context, grids);
+  }
+}
+
 export class CandlestickPlotter extends Plotter {
   constructor(name) {
     super(name);
     const { theme } = this.manager;
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
-  }
-
-  // 值换算坐标
-  toY(value) {
-    return this.top + Math.floor((this.maxValue - value) * this.ratio);
   }
 
   draw(layout) {
@@ -81,11 +104,11 @@ export class CandlestickPlotter extends Plotter {
     const fillNegLines = [];
     for (let i = currentData.length - 1; i >= 0; i--) {
       const data = currentData[i];
-      const { open, close } = data;
-      const highPlace = range.toY(data.high);
-      const lowPlace = range.toY(data.low);
-      const closePlace = range.toY(data.close);
-      const openPlace = range.toY(data.open);
+      const { open, close, high, low } = data;
+      const highPlace = range.toY(high);
+      const lowPlace = range.toY(low);
+      const closePlace = range.toY(close);
+      const openPlace = range.toY(open);
       // 涨
       if (close >= open) {
         fillPosRects.push({ x: columnRight, y: closePlace, width: 2 * itemCenterOffset, height: Math.max(openPlace - closePlace, 1) });
@@ -137,11 +160,12 @@ export class TimelinePlotter extends Plotter {
     bottom += 0.5;
     context.font = this.Font;
     context.textBaseline = 'middle';
-    context.fillStyle = this.GridColor;
+    context.strokeStyle = this.GridColor;
     this.drawLine(context, {
       from: { x: left, y: top },
       to: { x: right, y: top },
     });
+    context.fillStyle = this.GridColor;
     context.fillText(data.minDate, left, middle);
     context.fillText(data.maxDate, right, middle);
   }
@@ -168,7 +192,7 @@ export class RangePlotter extends Plotter {
     context.font = this.Font;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
-    context.fillStyle = this.GridColor;
+    context.strokeStyle = this.GridColor;
     context.lineWidth = 1;
     this.drawLine(context, {
       from: { x: left, y: top },
@@ -179,6 +203,7 @@ export class RangePlotter extends Plotter {
       to: { x: right, y: bottom },
     });
     gradations.forEach(item => {
+      context.strokeStyle = this.GridColor;
       this.drawLine(context, {
         from: { x: left, y: item.y },
         to: { x: left + 6, y: item.y },
@@ -187,7 +212,60 @@ export class RangePlotter extends Plotter {
         from: { x: right - 6, y: item.y },
         to: { x: right, y: item.y },
       });
+      context.fillStyle = this.GridColor;
       context.fillText(item.text, center, item.y);
+    });
+  }
+}
+
+export class VolumePlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.paddingBottom = 3;
+    this.NegativeColor = theme.Color.Negative;
+    this.PositiveColor = theme.Color.Positive;
+    this.GridColor = theme.Color.Grid;
+  }
+
+  draw(layout) {
+    const { range, chartArea } = layout;
+    const { dataSource } = this.manager;
+    const context = this.mainContext;
+    const currentData = dataSource.getCurrentData();
+    const { left, right, top } = chartArea.getPlace();
+    const columnWidth = dataSource.getColumnWidth();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let columnRight = right - columnWidth;
+    // 从后往前绘制
+    const fillPosRects = [];
+    const fillNegRects = [];
+    for (let i = currentData.length - 1; i >= 0; i--) {
+      const data = currentData[i];
+      const { volume, close, open } = data;
+      const volumePlace = range.toY(volume);
+      const lowPlace = range.toY(0);
+      // 涨
+      if (close >= open) {
+        fillPosRects.push({ x: columnRight, y: volumePlace, width: 2 * itemCenterOffset, height: lowPlace - volumePlace - this.paddingBottom });
+      } else if (close < open) {
+        fillNegRects.push({ x: columnRight, y: volumePlace, width: 2 * itemCenterOffset, height: lowPlace - volumePlace - this.paddingBottom });
+      }
+      columnRight -= columnWidth;
+    }
+    if (fillPosRects.length > 0) {
+      context.fillStyle = this.PositiveColor;
+      this.drawReacts(context, fillPosRects);
+    }
+    if (fillNegRects.length > 0) {
+      context.fillStyle = this.NegativeColor;
+      this.drawReacts(context, fillNegRects);
+    }
+    context.strokeStyle = this.GridColor;
+    // 绘制分割线
+    this.drawLine(context, {
+      from: { x: left + 0.5, y: top + 0.5 },
+      to: { x: right + 0.5, y: top + 0.5 },
     });
   }
 }

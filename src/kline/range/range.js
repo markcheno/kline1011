@@ -1,8 +1,13 @@
 import Manager from '../manage/manager';
 
 export default class Range {
-  constructor(name) {
-    this.name = name;
+  constructor(option) {
+    this.name = null;
+    // 两边留白策略
+    this.boundaryGap = ['0%', '0%'];
+    // range的标识字段
+    this.indicator = {};
+    Object.assign(this, option);
     // range 上的最大值, 最小值
     this.minValue = 0;
     this.maxValue = 0;
@@ -13,6 +18,22 @@ export default class Range {
     // 最小刻度间隔
     this.minInterval = 36;
     this.gradations = [];
+  }
+
+  updateRangeMinAndMAx() {
+    const { indicator } = this;
+    const currentData = Manager.instance.dataSource.getCurrentData();
+    let min = Array.prototype.toString.call(indicator.min) === '[object String]' ? Number.MAX_SAFE_INTEGER : indicator.min;
+    let max = Array.prototype.toString.call(indicator.max) === '[object String]' ? Number.MIN_SAFE_INTEGER : indicator.max;
+    currentData.forEach(item => {
+      if (min > item[indicator.min]) min = item[indicator.min];
+      if (max < item[indicator.max]) max = item[indicator.max];
+    });
+    const top = this.boundaryGap[0].split('%')[0] / 100;
+    const bottom = this.boundaryGap[1].split('%')[0] / 100;
+    const reduce = max - min;
+    this.minValue = min - reduce * bottom;
+    this.maxValue = max + reduce * top;
   }
 
   getGradations() {
@@ -36,14 +57,11 @@ export default class Range {
 
   // 更新range
   updateRange(layout) {
+    this.updateRangeMinAndMAx();
     const area = layout.rangeArea;
-    const { dataSource } = Manager.instance;
-    const { min, max } = dataSource.getCurrentMaxAndMin();
     const top = area.getTop();
     const bottom = area.getBottom();
     this.height = bottom - top;
-    this.minValue = min;
-    this.maxValue = max;
     this.top = top;
     this.ratio = this.height / (this.maxValue - this.minValue);
     this.updateGradations();

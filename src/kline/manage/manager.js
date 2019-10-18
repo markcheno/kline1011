@@ -2,7 +2,6 @@ import MainLayout from '../layout/layout';
 import Setting from '../setting/setting';
 import Theme from '../setting/themes';
 import DataSource from '../data/dataSource';
-import * as Plotters from '../plotters/plotters';
 // 保存kline的实例
 export default class Manager {
   static instance
@@ -107,17 +106,10 @@ export default class Manager {
 
 
   redraw() {
-    new Plotters.BackgroundPlotter().draw(this.layout);
+    this.layout.drawChartLayout();
     const { layouts } = this.layout;
     layouts.forEach(item => {
-      if (item.timelineArea) {
-        item.timeline.updateTimeline(item);
-        new Plotters.TimelinePlotter().draw(item);
-      } else {
-        item.range.updateRange(item);
-        new Plotters.CandlestickPlotter().draw(item);
-        new Plotters.RangePlotter().draw(item);
-      }
+      item.drawChartLayout();
     });
   }
 

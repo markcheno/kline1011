@@ -16,14 +16,10 @@ export default class DataSource {
   constructor() {
     // 原数据
     this.data = [];
+    // 当前时间段数据
+    this.currentData = [];
     // 保留小数点
     this.decimalDigits = 0;
-    this.currentMaxAndMin = {
-      min: Number.MAX_SAFE_INTEGER,
-      max: Number.MIN_SAFE_INTEGER,
-    };
-    // 两边留白策略
-    this.boundaryGap = ['10%', '10%'];
     this.firstIndex = -1;
     this.lastIndex = -1;
     this.maxCountInArea = -1;
@@ -58,31 +54,11 @@ export default class DataSource {
   updateCurrentData() {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = this.lastIndex - this.maxCountInArea;
-    this.setCurrentMaxAndMin();
+    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex);
   }
 
   // 获取当前视图数据
   getCurrentData() {
-    return [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex);
-  }
-
-  // 设置当前视图中的最大最小值
-  setCurrentMaxAndMin() {
-    const currentData = this.getCurrentData();
-    let min = Number.MAX_SAFE_INTEGER;
-    let max = Number.MIN_SAFE_INTEGER;
-    currentData.forEach(item => {
-      if (min > item.low) min = item.low;
-      if (max < item.high) max = item.high;
-    });
-    const top = this.boundaryGap[0].split('%')[0] / 100;
-    const bottom = this.boundaryGap[1].split('%')[0] / 100;
-    const reduce = max - min;
-    this.currentMaxAndMin = { min: min - reduce * bottom, max: max + reduce * top };
-  }
-
-  // 获取当前视图中的最大最小值
-  getCurrentMaxAndMin() {
-    return this.currentMaxAndMin;
+    return this.currentData;
   }
 }
