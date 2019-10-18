@@ -1,0 +1,15 @@
+#chart_canvasGroup {
+  position: relative;
+  height: 100%;
+  canvas {
+    position: absolute;;
+    left: 0;
+    top: 0;
+    &.chart_mainCanvas {
+      z-index: 1;
+    }
+    &.chart_overlayCanvas {
+      z-index: 2;
+    }
+  }
+}

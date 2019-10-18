@@ -1,5 +1,6 @@
 import Manager from './manage/manager';
 import MainTpl from './view/mainTpl';
+import './style/main.scss';
 
 export default class Kline {
   constructor(option) {
