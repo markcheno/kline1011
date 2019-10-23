@@ -20,20 +20,28 @@ export default class Range {
     this.gradations = [];
   }
 
-  updateRangeMinAndMAx() {
+  calcMaxAndMinByIndicator(data) {
     const { indicator } = this;
-    const currentData = Manager.instance.dataSource.getCurrentData();
     let min = Array.prototype.toString.call(indicator.min) === '[object String]' ? Number.MAX_SAFE_INTEGER : indicator.min;
     let max = Array.prototype.toString.call(indicator.max) === '[object String]' ? Number.MIN_SAFE_INTEGER : indicator.max;
-    currentData.forEach(item => {
+    data.forEach(item => {
       if (min > item[indicator.min]) min = item[indicator.min];
       if (max < item[indicator.max]) max = item[indicator.max];
     });
     const top = this.boundaryGap[0].split('%')[0] / 100;
     const bottom = this.boundaryGap[1].split('%')[0] / 100;
     const reduce = max - min;
-    this.minValue = min - reduce * bottom;
-    this.maxValue = max + reduce * top;
+    return {
+      min: min - reduce * bottom,
+      max: max + reduce * top,
+    };
+  }
+
+  updateRangeMinAndMAx() {
+    const data = Manager.instance.dataSource.getCurrentData();
+    const result = this.calcMaxAndMinByIndicator(data);
+    this.minValue = result.min;
+    this.maxValue = result.max;
   }
 
   getGradations() {

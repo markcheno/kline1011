@@ -24,7 +24,8 @@ class TimelineLayout extends Area {
   updateLayout(place) {
     this.layout(place);
     const { left, right, top, bottom } = place;
-    this.timelineArea.layout({ left, right: right - this.rangeWidth, top, bottom });
+    const { rangeWidth } = Manager.instance.dataSource;
+    this.timelineArea.layout({ left, right: right - rangeWidth, top, bottom });
   }
 
   updateTimelineArea(area) {
@@ -76,8 +77,9 @@ class ChartLayout extends Area {
   updateLayout(place) {
     this.layout(place);
     const { left, right, top, bottom } = place;
-    this.chartArea.layout({ left, right: right - this.rangeWidth, top, bottom });
-    this.rangeArea.layout({ left: right - this.rangeWidth, right, top, bottom });
+    const { rangeWidth } = Manager.instance.dataSource;
+    this.chartArea.layout({ left, right: right - rangeWidth, top, bottom });
+    this.rangeArea.layout({ left: right - rangeWidth, right, top, bottom });
   }
 
   // 设置chartArea
@@ -113,27 +115,12 @@ export default class MainLayout extends Area {
 
   // 初始化布局
   initLayout() {
+    const { setting } = Manager.instance;
     // 时间线
     this.addLayout(new TimelineLayout('timelineLayout'));
-    this.addLayout(new ChartLayout({
-      chartPlotters: 'VolumePlotter',
-      name: 'volumeChartLayout',
-      boundaryGap: ['10%', '0%'],
-      indicator: {
-        min: 0,
-        max: 'volume',
-      },
-    }));
-    // 主视图
-    this.addLayout(new ChartLayout({
-      chartPlotters: 'CandlestickPlotter',
-      name: 'mainChartLayout',
-      boundaryGap: ['10%', '10%'],
-      indicator: {
-        min: 'low',
-        max: 'high',
-      },
-    }));
+    setting.chart.forEach(item => {
+      this.addLayout(new ChartLayout(item));
+    });
   }
 
   drawChartLayout() {
@@ -150,7 +137,6 @@ export default class MainLayout extends Area {
     const manager = Manager.instance;
     this.layout(place);
     const { left, right, top, bottom } = place;
-    manager.dataSource.updateMaxCountInArea(right - left);
     const { timelineAreaHeight } = manager.setting;
     let nowBottom = bottom - top;
     let lastBottom = bottom;

@@ -7,7 +7,6 @@ export class Area {
     this.right = 0;
     this.top = 0;
     this.bottom = 0;
-    this.rangeWidth = 100;
     this.oldPlace = {};
   }
 
@@ -95,7 +94,7 @@ export class ChartArea extends Area {
   onMouseMove(place, status) {
     if (status) {
       Control.showCursor('move');
-      console.log('ChartArea', place.x - this.oldPlace.x);
+      console.log('ChartArea', place.x, place.x - this.oldPlace.x);
     }
   }
 }

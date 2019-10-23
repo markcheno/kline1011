@@ -92,6 +92,7 @@ export default class Manager {
     const that = Manager.instance;
     const { dataSource } = that;
     dataSource.updateData(data);
+    that.initLayout();
     that.redraw();
   }
 

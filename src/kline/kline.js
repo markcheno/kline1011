@@ -22,7 +22,6 @@ export default class Kline {
     manager.bindCanvas();
     manager.onSize(this.width, this.height);
     Control.registerMouseEvent();
-    manager.initLayout();
     manager.startDraw();
   }
 

@@ -38,6 +38,13 @@ export class Plotter {
   }
 }
 
+// 橡皮擦画笔
+export class ClearPlotter extends Plotter {
+  draw(layout, context) {
+    context.clearRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
+  }
+}
+
 // 主视图背景
 export class BackgroundPlotter extends Plotter {
   constructor(name) {
