@@ -101,6 +101,7 @@ export default class Manager {
   }
 
   onMouseMove(place, leftMouseDownStatus) {
-    this.layout.onMouseMove(place, leftMouseDownStatus);
+    // eslint-disable-next-line no-unused-expressions
+    this.layout && this.layout.onMouseMove(place, leftMouseDownStatus);
   }
 }
