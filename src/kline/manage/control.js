@@ -51,4 +51,8 @@ export default class Control {
     manager.canvas.mainCanvas.style.cursor = 'none';
     manager.canvas.overlayCanvas.style.cursor = 'none';
   }
+
+  static redrawView(x) {
+    Manager.instance.redraw(x);
+  }
 }

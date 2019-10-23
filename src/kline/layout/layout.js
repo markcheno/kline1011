@@ -57,14 +57,14 @@ class ChartLayout extends Area {
     this.initLayout();
   }
 
-  drawChartLayout() {
+  drawChartLayout(moveX = 0) {
     // 更新chart的range
     this.range.updateRange(this);
     new Plotters.BackgroundGridPlotter().draw(this);
     // 绘制range
     new Plotters.RangePlotter().draw(this);
     // 绘制主视图
-    new Plotters[this.chartPlotters]().draw(this);
+    new Plotters[this.chartPlotters]().draw(this, moveX);
   }
 
   // 初始化
@@ -124,6 +124,7 @@ export default class MainLayout extends Area {
   }
 
   drawChartLayout() {
+    new Plotters.ClearPlotter().draw(this);
     new Plotters.BackgroundPlotter().draw(this);
   }
 

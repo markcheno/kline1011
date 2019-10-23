@@ -94,7 +94,8 @@ export class ChartArea extends Area {
   onMouseMove(place, status) {
     if (status) {
       Control.showCursor('move');
-      console.log('ChartArea', place.x, place.x - this.oldPlace.x);
+      const moveX = place.x - this.oldPlace.x;
+      Control.redrawView(moveX);
     }
   }
 }

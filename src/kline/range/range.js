@@ -98,6 +98,7 @@ export default class Range {
   // 更新刻度
   updateGradations() {
     const interval = this.calcInterval();
+    this.gradations = [];
     // 开始位置取整
     let start = Math.floor(this.maxValue / interval) * interval;
     do {

@@ -40,7 +40,9 @@ export class Plotter {
 
 // 橡皮擦画笔
 export class ClearPlotter extends Plotter {
-  draw(layout, context) {
+  draw(layout) {
+    const context = this.mainContext;
+    console.log(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
     context.clearRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
   }
 }
@@ -91,19 +93,31 @@ export class BackgroundGridPlotter extends Plotter {
 export class CandlestickPlotter extends Plotter {
   constructor(name) {
     super(name);
+    this.areaRight = 0;
     const { theme } = this.manager;
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
   }
 
-  draw(layout) {
+  toMaxX(x) {
+    if (x > this.areaRight) return this.areaRight;
+    return x;
+  }
+
+  toReactWidth(x, width) {
+    if (x + width > this.areaRight) return this.areaRight - x;
+    return width;
+  }
+
+  draw(layout, moveX) {
     const { range, chartArea } = layout;
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
-    let columnRight = chartArea.getRight() - columnWidth;
+    this.areaRight = chartArea.getRight();
+    let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
     // 从后往前绘制
     const fillPosLines = [];
     const fillPosRects = [];
@@ -116,15 +130,19 @@ export class CandlestickPlotter extends Plotter {
       const lowPlace = range.toY(low);
       const closePlace = range.toY(close);
       const openPlace = range.toY(open);
+      const leftX = this.toMaxX(columnRight);
+      const leftLineX = this.toMaxX(columnRight + itemCenterOffset);
+      const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
+      const lineRectWidth = this.toReactWidth(leftLineX, 1);
       // 涨
       if (close >= open) {
-        fillPosRects.push({ x: columnRight, y: closePlace, width: 2 * itemCenterOffset, height: Math.max(openPlace - closePlace, 1) });
-        fillPosLines.push({ x: columnRight + itemCenterOffset, y: highPlace, width: 1, height: closePlace - highPlace });
-        fillPosLines.push({ x: columnRight + itemCenterOffset, y: openPlace, width: 1, height: lowPlace - openPlace });
+        fillPosRects.push({ x: leftX, y: closePlace, width: rectWidth, height: Math.max(openPlace - closePlace, 1) });
+        fillPosLines.push({ x: leftLineX, y: highPlace, width: lineRectWidth, height: closePlace - highPlace });
+        fillPosLines.push({ x: leftLineX, y: openPlace, width: lineRectWidth, height: lowPlace - openPlace });
       } else if (close < open) {
-        fillNegRects.push({ x: columnRight, y: openPlace, width: 2 * itemCenterOffset, height: Math.max(closePlace - openPlace, 1) });
-        fillNegLines.push({ x: columnRight + itemCenterOffset, y: highPlace, width: 1, height: openPlace - highPlace });
-        fillNegLines.push({ x: columnRight + itemCenterOffset, y: closePlace, width: 1, height: lowPlace - closePlace });
+        fillNegRects.push({ x: leftX, y: openPlace, width: rectWidth, height: Math.max(closePlace - openPlace, 1) });
+        fillNegLines.push({ x: leftLineX, y: highPlace, width: lineRectWidth, height: openPlace - highPlace });
+        fillNegLines.push({ x: leftLineX, y: closePlace, width: lineRectWidth, height: lowPlace - closePlace });
       }
       columnRight -= columnWidth;
     }
@@ -209,6 +227,7 @@ export class RangePlotter extends Plotter {
       from: { x: left, y: bottom },
       to: { x: right, y: bottom },
     });
+    console.log('gradations', gradations);
     gradations.forEach(item => {
       context.strokeStyle = this.GridColor;
       this.drawLine(context, {
@@ -230,12 +249,23 @@ export class VolumePlotter extends Plotter {
     super(name);
     const { theme } = this.manager;
     this.paddingBottom = 3;
+    this.areaRight = 0;
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
     this.GridColor = theme.Color.Grid;
   }
 
-  draw(layout) {
+  toMaxX(x) {
+    if (x > this.areaRight) return this.areaRight;
+    return x;
+  }
+
+  toReactWidth(x, width) {
+    if (x + width > this.areaRight) return this.areaRight - x;
+    return width;
+  }
+
+  draw(layout, moveX) {
     const { range, chartArea } = layout;
     const { dataSource } = this.manager;
     const context = this.mainContext;
@@ -243,7 +273,8 @@ export class VolumePlotter extends Plotter {
     const { left, right, top } = chartArea.getPlace();
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
-    let columnRight = right - columnWidth;
+    this.areaRight = right;
+    let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
     // 从后往前绘制
     const fillPosRects = [];
     const fillNegRects = [];
@@ -252,11 +283,13 @@ export class VolumePlotter extends Plotter {
       const { volume, close, open } = data;
       const volumePlace = range.toY(volume);
       const lowPlace = range.toY(0);
+      const leftX = this.toMaxX(columnRight);
+      const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       // 涨
       if (close >= open) {
-        fillPosRects.push({ x: columnRight, y: volumePlace, width: 2 * itemCenterOffset, height: lowPlace - volumePlace - this.paddingBottom });
+        fillPosRects.push({ x: leftX, y: volumePlace, width: rectWidth, height: lowPlace - volumePlace - this.paddingBottom });
       } else if (close < open) {
-        fillNegRects.push({ x: columnRight, y: volumePlace, width: 2 * itemCenterOffset, height: lowPlace - volumePlace - this.paddingBottom });
+        fillNegRects.push({ x: leftX, y: volumePlace, width: rectWidth, height: lowPlace - volumePlace - this.paddingBottom });
       }
       columnRight -= columnWidth;
     }

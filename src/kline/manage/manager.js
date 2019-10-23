@@ -68,11 +68,11 @@ export default class Manager {
   }
 
 
-  redraw() {
+  redraw(x) {
     this.layout.drawChartLayout();
     const { layouts } = this.layout;
     layouts.forEach(item => {
-      item.drawChartLayout();
+      item.drawChartLayout(x);
     });
   }
 
