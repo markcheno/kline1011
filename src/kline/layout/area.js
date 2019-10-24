@@ -89,16 +89,19 @@ export class ChartArea extends Area {
   onMouseDown(place) {
     this.oldPlace = place;
     Control.showCursor('move');
+    Control.startMove();
   }
 
   onMouseMove(place, status) {
     if (status) {
       Control.showCursor('move');
       const moveX = place.x - this.oldPlace.x;
-      const movePoints = Control.getMovePoints();
-      if (movePoints.includes(moveX)) console.log('到边');
-      console.log('movePoints', moveX, movePoints);
-      Control.redrawView(moveX);
+      // const movePoints = Control.getMovePoints();
+      // if (movePoints.includes(moveX)) console.log('到边');
+      // console.log('movePoints', moveX, movePoints);
+      console.log('moveX', moveX);
+      Control.move(moveX);
+      Control.redrawView();
     }
   }
 }

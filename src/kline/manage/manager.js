@@ -70,7 +70,7 @@ export default class Manager {
   }
 
 
-  redraw(x) {
+  redraw(x = 0) {
     this.layout.drawChartLayout();
     const { layouts } = this.layout;
     layouts.forEach(item => {
@@ -100,7 +100,7 @@ export default class Manager {
 
   onMouseDown(place) {
     this.layout.onMouseDown(place);
-    this.movePoints = [].concat(JSON.parse(JSON.stringify(this.candlestickMovePoint)));
+    // this.movePoints = [].concat(JSON.parse(JSON.stringify(this.candlestickMovePoint)));
   }
 
   onMouseMove(place, leftMouseDownStatus) {
@@ -111,7 +111,7 @@ export default class Manager {
   onMouseUp() {
   }
 
-  updateCandlestickMovePoint(points) {
-    this.candlestickMovePoint = points;
-  }
+  // updateCandlestickMovePoint(points) {
+  //   this.candlestickMovePoint = points;
+  // }
 }

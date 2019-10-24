@@ -26,6 +26,7 @@ export default class DataSource {
     this.rangeWidth = 0;
     this.firstIndex = -1;
     this.lastIndex = -1;
+    this.savedFirstIndex = -1;
     this.maxCountInArea = -1;
   }
 
@@ -68,7 +69,7 @@ export default class DataSource {
   updateCurrentData() {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
-    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex);
+    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
   }
 
   // 获取当前视图数据
@@ -114,5 +115,23 @@ export default class DataSource {
       const rangeWidth = Math.max(context.measureText(result.min).width, context.measureText(result.max).width);
       this.updateMaxRangeWidth(rangeWidth + 25);
     });
+  }
+
+  validateFirstIndex(index) {
+    return index < 0 ? 0 : index;
+  }
+
+  // 开始移动
+  move(x) {
+    const moveCount = Math.floor(x / this.getColumnWidth());
+    console.log('moveCount', x, moveCount);
+    this.firstIndex = this.validateFirstIndex(this.savedFirstIndex - moveCount);
+    this.lastIndex = Math.min(this.firstIndex + this.maxCountInArea - 1, this.getAllData().length - 1);
+    console.log(this.firstIndex, this.lastIndex);
+    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
+  }
+
+  startMove() {
+    this.savedFirstIndex = this.firstIndex;
   }
 }

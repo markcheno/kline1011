@@ -109,9 +109,9 @@ export class CandlestickPlotter extends Plotter {
   }
 
   // 计算蜡烛图顺滑移动的距离点
-  updateCandlestickMovePoint(points) {
-    this.manager.updateCandlestickMovePoint(points);
-  }
+  // updateCandlestickMovePoint(points) {
+  //   this.manager.updateCandlestickMovePoint(points);
+  // }
 
   draw(layout, moveX) {
     const { range, chartArea } = layout;
@@ -127,7 +127,6 @@ export class CandlestickPlotter extends Plotter {
     const fillPosRects = [];
     const fillNegRects = [];
     const fillNegLines = [];
-    const candlestickMovePoint = [];
     for (let i = currentData.length - 1; i >= 0; i--) {
       const data = currentData[i];
       const { open, close, high, low } = data;
@@ -149,23 +148,23 @@ export class CandlestickPlotter extends Plotter {
         fillNegLines.push({ x: leftLineX, y: highPlace, width: lineRectWidth, height: openPlace - highPlace });
         fillNegLines.push({ x: leftLineX, y: closePlace, width: lineRectWidth, height: lowPlace - closePlace });
       }
-      if (i === currentData.length - 1) {
-        // 计算最右蜡烛被遮盖的部分
-        const overRightX = leftX + 2 * itemCenterOffset - this.areaRight;
-        if (overRightX > 0) {
-          candlestickMovePoint.push(Math.round(-overRightX));
-          candlestickMovePoint.push(Math.round(columnWidth - overRightX + dataSource.getSpaceWidth()));
-        }
-      } else if (i === 0) {
-        const overLeftX = columnRight;
-        if (overLeftX < 0) {
-          candlestickMovePoint.push(Math.round(overLeftX));
-          candlestickMovePoint.push(Math.round(columnWidth - Math.abs(overLeftX)));
-        }
-      }
+      // if (i === currentData.length - 1) {
+      //   // 计算最右蜡烛被遮盖的部分
+      //   const overRightX = leftX + 2 * itemCenterOffset - this.areaRight;
+      //   if (overRightX > 0) {
+      //     candlestickMovePoint.push(Math.round(-overRightX));
+      //     candlestickMovePoint.push(Math.round(columnWidth - overRightX + dataSource.getSpaceWidth()));
+      //   }
+      // } else if (i === 0) {
+      //   const overLeftX = columnRight;
+      //   if (overLeftX < 0) {
+      //     candlestickMovePoint.push(Math.round(overLeftX));
+      //     candlestickMovePoint.push(Math.round(columnWidth - Math.abs(overLeftX)));
+      //   }
+      // }
       columnRight -= columnWidth;
     }
-    this.updateCandlestickMovePoint(candlestickMovePoint);
+    // this.updateCandlestickMovePoint(candlestickMovePoint);
     if (fillPosLines.length > 0) {
       context.fillStyle = this.PositiveColor;
       this.drawReacts(context, fillPosLines);

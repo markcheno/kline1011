@@ -53,8 +53,16 @@ export default class Control {
     manager.canvas.overlayCanvas.style.cursor = 'none';
   }
 
-  static redrawView(x) {
+  static redrawView(x = 0) {
     Manager.instance.redraw(x);
+  }
+
+  static move(x) {
+    Manager.instance.dataSource.move(x);
+  }
+
+  static startMove() {
+    Manager.instance.dataSource.startMove();
   }
 
   static getMovePoints() {
