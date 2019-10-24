@@ -42,7 +42,6 @@ export class Plotter {
 export class ClearPlotter extends Plotter {
   draw(layout) {
     const context = this.mainContext;
-    console.log(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
     context.clearRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
   }
 }
@@ -109,6 +108,11 @@ export class CandlestickPlotter extends Plotter {
     return width;
   }
 
+  // 计算蜡烛图顺滑移动的距离点
+  updateCandlestickMovePoint(points) {
+    this.manager.updateCandlestickMovePoint(points);
+  }
+
   draw(layout, moveX) {
     const { range, chartArea } = layout;
     const { dataSource } = this.manager;
@@ -123,6 +127,7 @@ export class CandlestickPlotter extends Plotter {
     const fillPosRects = [];
     const fillNegRects = [];
     const fillNegLines = [];
+    const candlestickMovePoint = [];
     for (let i = currentData.length - 1; i >= 0; i--) {
       const data = currentData[i];
       const { open, close, high, low } = data;
@@ -144,8 +149,23 @@ export class CandlestickPlotter extends Plotter {
         fillNegLines.push({ x: leftLineX, y: highPlace, width: lineRectWidth, height: openPlace - highPlace });
         fillNegLines.push({ x: leftLineX, y: closePlace, width: lineRectWidth, height: lowPlace - closePlace });
       }
+      if (i === currentData.length - 1) {
+        // 计算最右蜡烛被遮盖的部分
+        const overRightX = leftX + 2 * itemCenterOffset - this.areaRight;
+        if (overRightX > 0) {
+          candlestickMovePoint.push(Math.round(-overRightX));
+          candlestickMovePoint.push(Math.round(columnWidth - overRightX + dataSource.getSpaceWidth()));
+        }
+      } else if (i === 0) {
+        const overLeftX = columnRight;
+        if (overLeftX < 0) {
+          candlestickMovePoint.push(Math.round(overLeftX));
+          candlestickMovePoint.push(Math.round(columnWidth - Math.abs(overLeftX)));
+        }
+      }
       columnRight -= columnWidth;
     }
+    this.updateCandlestickMovePoint(candlestickMovePoint);
     if (fillPosLines.length > 0) {
       context.fillStyle = this.PositiveColor;
       this.drawReacts(context, fillPosLines);
@@ -227,7 +247,6 @@ export class RangePlotter extends Plotter {
       from: { x: left, y: bottom },
       to: { x: right, y: bottom },
     });
-    console.log('gradations', gradations);
     gradations.forEach(item => {
       context.strokeStyle = this.GridColor;
       this.drawLine(context, {

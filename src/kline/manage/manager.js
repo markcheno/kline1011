@@ -13,6 +13,8 @@ export default class Manager {
     this.option = {};
     this.dataSource = new DataSource();
     this.theme = new Theme();
+    this.candlestickMovePoint = {};
+    this.movePoints = [];
     Manager.instance = this;
   }
 
@@ -98,10 +100,18 @@ export default class Manager {
 
   onMouseDown(place) {
     this.layout.onMouseDown(place);
+    this.movePoints = [].concat(JSON.parse(JSON.stringify(this.candlestickMovePoint)));
   }
 
   onMouseMove(place, leftMouseDownStatus) {
     // eslint-disable-next-line no-unused-expressions
     this.layout && this.layout.onMouseMove(place, leftMouseDownStatus);
+  }
+
+  onMouseUp() {
+  }
+
+  updateCandlestickMovePoint(points) {
+    this.candlestickMovePoint = points;
   }
 }

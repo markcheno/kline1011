@@ -35,6 +35,7 @@ export default class Control {
     }).mouseup(e => {
       if (e.which !== 1) return;
       this.leftMouseDown = false;
+      manager.onMouseUp();
     }).mouseleave(() => {
       this.leftMouseDown = false;
     });
@@ -54,5 +55,9 @@ export default class Control {
 
   static redrawView(x) {
     Manager.instance.redraw(x);
+  }
+
+  static getMovePoints() {
+    return Manager.instance.movePoints;
   }
 }

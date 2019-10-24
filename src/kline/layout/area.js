@@ -95,6 +95,9 @@ export class ChartArea extends Area {
     if (status) {
       Control.showCursor('move');
       const moveX = place.x - this.oldPlace.x;
+      const movePoints = Control.getMovePoints();
+      if (movePoints.includes(moveX)) console.log('到边');
+      console.log('movePoints', moveX, movePoints);
       Control.redrawView(moveX);
     }
   }

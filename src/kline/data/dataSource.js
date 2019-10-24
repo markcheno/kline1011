@@ -39,6 +39,11 @@ export default class DataSource {
     return candleStickMode.itemWidth[candleStickMode.scale] / 2;
   }
 
+  getSpaceWidth() {
+    const candleStickMode = DataSource.candleStick;
+    return candleStickMode.spaceWidth[candleStickMode.scale];
+  }
+
   // 计算最大蜡烛图个数
   updateMaxCountInArea() {
     const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
