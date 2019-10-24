@@ -113,7 +113,7 @@ export class CandlestickPlotter extends Plotter {
   //   this.manager.updateCandlestickMovePoint(points);
   // }
 
-  draw(layout, moveX) {
+  draw(layout) {
     const { range, chartArea } = layout;
     const { dataSource } = this.manager;
     const context = this.mainContext;
@@ -121,21 +121,22 @@ export class CandlestickPlotter extends Plotter {
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     this.areaRight = chartArea.getRight();
-    let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
-    // 从后往前绘制
+    // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
+    let columnLeft = 0;
+    // 从前往后绘制
     const fillPosLines = [];
     const fillPosRects = [];
     const fillNegRects = [];
     const fillNegLines = [];
-    for (let i = currentData.length - 1; i >= 0; i--) {
+    for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
       const { open, close, high, low } = data;
       const highPlace = range.toY(high);
       const lowPlace = range.toY(low);
       const closePlace = range.toY(close);
       const openPlace = range.toY(open);
-      const leftX = this.toMaxX(columnRight);
-      const leftLineX = this.toMaxX(columnRight + itemCenterOffset);
+      const leftX = this.toMaxX(columnLeft);
+      const leftLineX = this.toMaxX(columnLeft + itemCenterOffset);
       const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       const lineRectWidth = this.toReactWidth(leftLineX, 1);
       // 涨
@@ -162,7 +163,7 @@ export class CandlestickPlotter extends Plotter {
       //     candlestickMovePoint.push(Math.round(columnWidth - Math.abs(overLeftX)));
       //   }
       // }
-      columnRight -= columnWidth;
+      columnLeft += columnWidth;
     }
     // this.updateCandlestickMovePoint(candlestickMovePoint);
     if (fillPosLines.length > 0) {
@@ -203,14 +204,15 @@ export class TimelinePlotter extends Plotter {
     top += 0.5;
     bottom += 0.5;
     context.font = this.Font;
-    context.textBaseline = 'middle';
     context.strokeStyle = this.GridColor;
     this.drawLine(context, {
       from: { x: left, y: top },
       to: { x: right, y: top },
     });
     context.fillStyle = this.GridColor;
+    context.textAlign = 'left';
     context.fillText(data.minDate, left, middle);
+    context.textAlign = 'right';
     context.fillText(data.maxDate, right, middle);
   }
 }
@@ -283,7 +285,7 @@ export class VolumePlotter extends Plotter {
     return width;
   }
 
-  draw(layout, moveX) {
+  draw(layout) {
     const { range, chartArea } = layout;
     const { dataSource } = this.manager;
     const context = this.mainContext;
@@ -292,16 +294,17 @@ export class VolumePlotter extends Plotter {
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     this.areaRight = right;
-    let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
-    // 从后往前绘制
+    // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
+    let columnLeft = 0;
+    // 从前往后绘制
     const fillPosRects = [];
     const fillNegRects = [];
-    for (let i = currentData.length - 1; i >= 0; i--) {
+    for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
       const { volume, close, open } = data;
       const volumePlace = range.toY(volume);
       const lowPlace = range.toY(0);
-      const leftX = this.toMaxX(columnRight);
+      const leftX = this.toMaxX(columnLeft);
       const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       // 涨
       if (close >= open) {
@@ -309,7 +312,7 @@ export class VolumePlotter extends Plotter {
       } else if (close < open) {
         fillNegRects.push({ x: leftX, y: volumePlace, width: rectWidth, height: lowPlace - volumePlace - this.paddingBottom });
       }
-      columnRight -= columnWidth;
+      columnLeft += columnWidth;
     }
     if (fillPosRects.length > 0) {
       context.fillStyle = this.PositiveColor;

@@ -117,16 +117,27 @@ export default class DataSource {
     });
   }
 
-  validateFirstIndex(index) {
-    return index < 0 ? 0 : index;
+  validateFirstIndex(moveCount) {
+    const maxIndex = this.getAllData().length - 1;
+    const index = this.savedFirstIndex - moveCount;
+    const lastIndexLimit = maxIndex - this.maxCountInArea / 2;
+    if (index < 0) return 0;
+    if (index > lastIndexLimit) return lastIndexLimit;
+    return index;
+  }
+
+  validateLastIndex() {
+    const maxIndex = this.getAllData().length - 1;
+    const index = this.firstIndex + this.maxCountInArea - 1;
+    return Math.min(maxIndex, index);
   }
 
   // 开始移动
   move(x) {
     const moveCount = Math.floor(x / this.getColumnWidth());
     console.log('moveCount', x, moveCount);
-    this.firstIndex = this.validateFirstIndex(this.savedFirstIndex - moveCount);
-    this.lastIndex = Math.min(this.firstIndex + this.maxCountInArea - 1, this.getAllData().length - 1);
+    this.firstIndex = this.validateFirstIndex(moveCount);
+    this.lastIndex = this.validateLastIndex();
     console.log(this.firstIndex, this.lastIndex);
     this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
   }

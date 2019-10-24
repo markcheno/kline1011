@@ -16,7 +16,7 @@ export default class Range {
     // 刻度比率 1刻度代表多少数值
     this.ratio = 0;
     // 最小刻度间隔
-    this.minInterval = 36;
+    this.minInterval = 25;
     this.gradations = [];
   }
 
