@@ -36,8 +36,9 @@ export default class Control {
       if (e.which !== 1) return;
       this.leftMouseDown = false;
       manager.onMouseUp();
-    }).mouseleave(() => {
+    }).mouseleave(e => {
       this.leftMouseDown = false;
+      manager.onMouseleave(getMouesePlace(e));
     }).bind('mousewheel', Control.mouseWheel);
   }
 
@@ -53,8 +54,12 @@ export default class Control {
     manager.canvas.overlayCanvas.style.cursor = 'none';
   }
 
-  static redrawView(x = 0) {
-    Manager.instance.redraw(x);
+  static redrawMainView(x = 0) {
+    Manager.instance.redrawMain(x);
+  }
+
+  static redrawOverView() {
+    Manager.instance.redrawOver();
   }
 
   static move(x) {
@@ -71,6 +76,14 @@ export default class Control {
 
   static mouseWheel(e, delta) {
     Manager.instance.dataSource.scaleView(delta > 0 ? 1 : -1);
-    Control.redrawView();
+    Control.redrawMainView();
+  }
+
+  static updateCrossCursorSelectAt(place) {
+    Manager.instance.dataSource.updateCrossCursorSelectAt(place);
+  }
+
+  static clearOverView() {
+    Manager.instance.layout.clearOverLayout();
   }
 }

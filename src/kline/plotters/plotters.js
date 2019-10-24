@@ -5,6 +5,7 @@ export class Plotter {
     this.name = name;
     this.manager = Manager.instance;
     this.mainContext = this.manager.canvas.mainContext;
+    this.overlayContext = this.manager.canvas.overlayContext;
   }
 
   drawLine(context, place) {
@@ -40,9 +41,13 @@ export class Plotter {
 
 // 橡皮擦画笔
 export class ClearPlotter extends Plotter {
+  constructor(type) {
+    super('ClearPlotter');
+    this.context = type === 'main' ? this.mainContext : this.overlayContext;
+  }
+
   draw(layout) {
-    const context = this.mainContext;
-    context.clearRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
+    this.context.clearRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
   }
 }
 
@@ -328,5 +333,32 @@ export class VolumePlotter extends Plotter {
       from: { x: left + 0.5, y: top + 0.5 },
       to: { x: right + 0.5, y: top + 0.5 },
     });
+  }
+}
+
+// 绘制over视图
+export class SelectionPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.lineColor = theme.Color.Grid;
+  }
+
+  draw(layout) {
+    const context = this.overlayContext;
+    const { crossCursorSelectAt } = this.manager.dataSource;
+    context.strokeStyle = this.lineColor;
+    const x = crossCursorSelectAt.x + 0.5;
+    const y = crossCursorSelectAt.y + 0.5;
+    context.setLineDash([5, 5]);
+    this.drawLine(context, {
+      from: { x, y: 0 },
+      to: { x, y: layout.getBottom() },
+    });
+    this.drawLine(context, {
+      from: { x: 0, y },
+      to: { x: layout.getRight(), y },
+    });
+    context.setLineDash([]);
   }
 }

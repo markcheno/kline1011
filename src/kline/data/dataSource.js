@@ -28,6 +28,10 @@ export default class DataSource {
     this.savedFirstIndex = -1;
     this.maxCountInArea = -1;
     this.scale = 10;
+    this.crossCursorSelectAt = {
+      x: 0,
+      y: 0,
+    };
   }
 
   getColumnWidth() {
@@ -158,5 +162,10 @@ export default class DataSource {
     this.updateMaxCountInArea();
     this.lastIndex = this.validateLastIndex();
     this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
+  }
+
+  // 更新十字线选中数据
+  updateCrossCursorSelectAt(place) {
+    this.crossCursorSelectAt = { ...place };
   }
 }

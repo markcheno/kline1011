@@ -70,12 +70,19 @@ export default class Manager {
   }
 
 
-  redraw(x = 0) {
-    this.layout.drawChartLayout();
+  // 重绘主视图
+  redrawMain(x = 0) {
+    this.layout.drawMainLayout();
     const { layouts } = this.layout;
     layouts.forEach(item => {
       item.drawChartLayout(x);
     });
+  }
+
+  // 重绘over视图
+  redrawOver() {
+    this.layout.drawOverLayout();
+    console.log('重绘over视图');
   }
 
   // 开始绘制
@@ -95,7 +102,7 @@ export default class Manager {
     const { dataSource } = that;
     dataSource.updateData(data);
     that.initLayout();
-    that.redraw();
+    that.redrawMain();
   }
 
   onMouseDown(place) {
@@ -109,6 +116,10 @@ export default class Manager {
   }
 
   onMouseUp() {
+  }
+
+  onMouseleave(e) {
+    this.layout.onMouseleave(e);
   }
 
   // updateCandlestickMovePoint(points) {

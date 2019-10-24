@@ -123,9 +123,22 @@ export default class MainLayout extends Area {
     });
   }
 
-  drawChartLayout() {
-    new Plotters.ClearPlotter().draw(this);
+  // 绘制主图
+  drawMainLayout() {
+    new Plotters.ClearPlotter('main').draw(this);
     new Plotters.BackgroundPlotter().draw(this);
+  }
+
+
+  // 请空over图
+  clearOverLayout() {
+    new Plotters.ClearPlotter('overlay').draw(this);
+  }
+
+  // 绘制over图
+  drawOverLayout() {
+    this.clearOverLayout();
+    new Plotters.SelectionPlotter().draw(this);
   }
 
   // 添加layout
@@ -172,5 +185,11 @@ export default class MainLayout extends Area {
         item.onMouseMove(place, leftMouseDownStatus);
       });
     }
+  }
+
+  onMouseleave(place) {
+    this.layouts.forEach(item => {
+      item.onMouseleave(place);
+    });
   }
 }

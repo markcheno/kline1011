@@ -90,6 +90,7 @@ export class ChartArea extends Area {
     this.oldPlace = place;
     Control.showCursor('move');
     Control.startMove();
+    Control.clearOverView();
   }
 
   onMouseMove(place, status) {
@@ -101,8 +102,15 @@ export class ChartArea extends Area {
       // console.log('movePoints', moveX, movePoints);
       console.log('moveX', moveX);
       Control.move(moveX);
-      Control.redrawView();
+      Control.redrawMainView();
+    } else {
+      Control.updateCrossCursorSelectAt(place);
+      Control.redrawOverView();
     }
+  }
+
+  onMouseleave() {
+    Control.clearOverView();
   }
 }
 
