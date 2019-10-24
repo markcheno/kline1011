@@ -12,7 +12,6 @@ export default class DataSource {
   static candleStick = {
     itemWidth: [1, 3, 3, 5, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29],
     spaceWidth: [1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 7, 7, 7],
-    scale: 10,
   }
 
   constructor() {
@@ -28,21 +27,22 @@ export default class DataSource {
     this.lastIndex = -1;
     this.savedFirstIndex = -1;
     this.maxCountInArea = -1;
+    this.scale = 10;
   }
 
   getColumnWidth() {
     const candleStickMode = DataSource.candleStick;
-    return candleStickMode.itemWidth[candleStickMode.scale] + candleStickMode.spaceWidth[candleStickMode.scale];
+    return candleStickMode.itemWidth[this.scale] + candleStickMode.spaceWidth[this.scale];
   }
 
   getColumnCenter() {
     const candleStickMode = DataSource.candleStick;
-    return candleStickMode.itemWidth[candleStickMode.scale] / 2;
+    return candleStickMode.itemWidth[this.scale] / 2;
   }
 
   getSpaceWidth() {
     const candleStickMode = DataSource.candleStick;
-    return candleStickMode.spaceWidth[candleStickMode.scale];
+    return candleStickMode.spaceWidth[this.scale];
   }
 
   // 计算最大蜡烛图个数
@@ -144,5 +144,19 @@ export default class DataSource {
 
   startMove() {
     this.savedFirstIndex = this.firstIndex;
+  }
+
+  // 放大缩小
+  scaleView(s) {
+    const candleStickModeItemLength = DataSource.candleStick.itemWidth.length;
+    this.scale += s;
+    if (this.scale < 0) {
+      this.scale = 0;
+    } else if (this.scale >= candleStickModeItemLength) {
+      this.scale = candleStickModeItemLength - 1;
+    }
+    this.updateMaxCountInArea();
+    this.lastIndex = this.validateLastIndex();
+    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
   }
 }

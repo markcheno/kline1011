@@ -38,7 +38,7 @@ export default class Control {
       manager.onMouseUp();
     }).mouseleave(() => {
       this.leftMouseDown = false;
-    });
+    }).bind('mousewheel', Control.mouseWheel);
   }
 
   static showCursor(cursor = 'default') {
@@ -67,5 +67,10 @@ export default class Control {
 
   static getMovePoints() {
     return Manager.instance.movePoints;
+  }
+
+  static mouseWheel(e, delta) {
+    Manager.instance.dataSource.scaleView(delta > 0 ? 1 : -1);
+    Control.redrawView();
   }
 }
