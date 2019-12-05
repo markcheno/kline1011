@@ -17,6 +17,9 @@ class TimelineLayout extends Area {
     new Plotters.TimelinePlotter().draw(this);
   }
 
+  drawChartLayoutOverInfo() {
+  }
+
   initLayout() {
     this.updateTimelineArea(new TimelineArea('timelineArea'));
   }
@@ -49,6 +52,7 @@ class ChartLayout extends Area {
     this.chartArea = {};
     this.rangeArea = {};
     this.chartPlotters = option.chartPlotters;
+    this.chartInfoPlotters = option.chartInfoPlotters;
     this.range = new Range({
       name: `${option.name}Range`,
       boundaryGap: option.boundaryGap,
@@ -65,6 +69,10 @@ class ChartLayout extends Area {
     new Plotters.RangePlotter().draw(this);
     // 绘制主视图
     new Plotters[this.chartPlotters]().draw(this, moveX);
+  }
+
+  drawChartLayoutOverInfo(index) {
+    new Plotters[this.chartInfoPlotters]().draw(this, index);
   }
 
   // 初始化
@@ -138,7 +146,15 @@ export default class MainLayout extends Area {
   // 绘制over图
   drawOverLayout() {
     this.clearOverLayout();
-    new Plotters.SelectionPlotter().draw(this);
+    const index = new Plotters.SelectionPlotter().draw(this);
+    this.drawSelectionInfo(index);
+  }
+
+  // 绘制over图上的info信息
+  drawSelectionInfo(index) {
+    this.layouts.forEach(item => {
+      item.drawChartLayoutOverInfo(index);
+    });
   }
 
   // 添加layout
@@ -187,9 +203,9 @@ export default class MainLayout extends Area {
     }
   }
 
-  onMouseleave(place) {
+  onMouseLeave(place) {
     this.layouts.forEach(item => {
-      item.onMouseleave(place);
+      item.onMouseLeave(place);
     });
   }
 }

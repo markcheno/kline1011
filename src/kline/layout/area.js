@@ -76,7 +76,9 @@ export class Area {
 
   onMouseMove() {}
 
-  onMouseLeave() {}
+  onMouseLeave() {
+    Control.clearOverView();
+  }
 
   onMouseUp() {}
 }
@@ -108,10 +110,6 @@ export class ChartArea extends Area {
       Control.redrawOverView();
     }
   }
-
-  onMouseleave() {
-    Control.clearOverView();
-  }
 }
 
 export class RangeArea extends Area {
@@ -120,6 +118,7 @@ export class RangeArea extends Area {
   }
 
   onMouseMove(place, status) {
+    Control.clearOverView();
     if (status) {
       Control.showCursor();
       console.log('RangeArea onMouseMove');
@@ -133,6 +132,7 @@ export class TimelineArea extends Area {
   }
 
   onMouseMove(place, status) {
+    Control.clearOverView();
     if (status) {
       Control.showCursor('move');
       console.log('TimelineArea onMouseMove');

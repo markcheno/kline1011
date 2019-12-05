@@ -1,5 +1,8 @@
 import Manager from '../manage/manager';
 
+// over视图所需的x轴坐标轴位置
+let xPlaces = [];
+
 export class Plotter {
   constructor(name) {
     this.name = name;
@@ -133,6 +136,7 @@ export class CandlestickPlotter extends Plotter {
     const fillPosRects = [];
     const fillNegRects = [];
     const fillNegLines = [];
+    xPlaces = [];
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
       const { open, close, high, low } = data;
@@ -142,6 +146,7 @@ export class CandlestickPlotter extends Plotter {
       const openPlace = range.toY(open);
       const leftX = this.toMaxX(columnLeft);
       const leftLineX = this.toMaxX(columnLeft + itemCenterOffset);
+      xPlaces.push(leftLineX);
       const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       const lineRectWidth = this.toReactWidth(leftLineX, 1);
       // 涨
@@ -187,6 +192,34 @@ export class CandlestickPlotter extends Plotter {
       context.fillStyle = this.NegativeColor;
       this.drawReacts(context, fillNegRects);
     }
+  }
+}
+
+export class CandlestickInfoPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.Font = theme.Font.Default;
+  }
+
+  draw(layout, index) {
+    const { chartArea } = layout;
+    const { dataSource } = this.manager;
+    const context = this.overlayContext;
+    const currentData = dataSource.getCurrentData();
+    const { left, top } = chartArea.getPlace();
+    const data = currentData[index];
+    context.font = this.Font;
+    context.fillStyle = this.GridColor;
+    const y = top + 15;
+    let x = left;
+    const textArray = [`开盘价: ${data.open}`, `最低价: ${data.low}`, `最高价: ${data.high}`, `收盘价: ${data.close}`];
+    textArray.forEach(item => {
+      console.log(item, x, y);
+      context.fillText(item, x, y);
+      x += context.measureText(item).width + 10;
+    });
   }
 }
 
@@ -336,6 +369,27 @@ export class VolumePlotter extends Plotter {
   }
 }
 
+export class VolumeInfoPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.Font = theme.Font.Default;
+  }
+
+  draw(layout, index) {
+    const { chartArea } = layout;
+    const { dataSource } = this.manager;
+    const context = this.overlayContext;
+    const currentData = dataSource.getCurrentData();
+    const { left, top } = chartArea.getPlace();
+    const data = currentData[index];
+    context.font = this.Font;
+    context.fillStyle = this.GridColor;
+    context.fillText(`成交量: ${data.volume}`, left, top + 15);
+  }
+}
+
 // 绘制over视图
 export class SelectionPlotter extends Plotter {
   constructor(name) {
@@ -344,11 +398,46 @@ export class SelectionPlotter extends Plotter {
     this.lineColor = theme.Color.Grid;
   }
 
+  // 二分搜索插入
+  searchInsert(target) {
+    const nums = xPlaces;
+    let left = 0;
+    let right = nums.length - 1;
+    while (left <= right) {
+      // eslint-disable-next-line no-bitwise
+      const mid = (left + right) >>> 1;
+      const midItem = nums[mid];
+      if (midItem === target) {
+        return {
+          index: mid,
+          value: midItem,
+        };
+      } if (target > midItem) {
+        left = mid + 1;
+      } else {
+        right = mid - 1;
+      }
+    }
+    if (left > nums.length - 1) left = nums.length - 1;
+    if (nums[left] - target > target - nums[left - 1]) {
+      return {
+        index: left - 1,
+        value: nums[left - 1],
+      };
+    }
+    return {
+      index: left,
+      value: nums[left],
+    };
+  }
+
   draw(layout) {
     const context = this.overlayContext;
     const { crossCursorSelectAt } = this.manager.dataSource;
     context.strokeStyle = this.lineColor;
-    const x = crossCursorSelectAt.x + 0.5;
+    // 取最近的蜡烛图点
+    const xInfo = this.searchInsert(crossCursorSelectAt.x);
+    const x = xInfo.value;
     const y = crossCursorSelectAt.y + 0.5;
     context.setLineDash([5, 5]);
     this.drawLine(context, {
@@ -360,5 +449,6 @@ export class SelectionPlotter extends Plotter {
       to: { x: layout.getRight(), y },
     });
     context.setLineDash([]);
+    return xInfo.index;
   }
 }

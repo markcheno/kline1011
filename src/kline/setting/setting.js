@@ -10,7 +10,8 @@ export default class Setting {
     this.chart = [{
       name: 'volumeChartLayout',
       chartPlotters: 'VolumePlotter',
-      boundaryGap: ['10%', '0%'],
+      chartInfoPlotters: 'VolumeInfoPlotter',
+      boundaryGap: ['15%', '0%'],
       indicator: {
         min: 0,
         max: 'volume',
@@ -18,6 +19,7 @@ export default class Setting {
     }, {
       name: 'mainChartLayout',
       chartPlotters: 'CandlestickPlotter',
+      chartInfoPlotters: 'CandlestickInfoPlotter',
       boundaryGap: ['10%', '10%'],
       indicator: {
         min: 'low',

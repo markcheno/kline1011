@@ -38,7 +38,7 @@ export default class Control {
       manager.onMouseUp();
     }).mouseleave(e => {
       this.leftMouseDown = false;
-      manager.onMouseleave(getMouesePlace(e));
+      manager.onMouseLeave(getMouesePlace(e));
     }).bind('mousewheel', Control.mouseWheel);
   }
 

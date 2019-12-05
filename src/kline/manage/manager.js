@@ -82,7 +82,6 @@ export default class Manager {
   // 重绘over视图
   redrawOver() {
     this.layout.drawOverLayout();
-    console.log('重绘over视图');
   }
 
   // 开始绘制
@@ -118,8 +117,8 @@ export default class Manager {
   onMouseUp() {
   }
 
-  onMouseleave(e) {
-    this.layout.onMouseleave(e);
+  onMouseLeave(e) {
+    this.layout.onMouseLeave(e);
   }
 
   // updateCandlestickMovePoint(points) {
