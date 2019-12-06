@@ -1,8 +1,8 @@
 export default class Theme {
   constructor() {
     this.Color = {
-      Positive: '#db5542',
-      Negative: '#53b37b',
+      Positive: '#E83B40',
+      Negative: '#239888',
       Background: '#fff',
       BackgroundGrid: '#333',
       Grid: '#333',

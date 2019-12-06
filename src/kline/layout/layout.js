@@ -17,7 +17,8 @@ class TimelineLayout extends Area {
     new Plotters.TimelinePlotter().draw(this);
   }
 
-  drawChartLayoutOverInfo() {
+  drawChartLayoutOverInfo(index) {
+    new Plotters.TimelineInfoPlotter().draw(this, index);
   }
 
   initLayout() {
@@ -73,6 +74,15 @@ class ChartLayout extends Area {
 
   drawChartLayoutOverInfo(index) {
     new Plotters[this.chartInfoPlotters]().draw(this, index);
+    this.drawChartLayoutRangeInfo();
+  }
+
+  drawChartLayoutRangeInfo() {
+    const { crossCursorSelectAt } = Manager.instance.dataSource;
+    const { y } = crossCursorSelectAt;
+    const { top, bottom } = this.rangeArea;
+    if (y <= top || y >= bottom) return;
+    new Plotters.RangeInfoPlotter().draw(this, y);
   }
 
   // 初始化

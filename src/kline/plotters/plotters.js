@@ -216,7 +216,6 @@ export class CandlestickInfoPlotter extends Plotter {
     let x = left;
     const textArray = [`开盘价: ${data.open}`, `最低价: ${data.low}`, `最高价: ${data.high}`, `收盘价: ${data.close}`];
     textArray.forEach(item => {
-      console.log(item, x, y);
       context.fillText(item, x, y);
       x += context.measureText(item).width + 10;
     });
@@ -252,6 +251,38 @@ export class TimelinePlotter extends Plotter {
     context.fillText(data.minDate, left, middle);
     context.textAlign = 'right';
     context.fillText(data.maxDate, right, middle);
+  }
+}
+
+export class TimelineInfoPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.Font = theme.Font.Default;
+  }
+
+  draw(layout, index) {
+    const { timelineArea } = layout;
+    const { dataSource } = this.manager;
+    const context = this.overlayContext;
+    const currentData = dataSource.getCurrentData();
+    const { top } = timelineArea.getPlace();
+    const data = currentData[index];
+    // eslint-disable-next-line no-undef
+    const time = moment(data.time).format('YYYY-MM-DD');
+    const x = xPlaces[index];
+    const leftX = x - context.measureText(time).width / 2;
+    context.font = this.Font;
+    context.fillStyle = this.GridColor;
+    this.drawReact(context, {
+      x: leftX - 10,
+      y: top,
+      width: context.measureText(time).width + 20,
+      height: 20,
+    });
+    context.fillStyle = '#ffffff';
+    context.fillText(time, leftX, top + 15);
   }
 }
 
@@ -299,6 +330,33 @@ export class RangePlotter extends Plotter {
       context.fillStyle = this.GridColor;
       context.fillText(item.text, center, item.y);
     });
+  }
+}
+
+export class RangeInfoPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.Font = theme.Font.Default;
+  }
+
+  draw(layout, y) {
+    const area = layout.rangeArea;
+    const context = this.overlayContext;
+    const value = parseInt(layout.range.toValue(y), 10);
+    const { left } = area.getPlace();
+    const textWidth = context.measureText(value).width;
+    context.font = this.Font;
+    context.fillStyle = this.GridColor;
+    this.drawReact(context, {
+      x: left,
+      y: y - 10,
+      width: textWidth + 40,
+      height: 20,
+    });
+    context.fillStyle = '#ffffff';
+    context.fillText(value, left + 20, y + 4);
   }
 }
 
@@ -396,6 +454,7 @@ export class SelectionPlotter extends Plotter {
     super(name);
     const { theme } = this.manager;
     this.lineColor = theme.Color.Grid;
+    this.timelineAreaHeight = this.manager.setting.timelineAreaHeight;
   }
 
   // 二分搜索插入
@@ -442,7 +501,7 @@ export class SelectionPlotter extends Plotter {
     context.setLineDash([5, 5]);
     this.drawLine(context, {
       from: { x, y: 0 },
-      to: { x, y: layout.getBottom() },
+      to: { x, y: layout.getBottom() - this.timelineAreaHeight },
     });
     this.drawLine(context, {
       from: { x: 0, y },
