@@ -98,11 +98,7 @@ export class ChartArea extends Area {
   onMouseMove(place, status) {
     if (status) {
       Control.showCursor('move');
-      const moveX = place.x - this.oldPlace.x;
-      // const movePoints = Control.getMovePoints();
-      // if (movePoints.includes(moveX)) console.log('到边');
-      // console.log('movePoints', moveX, movePoints);
-      console.log('moveX', moveX);
+      const moveX = place.x - this.oldPlace.x || 0;
       Control.move(moveX);
       Control.redrawMainView();
     } else {
@@ -121,7 +117,6 @@ export class RangeArea extends Area {
     Control.clearOverView();
     if (status) {
       Control.showCursor();
-      console.log('RangeArea onMouseMove');
     }
   }
 }
@@ -135,7 +130,6 @@ export class TimelineArea extends Area {
     Control.clearOverView();
     if (status) {
       Control.showCursor('move');
-      console.log('TimelineArea onMouseMove');
     }
   }
 }

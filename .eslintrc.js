@@ -22,6 +22,7 @@ module.exports = {
     'no-plusplus': 'off',
     'no-restricted-properties': 'off',
     'operator-assignment': 'off',
+    'no-unused-expressions': 'off',
   },
   parserOptions: {
     parser: 'babel-eslint',

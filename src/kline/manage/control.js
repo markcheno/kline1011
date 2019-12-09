@@ -7,6 +7,15 @@ export default class Control {
     return this.leftMouseDown;
   }
 
+  static leftMouseUp() {
+    this.leftMouseDown = false;
+  }
+
+  static leftMousePut() {
+    this.leftMouseDown = true;
+  }
+
+
   // 注册鼠标事件
   static registerMouseEvent() {
     const manager = Manager.instance;

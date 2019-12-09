@@ -1,4 +1,5 @@
 import Manager from '../manage/manager';
+import Control from '../manage/control';
 
 export default class DataSource {
   // 更新数据策略
@@ -27,7 +28,10 @@ export default class DataSource {
     this.lastIndex = -1;
     this.savedFirstIndex = -1;
     this.maxCountInArea = -1;
-    this.scale = 10;
+    this.maxCountInLayout = -1;
+    this.currentDataIndent = 0;
+    this.savedCurrentDataIndent = 0;
+    this.scale = 16;
     this.crossCursorSelectAt = {
       x: 0,
       y: 0,
@@ -53,27 +57,45 @@ export default class DataSource {
   updateMaxCountInArea() {
     const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
     const columnWidth = this.getColumnWidth();
-    this.maxCountInArea = Math.ceil(width / columnWidth);
+    this.maxCountInArea = Math.floor(width / columnWidth);
+  }
+
+  // 计算整个图表中最大蜡烛图个数
+  updateMaxCountInLayout() {
+    const { width } = Manager.instance.canvas.mainCanvas;
+    const columnWidth = this.getColumnWidth();
+    this.maxCountInLayout = Math.ceil(width / columnWidth);
   }
 
   updateData(data) {
-    this.data = data;
+    const isuUpdate = this.data.length;
+    this.data = data.concat(this.data);
     // 更新range width
     this.updateRangeWidth();
     this.updateMaxCountInArea();
     // 更新区间内的时间
-    this.updateCurrentData();
+    isuUpdate ? this.updateCurrentData(data.length) : this.initCurrentData();
   }
 
   getDataByIndex(index) {
     return this.data[index];
   }
 
-  // 更新当前视图数据
-  updateCurrentData() {
+  // 初始化当前视图数据
+  initCurrentData() {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
-    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
+    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex + 1);
+  }
+
+  // 更新当前视图数据
+  updateCurrentData(updateLength) {
+    this.lastIndex += updateLength;
+    this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
+    this.savedFirstIndex += updateLength;
+    this.currentDataIndent = 0;
+    console.log('updateCurrentData设置', this.firstIndex, this.lastIndex);
+    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex + 1);
   }
 
   // 获取当前视图数据
@@ -121,33 +143,54 @@ export default class DataSource {
     });
   }
 
+  validateDataIndent(moveCount) {
+    const index = this.savedFirstIndex - moveCount;
+    if (index < 0) {
+      // 开始请求新数据
+      Control.leftMouseUp();
+      const startTime = this.getCurrentData()[0].time;
+      Manager.instance.getBars({
+        startTime,
+        firstDataRequest: false,
+      });
+      // return this.savedCurrentDataIndent + index * -1;
+    } if (this.savedCurrentDataIndent) {
+      return this.savedCurrentDataIndent - index < 0 ? 0 : this.savedCurrentDataIndent - index;
+    }
+    return this.currentDataIndent;
+  }
+
   validateFirstIndex(moveCount) {
     const maxIndex = this.getAllData().length - 1;
     const index = this.savedFirstIndex - moveCount;
     const lastIndexLimit = maxIndex - this.maxCountInArea / 2;
-    if (index < 0) return 0;
+    if (index < 0 || (this.currentDataIndent && index > 0)) {
+      return 0;
+    }
     if (index > lastIndexLimit) return lastIndexLimit;
     return index;
   }
 
   validateLastIndex() {
     const maxIndex = this.getAllData().length - 1;
-    const index = this.firstIndex + this.maxCountInArea - 1;
+    const index = this.firstIndex + this.maxCountInArea - 1 - this.currentDataIndent;
     return Math.min(maxIndex, index);
   }
 
   // 开始移动
   move(x) {
+    if (Manager.instance.requestPending) return;
     const moveCount = Math.floor(x / this.getColumnWidth());
-    console.log('moveCount', x, moveCount);
+    this.currentDataIndent = this.validateDataIndent(moveCount);
     this.firstIndex = this.validateFirstIndex(moveCount);
     this.lastIndex = this.validateLastIndex();
-    console.log(this.firstIndex, this.lastIndex);
+    console.log('move设置', Manager.instance.requestPending, this.firstIndex, this.lastIndex);
     this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
   }
 
   startMove() {
     this.savedFirstIndex = this.firstIndex;
+    this.savedCurrentDataIndent = this.currentDataIndent;
   }
 
   // 放大缩小

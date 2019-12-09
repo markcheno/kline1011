@@ -2,6 +2,7 @@ import MainLayout from '../layout/layout';
 import Setting from '../setting/setting';
 import Theme from '../setting/themes';
 import DataSource from '../data/dataSource';
+import Control from './control';
 // 保存kline的实例
 export default class Manager {
   static instance
@@ -15,6 +16,7 @@ export default class Manager {
     this.theme = new Theme();
     this.candlestickMovePoint = {};
     this.movePoints = [];
+    this.requestPending = false;
     Manager.instance = this;
   }
 
@@ -67,6 +69,7 @@ export default class Manager {
     this.canvas.mainCanvas.height = height;
     this.canvas.overlayCanvas.width = width;
     this.canvas.overlayCanvas.height = height;
+    this.dataSource.updateMaxCountInLayout();
   }
 
 
@@ -91,17 +94,34 @@ export default class Manager {
 
   // 请求数据
   requestData() {
+    this.getBars({
+      firstDataRequest: true,
+      startTime: new Date().getTime(),
+    });
+  }
+
+  // 请求数据
+  getBars(requestParam) {
+    if (this.requestPending) return;
+    this.requestPending = true;
     const { datafeed } = this.getOption();
-    datafeed.getBars(this.onHistoryCallback);
+    // 计算当前蜡烛图最大可显示的数量
+    const requestCount = this.dataSource.maxCountInLayout * 1;
+    const { firstDataRequest, startTime } = requestParam;
+    datafeed.getBars(startTime, requestCount, this.onHistoryCallback, firstDataRequest);
   }
 
   // 请求历史数据处理
-  onHistoryCallback(data) {
+  onHistoryCallback(data, option = {
+    firstDataRequest: false,
+  }) {
     const that = Manager.instance;
     const { dataSource } = that;
     dataSource.updateData(data);
     that.initLayout();
     that.redrawMain();
+    that.requestPending = false;
+    option.firstDataRequest || Control.leftMousePut();
   }
 
   onMouseDown(place) {
