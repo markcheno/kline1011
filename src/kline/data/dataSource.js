@@ -31,6 +31,8 @@ export default class DataSource {
     this.maxCountInLayout = -1;
     this.currentDataIndent = 0;
     this.savedCurrentDataIndent = 0;
+    this.lastCurrentDataIndent = 0;
+    this.lastMoveCount = -1;
     this.scale = 16;
     this.crossCursorSelectAt = {
       x: 0,
@@ -145,15 +147,19 @@ export default class DataSource {
 
   validateDataIndent(moveCount) {
     const index = this.savedFirstIndex - moveCount;
-    if (index < 0) {
+    // console.log('this', index, this.savedCurrentDataIndent, this.savedFirstIndex, moveCount);
+    if (index <= 0) {
       // 开始请求新数据
-      Control.leftMouseUp();
-      const startTime = this.getCurrentData()[0].time;
-      Manager.instance.getBars({
-        startTime,
-        firstDataRequest: false,
-      });
-      // return this.savedCurrentDataIndent + index * -1;
+      // Control.leftMouseUp();
+      // const startTime = this.getCurrentData()[0].time;
+      // Manager.instance.getBars({
+      //   startTime,
+      //   firstDataRequest: false,
+      // });
+      const result = this.savedCurrentDataIndent + index * -1;
+      const maxIndex = this.getAllData().length - 1;
+      const lastIndexLimit = maxIndex - Math.round(this.maxCountInArea / 2);
+      return result > lastIndexLimit ? lastIndexLimit : result;
     } if (this.savedCurrentDataIndent) {
       return this.savedCurrentDataIndent - index < 0 ? 0 : this.savedCurrentDataIndent - index;
     }
@@ -163,8 +169,12 @@ export default class DataSource {
   validateFirstIndex(moveCount) {
     const maxIndex = this.getAllData().length - 1;
     const index = this.savedFirstIndex - moveCount;
-    const lastIndexLimit = maxIndex - this.maxCountInArea / 2;
-    if (index < 0 || (this.currentDataIndent && index > 0)) {
+    console.log('index', index, 'this.currentDataIndent', this.currentDataIndent, this.lastCurrentDataIndent);
+    const lastIndexLimit = maxIndex - Math.round(this.maxCountInArea / 2);
+    if (index <= 0 || this.currentDataIndent) {
+      return 0;
+    }
+    if (this.lastCurrentDataIndent === 1 && this.currentDataIndent === 0) {
       return 0;
     }
     if (index > lastIndexLimit) return lastIndexLimit;
@@ -181,10 +191,14 @@ export default class DataSource {
   move(x) {
     if (Manager.instance.requestPending) return;
     const moveCount = Math.floor(x / this.getColumnWidth());
+    if (moveCount === this.lastMoveCount) return;
+    this.lastMoveCount = moveCount;
+    console.log('moveCount', moveCount);
+    this.lastCurrentDataIndent = this.currentDataIndent;
     this.currentDataIndent = this.validateDataIndent(moveCount);
     this.firstIndex = this.validateFirstIndex(moveCount);
+    console.log('firstIndex', this.firstIndex);
     this.lastIndex = this.validateLastIndex();
-    console.log('move设置', Manager.instance.requestPending, this.firstIndex, this.lastIndex);
     this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
   }
 
