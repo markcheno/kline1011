@@ -126,12 +126,12 @@ export class CandlestickPlotter extends Plotter {
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
-    const { currentDataIndent } = dataSource;
+    const { leftIndentCount } = dataSource;
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     this.areaRight = chartArea.getRight();
     // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
-    let columnLeft = currentDataIndent * columnWidth;
+    let columnLeft = leftIndentCount * columnWidth;
     // 从前往后绘制
     const fillPosLines = [];
     const fillPosRects = [];
@@ -387,13 +387,13 @@ export class VolumePlotter extends Plotter {
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
-    const { currentDataIndent } = dataSource;
+    const { leftIndentCount } = dataSource;
     const { left, right, top } = chartArea.getPlace();
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     this.areaRight = right;
     // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
-    let columnLeft = currentDataIndent * columnWidth;
+    let columnLeft = leftIndentCount * columnWidth;
     // 从前往后绘制
     const fillPosRects = [];
     const fillNegRects = [];

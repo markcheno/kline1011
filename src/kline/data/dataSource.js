@@ -29,10 +29,10 @@ export default class DataSource {
     this.savedFirstIndex = -1;
     this.maxCountInArea = -1;
     this.maxCountInLayout = -1;
-    this.currentDataIndent = 0;
-    this.savedCurrentDataIndent = 0;
-    this.lastCurrentDataIndent = 0;
-    this.lastMoveCount = -1;
+    this.lastMoveCount = 0;
+    // 左侧空白
+    this.leftIndentCount = 0;
+    this.savedLeftIndentCount = 0;
     this.scale = 16;
     this.crossCursorSelectAt = {
       x: 0,
@@ -95,7 +95,6 @@ export default class DataSource {
     this.lastIndex += updateLength;
     this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
     this.savedFirstIndex += updateLength;
-    this.currentDataIndent = 0;
     console.log('updateCurrentData设置123123', this.firstIndex, this.lastIndex);
     this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex + 1);
   }
@@ -145,66 +144,57 @@ export default class DataSource {
     });
   }
 
-  validateDataIndent(moveCount) {
-    const index = this.savedFirstIndex - moveCount;
-    // console.log('this', index, this.savedCurrentDataIndent, this.savedFirstIndex, moveCount);
-    if (index <= 0) {
-      // 开始请求新数据
-      // Control.leftMouseUp();
-      // const startTime = this.getCurrentData()[0].time;
-      // Manager.instance.getBars({
-      //   startTime,
-      //   firstDataRequest: false,
-      // });
-      const result = this.savedCurrentDataIndent + index * -1;
-      const maxIndex = this.getAllData().length - 1;
-      const lastIndexLimit = maxIndex - Math.round(this.maxCountInArea / 2);
-      return result > lastIndexLimit ? lastIndexLimit : result;
-    } if (this.savedCurrentDataIndent) {
-      return this.savedCurrentDataIndent - index < 0 ? 0 : this.savedCurrentDataIndent - index;
+  move(x) {
+    // 右移大于0, 左移小于0
+    const moveCount = Math.floor(x / this.getColumnWidth());
+    if (moveCount === this.lastMoveCount || !moveCount) return;
+    this.lastMoveCount = moveCount;
+    this.leftIndentCount = this.validateLeftIndentCount(moveCount);
+    this.firstIndex = this.validateFirstIndex(moveCount);
+    this.lastIndex = this.validateLastIndex();
+    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
+  }
+
+  validateLeftIndentCount(moveCount) {
+    let { leftIndentCount } = this;
+    const { savedFirstIndex, savedLeftIndentCount } = this;
+    const index = savedFirstIndex - moveCount;
+    // savedLeftIndentCount = index < 0 ? savedLeftIndentCount - moveCount : savedLeftIndentCount + 1;
+    // console.log('123', savedFirstIndex, moveCount);
+    // if (leftIndentCount || index < 0) {
+    //   console.log('moveCount', index, savedLeftIndentCount, moveCount);
+    //   leftIndentCount = savedLeftIndentCount + moveCount;
+    //   leftIndentCount = Math.max(leftIndentCount, 0);
+    // }
+    if (leftIndentCount) {
+      leftIndentCount = savedLeftIndentCount + moveCount;
+    } else if (index <= 0) {
+      leftIndentCount = savedLeftIndentCount + moveCount - this.test;
     }
-    return this.currentDataIndent;
+    return leftIndentCount;
   }
 
   validateFirstIndex(moveCount) {
+    const { leftIndentCount, savedLeftIndentCount } = this;
+    if (leftIndentCount) return 0;
+    if (savedLeftIndentCount === moveCount) return 0;
     const maxIndex = this.getAllData().length - 1;
     const index = this.savedFirstIndex - moveCount;
-    console.log('index', index, 'this.currentDataIndent', this.currentDataIndent, this.lastCurrentDataIndent);
     const lastIndexLimit = maxIndex - Math.round(this.maxCountInArea / 2);
-    if (index <= 0 || this.currentDataIndent) {
-      return 0;
-    }
-    if (this.lastCurrentDataIndent === 1 && this.currentDataIndent === 0) {
-      return 0;
-    }
     if (index > lastIndexLimit) return lastIndexLimit;
     return index;
   }
 
   validateLastIndex() {
     const maxIndex = this.getAllData().length - 1;
-    const index = this.firstIndex + this.maxCountInArea - 1 - this.currentDataIndent;
+    const index = this.firstIndex + this.maxCountInArea - 1 - this.leftIndentCount;
     return Math.min(maxIndex, index);
   }
 
-  // 开始移动
-  move(x) {
-    if (Manager.instance.requestPending) return;
-    const moveCount = Math.floor(x / this.getColumnWidth());
-    if (moveCount === this.lastMoveCount) return;
-    this.lastMoveCount = moveCount;
-    console.log('moveCount', moveCount);
-    this.lastCurrentDataIndent = this.currentDataIndent;
-    this.currentDataIndent = this.validateDataIndent(moveCount);
-    this.firstIndex = this.validateFirstIndex(moveCount);
-    console.log('firstIndex', this.firstIndex);
-    this.lastIndex = this.validateLastIndex();
-    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
-  }
-
   startMove() {
+    this.test = 0;
     this.savedFirstIndex = this.firstIndex;
-    this.savedCurrentDataIndent = this.currentDataIndent;
+    this.savedLeftIndentCount = this.leftIndentCount;
   }
 
   // 放大缩小
