@@ -25,6 +25,10 @@ export default class Manager {
   }
 
   getOption() {
+    this.setting.init({
+      symbol: this.option.symbol,
+      period: this.option.period,
+    });
     return this.option;
   }
 
@@ -92,11 +96,24 @@ export default class Manager {
     this.requestData();
   }
 
+  switchSymbol(symbol) {
+    this.setting.setSymbol(symbol);
+    this.requestData();
+  }
+
+  switchPeriod(period) {
+    this.setting.setPeriod(period);
+    this.requestData();
+  }
+
   // 请求数据
   requestData() {
+    const { setting } = this;
     this.getBars({
       firstDataRequest: true,
       startTime: new Date().getTime(),
+      symbol: setting.getSymbol(),
+      period: setting.getPeriod(),
     });
   }
 
@@ -106,9 +123,9 @@ export default class Manager {
     this.requestPending = true;
     const { datafeed } = this.getOption();
     // 计算当前蜡烛图最大可显示的数量
-    const requestCount = this.dataSource.maxCountInLayout * 1;
-    const { firstDataRequest, startTime } = requestParam;
-    datafeed.getBars(startTime, requestCount, this.onHistoryCallback, firstDataRequest);
+    const requestCount = this.dataSource.maxCountInLayout * 3;
+    const { firstDataRequest, startTime, symbol, period } = requestParam;
+    datafeed.getBars(symbol, period, startTime, requestCount, this.onHistoryCallback, firstDataRequest);
   }
 
   // 请求历史数据处理

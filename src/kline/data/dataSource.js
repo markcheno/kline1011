@@ -33,7 +33,7 @@ export default class DataSource {
     // 左侧空白
     this.leftIndentCount = 0;
     this.savedLeftIndentCount = 0;
-    this.scale = 16;
+    this.scale = 10;
     this.crossCursorSelectAt = {
       x: 0,
       y: 0,
@@ -71,12 +71,12 @@ export default class DataSource {
 
   updateData(data) {
     const isuUpdate = this.data.length;
-    this.data = data.concat(this.data);
+    this.data = data;
     // 更新range width
     this.updateRangeWidth();
     this.updateMaxCountInArea();
     // 更新区间内的时间
-    isuUpdate ? this.updateCurrentData(data.length) : this.initCurrentData();
+    isuUpdate ? this.initCurrentData() : this.initCurrentData();
   }
 
   getDataByIndex(index) {

@@ -27,4 +27,26 @@ export default class Setting {
       },
     }];
   }
+
+  init(option) {
+    const { symbol, period } = option;
+    this.setPeriod(period);
+    this.setSymbol(symbol);
+  }
+
+  setSymbol(symbol) {
+    this.symbol = symbol;
+  }
+
+  setPeriod(period) {
+    this.period = period;
+  }
+
+  getSymbol() {
+    return this.symbol;
+  }
+
+  getPeriod() {
+    return this.period;
+  }
 }
