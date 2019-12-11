@@ -14,6 +14,7 @@ import Kline from './kline/entry';
 
 class Datafeed {
   getBars(
+    chartType,
     symbol,
     period,
     startTime,
@@ -21,23 +22,48 @@ class Datafeed {
     onHistoryCallback,
     firstDataRequest,
   ) {
+    let url = '';
+    if (chartType === 'candle') {
+      url = `https://official.gkoudai.com/officialNetworkApi/CandleStickV2?qid=${symbol.id}&type=${period}&ts=${startTime}&count=${requestCount}`;
+    } else if (chartType === 'line') {
+      url = `https://official.gkoudai.com/officialNetworkApi/TimeChartV4?qid=${symbol.id}&type=1`;
+    }
     $.ajax({
       type: 'GET',
-      url: `http://192.168.1.62:8080/officialNetworkApi/CandleStickV2?qid=${symbol.id}&type=${period}&ts=${startTime}&count=${requestCount}`,
+      url,
       dataType: 'json',
       timeout: 30000,
       success(res) {
-        const candle = res.data.candle.map(item => ({
-          open: Number(item.o),
-          high: Number(item.h),
-          low: Number(item.l),
-          close: Number(item.c),
-          time: item.ts,
-          volume: Number(item.v),
-        }));
-        onHistoryCallback(candle, {
-          firstDataRequest,
-        });
+        if (chartType === 'candle') {
+          const candle = res.data.candle.map(item => ({
+            open: Number(item.o),
+            high: Number(item.h),
+            low: Number(item.l),
+            close: Number(item.c),
+            time: item.ts,
+            volume: Number(item.v),
+          }));
+          onHistoryCallback(candle, {
+            firstDataRequest,
+          });
+        } else if (chartType === 'line') {
+          const lineData = res.data.data[0];
+          let line = [];
+          lineData.region.forEach(element => {
+            line = line.concat(element.quotes);
+          });
+          const lineResult = line.map(item => ({
+            open: Number(item.o),
+            high: Number(item.h),
+            low: Number(item.l),
+            close: Number(item.c),
+            time: Number(item.t),
+            volume: Number(item.v),
+          }));
+          onHistoryCallback(lineResult, {
+            firstDataRequest,
+          });
+        }
       },
     });
   }

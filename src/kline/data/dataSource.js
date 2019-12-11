@@ -136,7 +136,7 @@ export default class DataSource {
     const manager = Manager.instance;
     const data = this.getAllData();
     const context = manager.canvas.mainContext;
-    const { chart } = manager.setting;
+    const chart = manager.setting.getChart();
     chart.forEach(item => {
       const result = this.calcMaxAndMinByIndicator(data, item.indicator, item.boundaryGap);
       const rangeWidth = Math.max(context.measureText(result.min).width, context.measureText(result.max).width);

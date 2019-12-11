@@ -136,7 +136,7 @@ export default class MainLayout extends Area {
     const { setting } = Manager.instance;
     // 时间线
     this.addLayout(new TimelineLayout('timelineLayout'));
-    setting.chart.forEach(item => {
+    setting.getChart().forEach(item => {
       this.addLayout(new ChartLayout(item));
     });
   }

@@ -7,7 +7,9 @@ export default class Setting {
       right: 0,
     };
     this.timelineAreaHeight = 30;
-    this.chart = [{
+    // candle 蜡烛图 line 分时图
+    this.chartType = 'line';
+    this.candlechart = [{
       name: 'volumeChartLayout',
       chartPlotters: 'VolumePlotter',
       chartInfoPlotters: 'VolumeInfoPlotter',
@@ -26,6 +28,20 @@ export default class Setting {
         max: 'high',
       },
     }];
+    this.lineChart = [{
+      name: 'lineChartLayout',
+      chartPlotters: 'LineChartPlotter',
+      chartInfoPlotters: 'LineChartInfoPlotter',
+      boundaryGap: ['10%', '10%'],
+      indicator: {
+        min: 'low',
+        max: 'high',
+      },
+    }];
+  }
+
+  getChart() {
+    return this.chartType === 'candle' ? this.candlechart : this.lineChart;
   }
 
   init(option) {

@@ -97,6 +97,34 @@ export class BackgroundGridPlotter extends Plotter {
   }
 }
 
+export class LineChartPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.color = theme.Color.Grid;
+  }
+
+  draw(layout) {
+    const { range, chartArea } = layout;
+    const { dataSource } = this.manager;
+    const context = this.mainContext;
+    const data = dataSource.getAllData();
+    const { left, top, right, bottom } = chartArea.getPlace();
+  }
+}
+
+export class LineChartInfoPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.color = theme.Color.Grid;
+  }
+
+  draw(layout) {
+    console.log('LineChartInfoPlotter', layout);
+  }
+}
+
 export class CandlestickPlotter extends Plotter {
   constructor(name) {
     super(name);
