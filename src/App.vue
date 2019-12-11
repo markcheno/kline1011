@@ -48,9 +48,18 @@ class Datafeed {
           });
         } else if (chartType === 'line') {
           const lineData = res.data.data[0];
+          console.log('lineData', lineData);
           let line = [];
           lineData.region.forEach(element => {
-            line = line.concat(element.quotes);
+            // 如果不足, 空补全
+            const { start, end } = element;
+            let { quotes } = element;
+            const number = (end - start) / 60000;
+            if (quotes.length < number) {
+              quotes = quotes.concat(new Array(number - quotes.length));
+            }
+            console.log('quotes', quotes);
+            line = line.concat(quotes);
           });
           const lineResult = line.map(item => ({
             open: Number(item.o),

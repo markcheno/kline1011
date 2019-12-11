@@ -18,13 +18,19 @@ export default class Timeline {
 
   updateTimeline(layout) {
     const area = layout.timelineArea;
-    const { dataSource } = Manager.instance;
-    const minDate = dataSource.getDataByIndex(dataSource.firstIndex).time;
-    const maxDate = dataSource.getDataByIndex(dataSource.lastIndex).time;
-    /* global moment */
-    this.minDate = moment(minDate).format('YYYY-MM-DD');
-    this.maxDate = moment(maxDate).format('YYYY-MM-DD');
-    this.width = area.getWidth();
+    const { dataSource, setting } = Manager.instance;
+    const { chartType } = setting;
+    if (chartType === 'candle') {
+      const minDate = dataSource.getDataByIndex(dataSource.firstIndex).time;
+      const maxDate = dataSource.getDataByIndex(dataSource.lastIndex).time;
+      /* global moment */
+      this.minDate = moment(minDate).format('YYYY-MM-DD');
+      this.maxDate = moment(maxDate).format('YYYY-MM-DD');
+      this.width = area.getWidth();
+    } else if (chartType === 'line') {
+      this.minDate = '123';
+      this.maxDate = '123';
+    }
   }
 
   calcInterval() {

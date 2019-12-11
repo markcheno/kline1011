@@ -8,6 +8,11 @@ export default class Theme {
       Grid: '#333',
       BackgroundGridColor: '#eee',
     };
+    this.Line = {
+      fillColor: '#D5E2EE',
+      strokeColor: '#2D71AE',
+      strokeLineWidth: 3,
+    };
     this.Font = {
       Default: '12px Tahoma',
     };

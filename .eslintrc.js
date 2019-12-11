@@ -23,6 +23,7 @@ module.exports = {
     'no-restricted-properties': 'off',
     'operator-assignment': 'off',
     'no-unused-expressions': 'off',
+    'no-param-reassign': 'off',
   },
   parserOptions: {
     parser: 'babel-eslint',

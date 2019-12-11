@@ -32,7 +32,7 @@ export default class Setting {
       name: 'lineChartLayout',
       chartPlotters: 'LineChartPlotter',
       chartInfoPlotters: 'LineChartInfoPlotter',
-      boundaryGap: ['10%', '10%'],
+      boundaryGap: ['10%', '50%'],
       indicator: {
         min: 'low',
         max: 'high',

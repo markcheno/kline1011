@@ -70,24 +70,36 @@ export default class DataSource {
   }
 
   updateData(data) {
-    const isuUpdate = this.data.length;
+    // const isuUpdate = this.data.length;
+    const { chartType } = Manager.instance.setting;
     this.data = data;
     // 更新range width
     this.updateRangeWidth();
-    this.updateMaxCountInArea();
-    // 更新区间内的时间
-    isuUpdate ? this.initCurrentData() : this.initCurrentData();
+    if (chartType === 'candle') {
+      this.updateMaxCountInArea();
+      // 更新区间内的时间
+      this.initCandleCurrentData();
+    } else if (chartType === 'line') {
+      this.initLineData();
+    }
   }
 
   getDataByIndex(index) {
     return this.data[index];
   }
 
-  // 初始化当前视图数据
-  initCurrentData() {
+  // 初始化当前蜡烛视图数据
+  initCandleCurrentData() {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
     this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex + 1);
+  }
+
+  // 初始化当前分时视图数据
+  initLineData() {
+    this.lastIndex = this.data.length - 1;
+    this.firstIndex = 0;
+    this.currentData = this.getAllData();
   }
 
   // 更新当前视图数据

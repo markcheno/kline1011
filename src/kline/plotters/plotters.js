@@ -101,15 +101,54 @@ export class LineChartPlotter extends Plotter {
   constructor(name) {
     super(name);
     const { theme } = this.manager;
-    this.color = theme.Color.Grid;
+    this.fillColor = theme.Line.fillColor;
+    this.strokeColor = theme.Line.strokeColor;
+    this.strokeLineWidth = theme.Line.strokeLineWidth;
+  }
+
+  drawFillLines(context, places, bottom) {
+    context.beginPath();
+    context.moveTo(0, bottom);
+    places.forEach(item => {
+      const { x, y } = item;
+      context.lineTo(x, y);
+    });
+    context.lineTo(places[places.length - 1].x, bottom);
+    context.fillStyle = this.fillColor;
+    context.fill();
+  }
+
+  drawLineStorkeLines(context, places) {
+    context.beginPath();
+    places.forEach(item => {
+      const { x, y } = item;
+      context.lineTo(x, y);
+    });
+    context.strokeStyle = this.strokeColor;
+    context.lineWidth = this.strokeLineWidth;
+    context.stroke();
   }
 
   draw(layout) {
     const { range, chartArea } = layout;
     const { dataSource } = this.manager;
     const context = this.mainContext;
-    const data = dataSource.getAllData();
-    const { left, top, right, bottom } = chartArea.getPlace();
+    const data = dataSource.getCurrentData();
+    const width = chartArea.getWidth();
+    const bottom = chartArea.getBottom();
+    const size = data.length;
+    const interval = width / size;
+    const places = [];
+    for (let i = 0; i < size; i++) {
+      if (data[i]) {
+        places.push({
+          x: i * interval,
+          y: range.toY(data[i].close),
+        });
+      }
+    }
+    this.drawLineStorkeLines(context, places);
+    this.drawFillLines(context, places, bottom);
   }
 }
 
@@ -298,6 +337,7 @@ export class TimelineInfoPlotter extends Plotter {
     const currentData = dataSource.getCurrentData();
     const { top } = timelineArea.getPlace();
     const data = currentData[index];
+    if (!data) return;
     // eslint-disable-next-line no-undef
     const time = moment(data.time).format('YYYY-MM-DD');
     const x = xPlaces[index];
@@ -375,17 +415,18 @@ export class RangeInfoPlotter extends Plotter {
     const context = this.overlayContext;
     const value = parseInt(layout.range.toValue(y), 10);
     const { left } = area.getPlace();
+    const width = area.getWidth();
     const textWidth = context.measureText(value).width;
     context.font = this.Font;
     context.fillStyle = this.GridColor;
     this.drawReact(context, {
       x: left,
       y: y - 10,
-      width: textWidth + 40,
+      width,
       height: 20,
     });
     context.fillStyle = '#ffffff';
-    context.fillText(value, left + 20, y + 4);
+    context.fillText(value, left + (width - textWidth) / 2, y + 4);
   }
 }
 
