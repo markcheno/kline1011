@@ -24,6 +24,7 @@ module.exports = {
     'operator-assignment': 'off',
     'no-unused-expressions': 'off',
     'no-param-reassign': 'off',
+    'no-continue': 'off',
   },
   parserOptions: {
     parser: 'babel-eslint',

@@ -476,13 +476,21 @@ export class VolumePlotter extends Plotter {
 
   draw(layout) {
     const { range, chartArea } = layout;
-    const { dataSource } = this.manager;
+    const { dataSource, setting } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
     const { leftIndentCount } = dataSource;
     const { left, right, top } = chartArea.getPlace();
-    const columnWidth = dataSource.getColumnWidth();
-    const itemCenterOffset = dataSource.getColumnCenter();
+    let columnWidth = 0;
+    let itemCenterOffset = 0;
+    if (setting.chartType === 'candle') {
+      columnWidth = dataSource.getColumnWidth();
+      itemCenterOffset = dataSource.getColumnCenter();
+    } else if (setting.chartType === 'line') {
+      const size = currentData.length;
+      columnWidth = (right - left) / size;
+      itemCenterOffset = columnWidth / 2;
+    }
     this.areaRight = right;
     // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
     let columnLeft = leftIndentCount * columnWidth;
@@ -491,6 +499,7 @@ export class VolumePlotter extends Plotter {
     const fillNegRects = [];
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
+      if (!data) continue;
       const { volume, close, open } = data;
       const volumePlace = range.toY(volume);
       const lowPlace = range.toY(0);
@@ -498,12 +507,13 @@ export class VolumePlotter extends Plotter {
       const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       // 涨
       if (close >= open) {
-        fillPosRects.push({ x: leftX, y: volumePlace, width: rectWidth, height: lowPlace - volumePlace - this.paddingBottom });
+        fillPosRects.push({ x: leftX, y: volumePlace - this.paddingBottom, width: rectWidth, height: lowPlace - volumePlace });
       } else if (close < open) {
-        fillNegRects.push({ x: leftX, y: volumePlace, width: rectWidth, height: lowPlace - volumePlace - this.paddingBottom });
+        fillNegRects.push({ x: leftX, y: volumePlace - this.paddingBottom, width: rectWidth, height: lowPlace - volumePlace });
       }
       columnLeft += columnWidth;
     }
+    console.log('fillPosRects', fillPosRects);
     if (fillPosRects.length > 0) {
       context.fillStyle = this.PositiveColor;
       this.drawReacts(context, fillPosRects);
