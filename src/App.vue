@@ -58,7 +58,6 @@ class Datafeed {
             if (quotes.length < number) {
               quotes = quotes.concat(new Array(number - quotes.length));
             }
-            console.log('quotes', quotes);
             line = line.concat(quotes);
           });
           const lineResult = line.map(item => ({

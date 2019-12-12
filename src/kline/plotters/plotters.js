@@ -1,7 +1,10 @@
 import Manager from '../manage/manager';
 
-// over视图所需的x轴坐标轴位置
-let xPlaces = [];
+// 记录的绘制坐标点
+let pointsPlaces = {
+  x: [],
+  y: [],
+};
 
 export class Plotter {
   constructor(name) {
@@ -139,11 +142,16 @@ export class LineChartPlotter extends Plotter {
     const size = data.length;
     const interval = width / size;
     const places = [];
+    pointsPlaces = { x: [], y: [] };
     for (let i = 0; i < size; i++) {
       if (data[i]) {
+        const x = i * interval;
+        const y = range.toY(data[i].close);
+        pointsPlaces.x.push(x);
+        pointsPlaces.y.push(y);
         places.push({
-          x: i * interval,
-          y: range.toY(data[i].close),
+          x,
+          y,
         });
       }
     }
@@ -156,11 +164,26 @@ export class LineChartInfoPlotter extends Plotter {
   constructor(name) {
     super(name);
     const { theme } = this.manager;
-    this.color = theme.Color.Grid;
+    this.GridColor = theme.Color.Grid;
+    this.Font = theme.Font.Default;
   }
 
-  draw(layout) {
-    console.log('LineChartInfoPlotter', layout);
+  draw(layout, index) {
+    const { chartArea } = layout;
+    const { dataSource } = this.manager;
+    const context = this.overlayContext;
+    const currentData = dataSource.getCurrentData();
+    const { left, top } = chartArea.getPlace();
+    const data = currentData[index];
+    context.font = this.Font;
+    context.fillStyle = this.GridColor;
+    const y = top + 15;
+    let x = left;
+    const textArray = [`开盘价: ${data.open}`, `最低价: ${data.low}`, `最高价: ${data.high}`, `收盘价: ${data.close}`];
+    textArray.forEach(item => {
+      context.fillText(item, x, y);
+      x += context.measureText(item).width + 10;
+    });
   }
 }
 
@@ -204,7 +227,7 @@ export class CandlestickPlotter extends Plotter {
     const fillPosRects = [];
     const fillNegRects = [];
     const fillNegLines = [];
-    xPlaces = [];
+    pointsPlaces = { x: [], y: [] };
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
       const { open, close, high, low } = data;
@@ -214,7 +237,7 @@ export class CandlestickPlotter extends Plotter {
       const openPlace = range.toY(open);
       const leftX = this.toMaxX(columnLeft);
       const leftLineX = this.toMaxX(columnLeft + itemCenterOffset);
-      xPlaces.push(leftLineX);
+      pointsPlaces.x.push(leftLineX);
       const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       const lineRectWidth = this.toReactWidth(leftLineX, 1);
       // 涨
@@ -340,7 +363,7 @@ export class TimelineInfoPlotter extends Plotter {
     if (!data) return;
     // eslint-disable-next-line no-undef
     const time = moment(data.time).format('YYYY-MM-DD');
-    const x = xPlaces[index];
+    const x = pointsPlaces.x[index];
     const leftX = x - context.measureText(time).width / 2;
     context.font = this.Font;
     context.fillStyle = this.GridColor;
@@ -530,7 +553,7 @@ export class SelectionPlotter extends Plotter {
 
   // 二分搜索插入
   searchInsert(target) {
-    const nums = xPlaces;
+    const nums = pointsPlaces.x;
     let left = 0;
     let right = nums.length - 1;
     while (left <= right) {
@@ -561,14 +584,22 @@ export class SelectionPlotter extends Plotter {
     };
   }
 
+  getCrossLineY(y, index) {
+    const { chartType } = this.manager.setting;
+    if (chartType === 'line') {
+      return pointsPlaces.y[index];
+    }
+    return y;
+  }
+
   draw(layout) {
     const context = this.overlayContext;
     const { crossCursorSelectAt } = this.manager.dataSource;
     context.strokeStyle = this.lineColor;
-    // 取最近的蜡烛图点
+    // 取最近的图点
     const xInfo = this.searchInsert(crossCursorSelectAt.x);
     const x = xInfo.value;
-    const y = crossCursorSelectAt.y + 0.5;
+    const y = this.getCrossLineY(crossCursorSelectAt.y + 0.5, xInfo.index);
     context.setLineDash([5, 5]);
     this.drawLine(context, {
       from: { x, y: 0 },
@@ -579,6 +610,9 @@ export class SelectionPlotter extends Plotter {
       to: { x: layout.getRight(), y },
     });
     context.setLineDash([]);
-    return xInfo.index;
+    return {
+      index: xInfo.index,
+      y,
+    };
   }
 }

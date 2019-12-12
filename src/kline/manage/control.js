@@ -36,7 +36,7 @@ export default class Control {
       return false;
     }).mousedown(e => {
       // 注册左键按下事件
-      if (e.which !== 1) return;
+      if (e.which !== 1 || Manager.instance.setting.chartType === 'line') return;
       this.leftMouseDown = true;
       manager.onMouseDown(getMouesePlace(e));
     }).mousemove(e => {
@@ -84,6 +84,7 @@ export default class Control {
   }
 
   static mouseWheel(e, delta) {
+    if (Manager.instance.setting.chartType === 'line') return;
     Manager.instance.dataSource.scaleView(delta > 0 ? 1 : -1);
     Control.redrawMainView();
   }

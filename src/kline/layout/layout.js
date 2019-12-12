@@ -17,8 +17,8 @@ class TimelineLayout extends Area {
     new Plotters.TimelinePlotter().draw(this);
   }
 
-  drawChartLayoutOverInfo(index) {
-    new Plotters.TimelineInfoPlotter().draw(this, index);
+  drawChartLayoutOverInfo(selectedInfo) {
+    new Plotters.TimelineInfoPlotter().draw(this, selectedInfo.index);
   }
 
   initLayout() {
@@ -72,14 +72,12 @@ class ChartLayout extends Area {
     new Plotters[this.chartPlotters]().draw(this, moveX);
   }
 
-  drawChartLayoutOverInfo(index) {
-    new Plotters[this.chartInfoPlotters]().draw(this, index);
-    this.drawChartLayoutRangeInfo();
+  drawChartLayoutOverInfo(selectedInfo) {
+    new Plotters[this.chartInfoPlotters]().draw(this, selectedInfo.index);
+    this.drawChartLayoutRangeInfo(selectedInfo.y);
   }
 
-  drawChartLayoutRangeInfo() {
-    const { crossCursorSelectAt } = Manager.instance.dataSource;
-    const { y } = crossCursorSelectAt;
+  drawChartLayoutRangeInfo(y) {
     const { top, bottom } = this.rangeArea;
     if (y <= top || y >= bottom) return;
     new Plotters.RangeInfoPlotter().draw(this, y);
@@ -156,14 +154,14 @@ export default class MainLayout extends Area {
   // 绘制over图
   drawOverLayout() {
     this.clearOverLayout();
-    const index = new Plotters.SelectionPlotter().draw(this);
-    this.drawSelectionInfo(index);
+    const selectedInfo = new Plotters.SelectionPlotter().draw(this);
+    this.drawSelectionInfo(selectedInfo);
   }
 
   // 绘制over图上的info信息
-  drawSelectionInfo(index) {
+  drawSelectionInfo(selectedInfo) {
     this.layouts.forEach(item => {
-      item.drawChartLayoutOverInfo(index);
+      item.drawChartLayoutOverInfo(selectedInfo);
     });
   }
 

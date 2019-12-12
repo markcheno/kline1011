@@ -35,11 +35,9 @@ export default class Kline {
 
   switchSymbol(symbol) {
     this.manager.switchSymbol(symbol);
-    console.log('symbol', symbol);
   }
 
   switchPeriod(period) {
     this.manager.switchPeriod(period);
-    console.log('period', period);
   }
 }

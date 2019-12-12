@@ -107,7 +107,6 @@ export default class DataSource {
     this.lastIndex += updateLength;
     this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
     this.savedFirstIndex += updateLength;
-    console.log('updateCurrentData设置123123', this.firstIndex, this.lastIndex);
     this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex + 1);
   }
 
