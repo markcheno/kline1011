@@ -10,6 +10,7 @@ export class Plotter {
   constructor(name) {
     this.name = name;
     this.manager = Manager.instance;
+    this.chartType = Manager.instance.setting.chartType;
     this.mainContext = this.manager.canvas.mainContext;
     this.overlayContext = this.manager.canvas.overlayContext;
   }
@@ -338,8 +339,14 @@ export class TimelinePlotter extends Plotter {
       to: { x: right, y: top },
     });
     context.fillStyle = this.GridColor;
-    context.textAlign = 'middle';
-    timeArray.forEach(item => {
+    timeArray.forEach((item, index) => {
+      if (this.chartType === 'line' && index === 0) {
+        context.textAlign = 'left';
+      } else if (this.chartType === 'line' && index === timeArray.length - 1) {
+        context.textAlign = 'right';
+      } else {
+        context.textAlign = 'center';
+      }
       const x = pointsPlaces.x[item.index - firstIndex];
       context.fillText(item.value, x, middle);
     });
@@ -362,8 +369,9 @@ export class TimelineInfoPlotter extends Plotter {
     const { top } = timelineArea.getPlace();
     const data = currentData[index];
     if (!data) return;
+    const formatStr = this.chartType === 'candle' ? 'YYYY-MM-DD' : 'HH:mm';
     // eslint-disable-next-line no-undef
-    const time = moment(data.time).format('YYYY-MM-DD');
+    const time = moment(data.time).format(formatStr);
     const x = pointsPlaces.x[index];
     const leftX = x - context.measureText(time).width / 2;
     context.font = this.Font;

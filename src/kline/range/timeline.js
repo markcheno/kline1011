@@ -11,16 +11,19 @@ export default class Timeline {
 
   getData() {
     const { dataSource } = Manager.instance;
-    const { firstIndex, lastIndex } = dataSource;
+    const { firstIndex } = dataSource;
     return {
       timeArray: this.timeArray,
       firstIndex,
-      lastIndex,
-      dataSource,
     };
   }
 
   updateTimeline() {
+    const { chartType } = Manager.instance.setting;
+    chartType === 'candle' ? this.updateCandleTimeline() : this.updateLineTimeline();
+  }
+
+  updateCandleTimeline() {
     const { dataSource } = Manager.instance;
     const { firstIndex, lastIndex } = dataSource;
     const allData = dataSource.getAllData();
@@ -38,6 +41,10 @@ export default class Timeline {
       start += interval;
     }
     this.timeArray = timeArray;
+  }
+
+  updateLineTimeline() {
+    this.timeArray = Manager.instance.dataSource.lineTimeArray;
   }
 
   calcInterval() {

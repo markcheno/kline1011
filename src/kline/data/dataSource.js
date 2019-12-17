@@ -38,6 +38,7 @@ export default class DataSource {
       x: 0,
       y: 0,
     };
+    this.lineTimeArray = [];
   }
 
   getColumnWidth() {
@@ -72,7 +73,7 @@ export default class DataSource {
   updateData(data) {
     // const isuUpdate = this.data.length;
     const { chartType } = Manager.instance.setting;
-    this.data = data;
+    this.dataFilterHandle(chartType, data);
     // 更新range width
     this.updateRangeWidth();
     if (chartType === 'candle') {
@@ -83,6 +84,41 @@ export default class DataSource {
       this.initLineData();
     }
   }
+
+  // 区别处理蜡烛图和分时数据
+  dataFilterHandle(chartType, data) {
+    if (chartType === 'candle') {
+      this.data = data;
+    } else if (chartType === 'line') {
+      let line = [];
+      const lineTimeArray = [];
+      data.forEach((element, index) => {
+        // 如果不足, 空补全
+        const { start, end } = element;
+        let { quotes } = element;
+        const number = (end - start) / 60000;
+        if (quotes.length < number) {
+          quotes = quotes.concat(new Array(number - quotes.length));
+        }
+        lineTimeArray.push({
+          index: line.length === 0 ? 0 : line.length - 1,
+          /* global moment */
+          value: moment(start).format('HH:mm'),
+        });
+        line = line.concat(quotes);
+        if (index === data.length - 1) {
+          lineTimeArray.push({
+            index: line.length - 1,
+            value: moment(end).format('HH:mm'),
+          });
+        }
+      });
+      this.lineTimeArray = lineTimeArray;
+      // Manager.instance.timel
+      this.data = line;
+    }
+  }
+
 
   getDataByIndex(index) {
     return this.data[index];

@@ -2,7 +2,11 @@
   <div id="app">
     <button @click="changeSymbol({id: 6, name: '白银T+D'})">白银T+D</button>
     <button @click="changeSymbol({id: 12, name: '现货黄金'})">现货黄金</button>
-    <button v-for="(item, index) in timer" :key="index" @click="changePeriod(item.type)">{{item.text}}</button>
+    <button
+      v-for="(item, index) in timer"
+      :key="index"
+      @click="changePeriod(item.type)"
+    >{{item.text}}</button>
     <button>切换分时图</button>
     <div id="kline_container"></div>
   </div>
@@ -47,28 +51,38 @@ class Datafeed {
             firstDataRequest,
           });
         } else if (chartType === 'line') {
-          const lineData = res.data.data[0];
-          console.log('lineData', lineData);
-          let line = [];
-          lineData.region.forEach(element => {
-            // 如果不足, 空补全
-            const { start, end } = element;
-            let { quotes } = element;
-            const number = (end - start) / 60000;
-            if (quotes.length < number) {
-              quotes = quotes.concat(new Array(number - quotes.length));
-            }
-            line = line.concat(quotes);
+          const line = res.data.data[0].region;
+          line.forEach(element => {
+            element.quotes = element.quotes.map(item => ({
+              open: Number(item.o),
+              high: Number(item.h),
+              low: Number(item.l),
+              close: Number(item.c),
+              time: Number(item.t),
+              volume: Number(item.v),
+            }));
           });
-          const lineResult = line.map(item => ({
-            open: Number(item.o),
-            high: Number(item.h),
-            low: Number(item.l),
-            close: Number(item.c),
-            time: Number(item.t),
-            volume: Number(item.v),
-          }));
-          onHistoryCallback(lineResult, {
+          console.log('line', line);
+          // let line = [];
+          // lineData.region.forEach(element => {
+          //   // 如果不足, 空补全
+          //   const { start, end } = element;
+          //   let { quotes } = element;
+          //   const number = (end - start) / 60000;
+          //   if (quotes.length < number) {
+          //     quotes = quotes.concat(new Array(number - quotes.length));
+          //   }
+          //   line = line.concat(quotes);
+          // });
+          // const lineResult = line.map(item => ({
+          //   open: Number(item.o),
+          //   high: Number(item.h),
+          //   low: Number(item.l),
+          //   close: Number(item.c),
+          //   time: Number(item.t),
+          //   volume: Number(item.v),
+          // }));
+          onHistoryCallback(line, {
             firstDataRequest,
           });
         }
@@ -121,7 +135,7 @@ export default {
 
 <style>
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: "Avenir", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -132,5 +146,4 @@ export default {
 #kline_container {
   margin: auto;
 }
-
 </style>
