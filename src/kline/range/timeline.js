@@ -2,35 +2,42 @@ import Manager from '../manage/manager';
 
 export default class Timeline {
   constructor() {
-    this.minDate = 0;
-    this.maxDate = 0;
-    this.minInterval = 0;
-    this.width = 0;
+    // 需要至少大于2
+    this.timeCount = 5;
+    this.timeArray = [];
+    this.timeInterval = 0;
   }
 
 
   getData() {
+    const { dataSource } = Manager.instance;
+    const { firstIndex, lastIndex } = dataSource;
     return {
-      minDate: this.minDate,
-      maxDate: this.maxDate,
+      timeArray: this.timeArray,
+      firstIndex,
+      lastIndex,
+      dataSource,
     };
   }
 
-  updateTimeline(layout) {
-    const area = layout.timelineArea;
-    const { dataSource, setting } = Manager.instance;
-    const { chartType } = setting;
-    if (chartType === 'candle') {
-      const minDate = dataSource.getDataByIndex(dataSource.firstIndex).time;
-      const maxDate = dataSource.getDataByIndex(dataSource.lastIndex).time;
+  updateTimeline() {
+    const { dataSource } = Manager.instance;
+    const { firstIndex, lastIndex } = dataSource;
+    const allData = dataSource.getAllData();
+    const interval = Math.floor((lastIndex - firstIndex) / this.timeCount);
+    let start = firstIndex % interval;
+    start = interval - start + firstIndex;
+    const timeArray = [];
+    while (start <= lastIndex) {
       /* global moment */
-      this.minDate = moment(minDate).format('YYYY-MM-DD');
-      this.maxDate = moment(maxDate).format('YYYY-MM-DD');
-      this.width = area.getWidth();
-    } else if (chartType === 'line') {
-      this.minDate = '123';
-      this.maxDate = '123';
+      const value = moment(allData[start].time).format('YYYY-MM-DD');
+      timeArray.push({
+        index: start,
+        value,
+      });
+      start += interval;
     }
+    this.timeArray = timeArray;
   }
 
   calcInterval() {

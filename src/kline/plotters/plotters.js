@@ -323,7 +323,7 @@ export class TimelinePlotter extends Plotter {
 
   draw(layout) {
     const area = layout.timelineArea;
-    const data = layout.timeline.getData();
+    const { timeArray, firstIndex } = layout.timeline.getData();
     const context = this.mainContext;
     let { left, right, top, bottom } = area.getPlace();
     const middle = (top + bottom) / 2 + 0.5;
@@ -338,10 +338,11 @@ export class TimelinePlotter extends Plotter {
       to: { x: right, y: top },
     });
     context.fillStyle = this.GridColor;
-    context.textAlign = 'left';
-    context.fillText(data.minDate, left, middle);
-    context.textAlign = 'right';
-    context.fillText(data.maxDate, right, middle);
+    context.textAlign = 'middle';
+    timeArray.forEach(item => {
+      const x = pointsPlaces.x[item.index - firstIndex];
+      context.fillText(item.value, x, middle);
+    });
   }
 }
 
@@ -513,7 +514,6 @@ export class VolumePlotter extends Plotter {
       }
       columnLeft += columnWidth;
     }
-    console.log('fillPosRects', fillPosRects);
     if (fillPosRects.length > 0) {
       context.fillStyle = this.PositiveColor;
       this.drawReacts(context, fillPosRects);

@@ -33,7 +33,7 @@ export default class DataSource {
     // 左侧空白
     this.leftIndentCount = 0;
     this.savedLeftIndentCount = 0;
-    this.scale = 10;
+    this.scale = 16;
     this.crossCursorSelectAt = {
       x: 0,
       y: 0,
@@ -92,7 +92,7 @@ export default class DataSource {
   initCandleCurrentData() {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
-    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex + 1);
+    this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
   // 初始化当前分时视图数据
@@ -100,14 +100,6 @@ export default class DataSource {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = 0;
     this.currentData = this.getAllData();
-  }
-
-  // 更新当前视图数据
-  updateCurrentData(updateLength) {
-    this.lastIndex += updateLength;
-    this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
-    this.savedFirstIndex += updateLength;
-    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex + 1);
   }
 
   // 获取当前视图数据
@@ -163,7 +155,7 @@ export default class DataSource {
     this.leftIndentCount = this.validateLeftIndentCount(moveCount);
     this.firstIndex = this.validateFirstIndex(moveCount);
     this.lastIndex = this.validateLastIndex();
-    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
+    this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
   validateLeftIndentCount(moveCount) {
@@ -219,7 +211,7 @@ export default class DataSource {
     }
     this.updateMaxCountInArea();
     this.lastIndex = this.validateLastIndex();
-    this.currentData = [].concat(JSON.parse(JSON.stringify(this.data))).splice(this.firstIndex, this.lastIndex - this.firstIndex);
+    this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
   // 更新十字线选中数据

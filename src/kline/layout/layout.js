@@ -13,7 +13,7 @@ class TimelineLayout extends Area {
   }
 
   drawChartLayout() {
-    this.timeline.updateTimeline(this);
+    this.timeline.updateTimeline();
     new Plotters.TimelinePlotter().draw(this);
   }
 
