@@ -8,7 +8,7 @@ export default class Setting {
     };
     this.timelineAreaHeight = 30;
     // candle 蜡烛图 line 分时图
-    this.chartType = 'candle';
+    this.chartType = 'line';
     this.candlechart = [{
       name: 'volumeChartLayout',
       chartPlotters: 'VolumePlotter',

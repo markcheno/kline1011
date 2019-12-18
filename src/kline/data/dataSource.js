@@ -33,7 +33,7 @@ export default class DataSource {
     // 左侧空白
     this.leftIndentCount = 0;
     this.savedLeftIndentCount = 0;
-    this.scale = 16;
+    this.scale = 10;
     this.crossCursorSelectAt = {
       x: 0,
       y: 0,

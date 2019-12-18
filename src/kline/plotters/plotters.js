@@ -44,6 +44,44 @@ export class Plotter {
       context.fillRect(x, y, width, height);
     });
   }
+
+  // 绘制最大最小
+  drawMaxMin(option) {
+    const { mainContext, maxMin, PositiveColor, NegativeColor, Font } = option;
+    const maxX = maxMin.max.x;
+    const maxY = maxMin.max.y;
+    const minX = maxMin.min.x;
+    const minY = maxMin.min.y;
+    mainContext.font = Font;
+    const textMaxWidth = mainContext.measureText(maxMin.max.value).width + 20;
+    const textMinWidth = mainContext.measureText(maxMin.min.value).width + 20;
+    mainContext.strokeStyle = PositiveColor;
+    mainContext.lineWidth = 2;
+    this.drawLine(mainContext, {
+      from: { x: maxX, y: maxY },
+      to: { x: maxX, y: maxY - 20 },
+    });
+    this.drawLine(mainContext, {
+      from: { x: maxX, y: maxY - 20 },
+      to: { x: maxX + 40, y: maxY - 20 },
+    });
+    mainContext.fillStyle = PositiveColor;
+    this.drawReact(mainContext, { x: maxX + 40, y: maxY - 30, width: textMaxWidth, height: 20 });
+    mainContext.strokeStyle = NegativeColor;
+    this.drawLine(mainContext, {
+      from: { x: minX, y: minY },
+      to: { x: minX, y: minY + 20 },
+    });
+    this.drawLine(mainContext, {
+      from: { x: minX, y: minY + 20 },
+      to: { x: minX + 40, y: minY + 20 },
+    });
+    mainContext.fillStyle = NegativeColor;
+    this.drawReact(mainContext, { x: minX + 40, y: minY + 10, width: textMinWidth, height: 20 });
+    mainContext.fillStyle = '#ffffff';
+    mainContext.fillText(maxMin.max.value, maxX + 65, maxY - 18);
+    mainContext.fillText(maxMin.min.value, minX + 65, minY + 22);
+  }
 }
 
 // 橡皮擦画笔
@@ -108,6 +146,13 @@ export class LineChartPlotter extends Plotter {
     this.fillColor = theme.Line.fillColor;
     this.strokeColor = theme.Line.strokeColor;
     this.strokeLineWidth = theme.Line.strokeLineWidth;
+    this.NegativeColor = theme.Color.Negative;
+    this.PositiveColor = theme.Color.Positive;
+    this.Font = theme.Font.Default;
+    this.maxMin = {
+      min: { x: -1, y: Number.MIN_SAFE_INTEGER, value: 0 },
+      max: { x: -1, y: Number.MAX_SAFE_INTEGER, value: 0 },
+    };
   }
 
   drawFillLines(context, places, bottom) {
@@ -143,21 +188,45 @@ export class LineChartPlotter extends Plotter {
     const size = data.length;
     const interval = width / size;
     const places = [];
+    const { maxMin } = this;
     pointsPlaces = { x: [], y: [] };
     for (let i = 0; i < size; i++) {
       if (data[i]) {
+        const { close } = data[i];
         const x = i * interval;
-        const y = range.toY(data[i].close);
+        const y = range.toY(close);
         pointsPlaces.x.push(x);
         pointsPlaces.y.push(y);
         places.push({
           x,
           y,
         });
+        // 分时图最大最小值
+        if (y < maxMin.max.y) {
+          maxMin.max = {
+            x,
+            y,
+            value: close,
+          };
+        }
+        if (y > maxMin.min.y) {
+          maxMin.min = {
+            x,
+            y,
+            value: close,
+          };
+        }
       }
     }
     this.drawLineStorkeLines(context, places);
     this.drawFillLines(context, places, bottom);
+    this.drawMaxMin({
+      mainContext: context,
+      maxMin: this.maxMin,
+      PositiveColor: this.PositiveColor,
+      NegativeColor: this.NegativeColor,
+      Font: this.Font,
+    });
   }
 }
 
@@ -195,6 +264,12 @@ export class CandlestickPlotter extends Plotter {
     const { theme } = this.manager;
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
+    this.GridColor = theme.Color.Grid;
+    this.Font = theme.Font.Default;
+    this.maxMin = {
+      min: { x: -1, y: Number.MIN_SAFE_INTEGER, value: 0 },
+      max: { x: -1, y: Number.MAX_SAFE_INTEGER, value: 0 },
+    };
   }
 
   toMaxX(x) {
@@ -220,6 +295,7 @@ export class CandlestickPlotter extends Plotter {
     const { leftIndentCount } = dataSource;
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
+    const { maxMin } = this;
     this.areaRight = chartArea.getRight();
     // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
     let columnLeft = leftIndentCount * columnWidth;
@@ -241,6 +317,21 @@ export class CandlestickPlotter extends Plotter {
       pointsPlaces.x.push(leftLineX);
       const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       const lineRectWidth = this.toReactWidth(leftLineX, 1);
+      // 蜡烛图最大最小值
+      if (highPlace < maxMin.max.y) {
+        maxMin.max = {
+          x: leftLineX,
+          y: highPlace,
+          value: data.high,
+        };
+      }
+      if (lowPlace > maxMin.min.y) {
+        maxMin.min = {
+          x: leftLineX,
+          y: lowPlace,
+          value: data.low,
+        };
+      }
       // 涨
       if (close >= open) {
         fillPosRects.push({ x: leftX, y: closePlace, width: rectWidth, height: Math.max(openPlace - closePlace, 1) });
@@ -284,6 +375,13 @@ export class CandlestickPlotter extends Plotter {
       context.fillStyle = this.NegativeColor;
       this.drawReacts(context, fillNegRects);
     }
+    this.drawMaxMin({
+      mainContext: context,
+      maxMin: this.maxMin,
+      PositiveColor: this.PositiveColor,
+      NegativeColor: this.NegativeColor,
+      Font: this.Font,
+    });
   }
 }
 
