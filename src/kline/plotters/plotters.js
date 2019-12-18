@@ -422,7 +422,7 @@ export class TimelinePlotter extends Plotter {
 
   draw(layout) {
     const area = layout.timelineArea;
-    const { timeArray, firstIndex } = layout.timeline.getData();
+    const { timeArray, firstIndex, data } = layout.timeline.getData();
     const context = this.mainContext;
     let { left, right, top, bottom } = area.getPlace();
     const middle = (top + bottom) / 2 + 0.5;
@@ -437,17 +437,30 @@ export class TimelinePlotter extends Plotter {
       to: { x: right, y: top },
     });
     context.fillStyle = this.GridColor;
-    timeArray.forEach((item, index) => {
-      if (this.chartType === 'line' && index === 0) {
-        context.textAlign = 'left';
-      } else if (this.chartType === 'line' && index === timeArray.length - 1) {
-        context.textAlign = 'right';
-      } else {
-        context.textAlign = 'center';
-      }
-      const x = pointsPlaces.x[item.index - firstIndex];
-      context.fillText(item.value, x, middle);
-    });
+    if (this.chartType === 'candle') {
+      // 蜡烛图
+      context.textAlign = 'center';
+      timeArray.forEach(item => {
+        const x = pointsPlaces.x[item.index - firstIndex];
+        context.fillText(item.value, x, middle);
+      });
+    } else if (this.chartType === 'line') {
+      // 分时图
+      const width = area.getWidth();
+      const size = data.length;
+      const interval = width / size;
+      timeArray.forEach((item, index) => {
+        if (index === 0) {
+          context.textAlign = 'left';
+        } else if (index === timeArray.length - 1) {
+          context.textAlign = 'right';
+        } else {
+          context.textAlign = 'center';
+        }
+        const x = interval * item.index;
+        context.fillText(item.value, x, middle);
+      });
+    }
   }
 }
 

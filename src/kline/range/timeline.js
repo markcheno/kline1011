@@ -15,6 +15,7 @@ export default class Timeline {
     return {
       timeArray: this.timeArray,
       firstIndex,
+      data: dataSource.getCurrentData(),
     };
   }
 
