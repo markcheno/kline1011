@@ -9,9 +9,9 @@ export default class Theme {
       BackgroundGridColor: '#eee',
     };
     this.Line = {
-      fillColor: '#D5E2EE',
+      fillColor: 'rgba(45, 113, 174, .2)',
       strokeColor: '#2D71AE',
-      strokeLineWidth: 3,
+      strokeLineWidth: 2,
     };
     this.Font = {
       Default: '12px Tahoma',

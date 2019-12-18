@@ -119,6 +119,7 @@ export class BackgroundGridPlotter extends Plotter {
     this.BackgroundGridColor = theme.Color.BackgroundGridColor;
   }
 
+  // 绘制 不同chartArea的range横线
   draw(layout) {
     const area = layout.chartArea;
     const context = this.mainContext;
@@ -417,50 +418,91 @@ export class TimelinePlotter extends Plotter {
     super(name);
     const { theme } = this.manager;
     this.GridColor = theme.Color.Grid;
+    this.BackgroundGridColor = theme.Color.BackgroundGridColor;
     this.Font = theme.Font.Default;
+    this.middle = 0;
+  }
+
+  // 绘制timeline的竖线
+  drawVertical(verticalX) {
+    const { layout, setting } = this.manager;
+    const { timelineAreaHeight } = setting;
+    const context = this.mainContext;
+    const { top, bottom } = layout.getPlace();
+    context.strokeStyle = this.BackgroundGridColor;
+    verticalX.forEach(item => {
+      this.drawLine(context, {
+        from: { x: item, y: top },
+        to: { x: item, y: bottom - timelineAreaHeight },
+      });
+    });
+  }
+
+  // 蜡烛图
+  drawCandleTime(context, timeArray) {
+    const { dataSource } = this.manager;
+    const { firstIndex } = dataSource;
+    const { leftIndentCount } = dataSource;
+    const columnWidth = dataSource.getColumnWidth();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    const leftSpace = leftIndentCount * columnWidth;
+    context.textAlign = 'center';
+    const verticalX = [];
+    timeArray.forEach(item => {
+      const x = leftSpace + columnWidth * (item.index - firstIndex) + itemCenterOffset;
+      verticalX.push(x);
+      context.fillText(item.value, x, this.middle);
+    });
+    this.drawVertical(verticalX);
+  }
+
+  // 分时图
+  drawLineTime(context, timeArray, width) {
+    const { dataSource } = this.manager;
+    const size = dataSource.getCurrentData().length;
+    const interval = width / size;
+    const verticalX = [];
+    timeArray.forEach((item, index) => {
+      if (index === 0) {
+        context.textAlign = 'left';
+      } else if (index === timeArray.length - 1) {
+        context.textAlign = 'right';
+      } else {
+        context.textAlign = 'center';
+      }
+      const x = interval * item.index;
+      verticalX.push(x);
+      context.fillText(item.value, x, this.middle);
+    });
+    this.drawVertical(verticalX);
   }
 
   draw(layout) {
     const area = layout.timelineArea;
-    const { timeArray, firstIndex, data } = layout.timeline.getData();
+    const { timeArray } = layout.timeline.getData();
     const context = this.mainContext;
     let { left, right, top, bottom } = area.getPlace();
-    const middle = (top + bottom) / 2 + 0.5;
+    this.middle = (top + bottom) / 2 + 0.5;
     left += 0.5;
     right += 0.5;
     top += 0.5;
     bottom += 0.5;
     context.font = this.Font;
     context.strokeStyle = this.GridColor;
+    context.lineWidth = 1;
+    context.fillStyle = this.GridColor;
+    // 背景上的横轴
+    // const layoutGrid = [];
+    if (this.chartType === 'candle') {
+      this.drawCandleTime(context, timeArray);
+    } else if (this.chartType === 'line') {
+      this.drawLineTime(context, timeArray, right - left);
+    }
+    context.strokeStyle = this.GridColor;
     this.drawLine(context, {
       from: { x: left, y: top },
       to: { x: right, y: top },
     });
-    context.fillStyle = this.GridColor;
-    if (this.chartType === 'candle') {
-      // 蜡烛图
-      context.textAlign = 'center';
-      timeArray.forEach(item => {
-        const x = pointsPlaces.x[item.index - firstIndex];
-        context.fillText(item.value, x, middle);
-      });
-    } else if (this.chartType === 'line') {
-      // 分时图
-      const width = area.getWidth();
-      const size = data.length;
-      const interval = width / size;
-      timeArray.forEach((item, index) => {
-        if (index === 0) {
-          context.textAlign = 'left';
-        } else if (index === timeArray.length - 1) {
-          context.textAlign = 'right';
-        } else {
-          context.textAlign = 'center';
-        }
-        const x = interval * item.index;
-        context.fillText(item.value, x, middle);
-      });
-    }
   }
 }
 

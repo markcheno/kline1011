@@ -81,9 +81,12 @@ export default class Manager {
   redrawMain(x = 0) {
     this.layout.drawMainLayout();
     const { layouts } = this.layout;
-    for (let i = layouts.length - 1; i >= 0; i--) {
-      layouts[i].drawChartLayout(x);
-    }
+    // for (let i = layouts.length - 1; i >= 0; i--) {
+    //   layouts[i].drawChartLayout(x);
+    // }
+    layouts.forEach(item => {
+      item.drawChartLayout(x);
+    });
   }
 
   // 重绘over视图
