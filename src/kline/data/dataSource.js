@@ -26,12 +26,9 @@ export default class DataSource {
     this.rangeWidth = 0;
     this.firstIndex = -1;
     this.lastIndex = -1;
-    this.scale = 16;
-    this.savedFirstIndex = -1;
+    this.scale = 10;
     this.maxCountInArea = -1;
     this.maxCountInLayout = -1;
-    this.lastMoveCount = 0;
-    this.leftIndentCount = 0;
     // 记录蜡烛图最左侧被遮盖的距离
     this.candleLeftOffest = 0;
     this.savedCandleLeftOffest = 0;
@@ -204,8 +201,7 @@ export default class DataSource {
         area.updateMoveStartPlace({ x: area.oldPlace.x + x });
         this.candleLeftOffest = maxOffest;
         this.savedCandleLeftOffest = this.candleLeftOffest;
-        this.firstIndex = this.savedFirstIndex - 1;
-        this.savedFirstIndex = this.firstIndex;
+        this.firstIndex -= 1;
         this.lastIndex = this.validateLastIndex();
       }
     } else if (direction === 'left') {
@@ -213,8 +209,7 @@ export default class DataSource {
         area.updateMoveStartPlace({ x: area.oldPlace.x + x });
         this.candleLeftOffest = 0;
         this.savedCandleLeftOffest = this.candleLeftOffest;
-        this.firstIndex = this.savedFirstIndex + 1;
-        this.savedFirstIndex = this.firstIndex;
+        this.firstIndex += 1;
         this.lastIndex = this.validateLastIndex();
       }
     }
@@ -229,7 +224,6 @@ export default class DataSource {
 
   startMove() {
     this.savedCandleLeftOffest = this.candleLeftOffest;
-    this.savedFirstIndex = this.firstIndex;
   }
 
   // 放大缩小
