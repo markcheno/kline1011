@@ -71,8 +71,8 @@ export default class Control {
     Manager.instance.redrawOver();
   }
 
-  static move(x) {
-    Manager.instance.dataSource.move(x);
+  static move(x, direction, area) {
+    Manager.instance.dataSource.move(x, direction, area);
   }
 
   static startMove() {

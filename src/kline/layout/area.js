@@ -8,6 +8,7 @@ export class Area {
     this.top = 0;
     this.bottom = 0;
     this.oldPlace = {};
+    this.lastMoveLength = 0;
   }
 
   getName() {
@@ -86,6 +87,7 @@ export class Area {
 export class ChartArea extends Area {
   constructor(name) {
     super(name);
+    this.lastMoveX = 0;
   }
 
   onMouseDown(place) {
@@ -95,12 +97,26 @@ export class ChartArea extends Area {
     Control.clearOverView();
   }
 
+  // 更新移动起始的触摸点
+  updateMoveStartPlace(place) {
+    const { x, y } = place;
+    this.oldPlace = {
+      x: x || this.oldPlace.x,
+      y: y || this.oldPlace.y,
+    };
+    this.lastMoveX = 0;
+  }
+
   onMouseMove(place, status) {
     if (status) {
       Control.showCursor('move');
       const moveX = place.x - this.oldPlace.x || 0;
-      Control.move(moveX);
-      Control.redrawMainView();
+      if (this.lastMoveX !== moveX) {
+        const direction = moveX - this.lastMoveX > 0 ? 'right' : 'left';
+        this.lastMoveX = moveX;
+        Control.move(moveX, direction, this);
+        Control.redrawMainView();
+      }
     } else {
       Control.updateCrossCursorSelectAt(place);
       Control.redrawOverView();

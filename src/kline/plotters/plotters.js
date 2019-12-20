@@ -293,13 +293,12 @@ export class CandlestickPlotter extends Plotter {
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
-    const { leftIndentCount } = dataSource;
+    const { candleLeftOffest } = dataSource;
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     const { maxMin } = this;
     this.areaRight = chartArea.getRight();
-    // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
-    let columnLeft = leftIndentCount * columnWidth;
+    let columnLeft = candleLeftOffest;
     // 从前往后绘制
     const fillPosLines = [];
     const fillPosRects = [];
@@ -343,20 +342,6 @@ export class CandlestickPlotter extends Plotter {
         fillNegLines.push({ x: leftLineX, y: highPlace, width: lineRectWidth, height: openPlace - highPlace });
         fillNegLines.push({ x: leftLineX, y: closePlace, width: lineRectWidth, height: lowPlace - closePlace });
       }
-      // if (i === currentData.length - 1) {
-      //   // 计算最右蜡烛被遮盖的部分
-      //   const overRightX = leftX + 2 * itemCenterOffset - this.areaRight;
-      //   if (overRightX > 0) {
-      //     candlestickMovePoint.push(Math.round(-overRightX));
-      //     candlestickMovePoint.push(Math.round(columnWidth - overRightX + dataSource.getSpaceWidth()));
-      //   }
-      // } else if (i === 0) {
-      //   const overLeftX = columnRight;
-      //   if (overLeftX < 0) {
-      //     candlestickMovePoint.push(Math.round(overLeftX));
-      //     candlestickMovePoint.push(Math.round(columnWidth - Math.abs(overLeftX)));
-      //   }
-      // }
       columnLeft += columnWidth;
     }
     // this.updateCandlestickMovePoint(candlestickMovePoint);
@@ -442,14 +427,13 @@ export class TimelinePlotter extends Plotter {
   drawCandleTime(context, timeArray) {
     const { dataSource } = this.manager;
     const { firstIndex } = dataSource;
-    const { leftIndentCount } = dataSource;
+    const { candleLeftOffest } = dataSource;
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
-    const leftSpace = leftIndentCount * columnWidth;
     context.textAlign = 'center';
     const verticalX = [];
     timeArray.forEach(item => {
-      const x = leftSpace + columnWidth * (item.index - firstIndex) + itemCenterOffset;
+      const x = candleLeftOffest + columnWidth * (item.index - firstIndex) + itemCenterOffset;
       verticalX.push(x);
       context.fillText(item.value, x, this.middle);
     });
@@ -641,21 +625,22 @@ export class VolumePlotter extends Plotter {
     const { dataSource, setting } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
-    const { leftIndentCount } = dataSource;
+    const { candleLeftOffest } = dataSource;
     const { left, right, top } = chartArea.getPlace();
     let columnWidth = 0;
     let itemCenterOffset = 0;
+    let columnLeft;
     if (setting.chartType === 'candle') {
       columnWidth = dataSource.getColumnWidth();
       itemCenterOffset = dataSource.getColumnCenter();
+      columnLeft = candleLeftOffest;
     } else if (setting.chartType === 'line') {
       const size = currentData.length;
       columnWidth = (right - left) / size;
       itemCenterOffset = columnWidth / 2;
+      columnLeft = 0;
     }
     this.areaRight = right;
-    // let columnRight = this.areaRight + moveX - 2 * itemCenterOffset;
-    let columnLeft = leftIndentCount * columnWidth;
     // 从前往后绘制
     const fillPosRects = [];
     const fillNegRects = [];

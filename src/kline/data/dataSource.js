@@ -26,14 +26,15 @@ export default class DataSource {
     this.rangeWidth = 0;
     this.firstIndex = -1;
     this.lastIndex = -1;
+    this.scale = 16;
     this.savedFirstIndex = -1;
     this.maxCountInArea = -1;
     this.maxCountInLayout = -1;
     this.lastMoveCount = 0;
-    // 左侧空白
     this.leftIndentCount = 0;
-    this.savedLeftIndentCount = 0;
-    this.scale = 10;
+    // 记录蜡烛图最左侧被遮盖的距离
+    this.candleLeftOffest = 0;
+    this.savedCandleLeftOffest = 0;
     this.crossCursorSelectAt = {
       x: 0,
       y: 0,
@@ -60,7 +61,7 @@ export default class DataSource {
   updateMaxCountInArea() {
     const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
     const columnWidth = this.getColumnWidth();
-    this.maxCountInArea = Math.floor(width / columnWidth);
+    this.maxCountInArea = Math.ceil(width / columnWidth);
   }
 
   // 计算整个图表中最大蜡烛图个数
@@ -183,57 +184,52 @@ export default class DataSource {
     });
   }
 
-  move(x) {
+  // 视图往右移动 first-- last++
+  chartToRightMove() {
+
+  }
+
+  // 视图往左移动 first++ last--
+  chartToLeftMove() {
+
+  }
+
+  move(x, direction, area) {
     // 右移大于0, 左移小于0
-    const moveCount = Math.floor(x / this.getColumnWidth());
-    if (moveCount === this.lastMoveCount || !moveCount) return;
-    this.lastMoveCount = moveCount;
-    this.leftIndentCount = this.validateLeftIndentCount(moveCount);
-    this.firstIndex = this.validateFirstIndex(moveCount);
-    this.lastIndex = this.validateLastIndex();
-    this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
-  }
-
-  validateLeftIndentCount(moveCount) {
-    let { leftIndentCount } = this;
-    const { savedFirstIndex, savedLeftIndentCount } = this;
-    const index = savedFirstIndex - moveCount;
-    // savedLeftIndentCount = index < 0 ? savedLeftIndentCount - moveCount : savedLeftIndentCount + 1;
-    // console.log('123', savedFirstIndex, moveCount);
-    // if (leftIndentCount || index < 0) {
-    //   console.log('moveCount', index, savedLeftIndentCount, moveCount);
-    //   leftIndentCount = savedLeftIndentCount + moveCount;
-    //   leftIndentCount = Math.max(leftIndentCount, 0);
-    // }
-    if (leftIndentCount) {
-      leftIndentCount = savedLeftIndentCount + moveCount;
-    } else if (index <= 0) {
-      leftIndentCount = savedLeftIndentCount + moveCount - this.test;
+    this.candleLeftOffest = this.savedCandleLeftOffest + x;
+    console.table({ candleLeftOffest: this.candleLeftOffest });
+    const maxOffest = 0 - this.getColumnWidth();
+    if (direction === 'right') {
+      if (this.candleLeftOffest >= 0) {
+        area.updateMoveStartPlace({ x: area.oldPlace.x + x });
+        this.candleLeftOffest = maxOffest;
+        this.savedCandleLeftOffest = this.candleLeftOffest;
+        this.firstIndex = this.savedFirstIndex - 1;
+        this.savedFirstIndex = this.firstIndex;
+        this.lastIndex = this.validateLastIndex();
+      }
+    } else if (direction === 'left') {
+      if (this.candleLeftOffest <= maxOffest) {
+        area.updateMoveStartPlace({ x: area.oldPlace.x + x });
+        this.candleLeftOffest = 0;
+        this.savedCandleLeftOffest = this.candleLeftOffest;
+        this.firstIndex = this.savedFirstIndex + 1;
+        this.savedFirstIndex = this.firstIndex;
+        this.lastIndex = this.validateLastIndex();
+      }
     }
-    return leftIndentCount;
-  }
-
-  validateFirstIndex(moveCount) {
-    const { leftIndentCount, savedLeftIndentCount } = this;
-    if (leftIndentCount) return 0;
-    if (savedLeftIndentCount === moveCount) return 0;
-    const maxIndex = this.getAllData().length - 1;
-    const index = this.savedFirstIndex - moveCount;
-    const lastIndexLimit = maxIndex - Math.round(this.maxCountInArea / 2);
-    if (index > lastIndexLimit) return lastIndexLimit;
-    return index;
+    this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
   validateLastIndex() {
     const maxIndex = this.getAllData().length - 1;
-    const index = this.firstIndex + this.maxCountInArea - 1 - this.leftIndentCount;
+    const index = this.firstIndex + this.maxCountInArea - 1;
     return Math.min(maxIndex, index);
   }
 
   startMove() {
-    this.test = 0;
+    this.savedCandleLeftOffest = this.candleLeftOffest;
     this.savedFirstIndex = this.firstIndex;
-    this.savedLeftIndentCount = this.leftIndentCount;
   }
 
   // 放大缩小
