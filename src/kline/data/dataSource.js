@@ -12,7 +12,7 @@ export default class DataSource {
   static candleStick = {
     itemWidth: [1, 3, 3, 5, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29],
     spaceWidth: [1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 7, 7, 7],
-  }
+  };
 
   constructor() {
     // 原数据
@@ -67,8 +67,8 @@ export default class DataSource {
     this.maxCountInLayout = Math.ceil(width / columnWidth);
   }
 
-  updateData(data) {
-    // const isuUpdate = this.data.length;
+  // 初始加载数据
+  initData(data) {
     const { chartType } = Manager.instance.setting;
     this.dataFilterHandle(chartType, data);
     // 更新range width
@@ -80,6 +80,15 @@ export default class DataSource {
     } else if (chartType === 'line') {
       this.initLineData();
     }
+  }
+
+  // loadmore更新数据
+  updateData(data) {
+    const appendLength = data.length;
+    this.data = data.concat(this.data);
+    // 更新range width
+    this.updateRangeWidth();
+    this.updateCandleCurrentData(appendLength);
   }
 
   // 区别处理蜡烛图和分时数据
@@ -116,15 +125,19 @@ export default class DataSource {
     }
   }
 
-
-  getDataByIndex(index) {
-    return this.data[index];
-  }
-
   // 初始化当前蜡烛视图数据
   initCandleCurrentData() {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
+    this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
+  }
+
+  // 更新当前蜡烛视图数据
+  updateCandleCurrentData(appendLength) {
+    this.lastIndex += appendLength;
+    this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
+    // 重新计算偏移量
+    this.candleLeftOffest = this.candleLeftOffest % this.getColumnWidth();
     this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
@@ -133,6 +146,10 @@ export default class DataSource {
     this.lastIndex = this.data.length - 1;
     this.firstIndex = 0;
     this.currentData = this.getAllData();
+  }
+
+  getDataByIndex(index) {
+    return this.data[index];
   }
 
   // 获取当前视图数据
@@ -147,13 +164,18 @@ export default class DataSource {
 
   // 获取所有数据中的最大值, 最小值
   updateMaxRangeWidth(rangeWidth) {
-    if (rangeWidth > this.rangeWidth) { this.rangeWidth = rangeWidth; }
+    if (rangeWidth > this.rangeWidth) {
+      this.rangeWidth = rangeWidth;
+    }
   }
 
-
   calcMaxAndMinByIndicator(data, indicator, boundaryGap) {
-    let min = Array.prototype.toString.call(indicator.min) === '[object String]' ? Number.MAX_SAFE_INTEGER : indicator.min;
-    let max = Array.prototype.toString.call(indicator.max) === '[object String]' ? Number.MIN_SAFE_INTEGER : indicator.max;
+    let min = Array.prototype.toString.call(indicator.min) === '[object String]'
+      ? Number.MAX_SAFE_INTEGER
+      : indicator.min;
+    let max = Array.prototype.toString.call(indicator.max) === '[object String]'
+      ? Number.MIN_SAFE_INTEGER
+      : indicator.max;
     data.forEach(item => {
       if (min > item[indicator.min]) min = item[indicator.min];
       if (max < item[indicator.max]) max = item[indicator.max];
@@ -175,7 +197,10 @@ export default class DataSource {
     const chart = manager.setting.getChart();
     chart.forEach(item => {
       const result = this.calcMaxAndMinByIndicator(data, item.indicator, item.boundaryGap);
-      const rangeWidth = Math.max(context.measureText(result.min).width, context.measureText(result.max).width);
+      const rangeWidth = Math.max(
+        context.measureText(result.min).width,
+        context.measureText(result.max).width,
+      );
       this.updateMaxRangeWidth(rangeWidth + 25);
     });
   }

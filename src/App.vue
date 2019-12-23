@@ -17,15 +17,14 @@
 import Kline from './kline/entry';
 
 class Datafeed {
-  getBars(
-    chartType,
-    symbol,
-    period,
-    startTime,
-    requestCount,
-    onHistoryCallback,
-    firstDataRequest,
-  ) {
+  getBars(params) {
+    const { chartType,
+      symbol,
+      period,
+      startTime,
+      requestCount,
+      onHistoryCallback,
+      firstDataRequest } = params;
     let url = '';
     if (chartType === 'candle') {
       url = `https://official.gkoudai.com/officialNetworkApi/CandleStickV2?qid=${symbol.id}&type=${period}&ts=${startTime}&count=${requestCount}`;
@@ -63,25 +62,6 @@ class Datafeed {
             }));
           });
           console.log('line', line);
-          // let line = [];
-          // lineData.region.forEach(element => {
-          //   // 如果不足, 空补全
-          //   const { start, end } = element;
-          //   let { quotes } = element;
-          //   const number = (end - start) / 60000;
-          //   if (quotes.length < number) {
-          //     quotes = quotes.concat(new Array(number - quotes.length));
-          //   }
-          //   line = line.concat(quotes);
-          // });
-          // const lineResult = line.map(item => ({
-          //   open: Number(item.o),
-          //   high: Number(item.h),
-          //   low: Number(item.l),
-          //   close: Number(item.c),
-          //   time: Number(item.t),
-          //   volume: Number(item.v),
-          // }));
           onHistoryCallback(line, {
             firstDataRequest,
           });

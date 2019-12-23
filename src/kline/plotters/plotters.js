@@ -344,7 +344,6 @@ export class CandlestickPlotter extends Plotter {
       }
       columnLeft += columnWidth;
     }
-    // this.updateCandlestickMovePoint(candlestickMovePoint);
     if (fillPosLines.length > 0) {
       context.fillStyle = this.PositiveColor;
       this.drawReacts(context, fillPosLines);

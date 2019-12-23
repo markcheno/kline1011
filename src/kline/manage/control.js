@@ -63,8 +63,8 @@ export default class Control {
     manager.canvas.overlayCanvas.style.cursor = 'none';
   }
 
-  static redrawMainView(x = 0) {
-    Manager.instance.redrawMain(x);
+  static redrawMainView() {
+    Manager.instance.redrawMain();
   }
 
   static redrawOverView() {
@@ -77,10 +77,6 @@ export default class Control {
 
   static startMove() {
     Manager.instance.dataSource.startMove();
-  }
-
-  static getMovePoints() {
-    return Manager.instance.movePoints;
   }
 
   static mouseWheel(e, delta) {

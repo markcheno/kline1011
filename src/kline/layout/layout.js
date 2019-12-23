@@ -62,14 +62,14 @@ class ChartLayout extends Area {
     this.initLayout();
   }
 
-  drawChartLayout(moveX = 0) {
+  drawChartLayout() {
     // 更新chart的range
     this.range.updateRange(this);
     new Plotters.BackgroundGridPlotter().draw(this);
     // 绘制range
     new Plotters.RangePlotter().draw(this);
     // 绘制主视图
-    new Plotters[this.chartPlotters]().draw(this, moveX);
+    new Plotters[this.chartPlotters]().draw(this);
   }
 
   drawChartLayoutOverInfo(selectedInfo) {
@@ -143,6 +143,14 @@ export default class MainLayout extends Area {
   drawMainLayout() {
     new Plotters.ClearPlotter('main').draw(this);
     new Plotters.BackgroundPlotter().draw(this);
+    this.drawChartLayout();
+  }
+
+  drawChartLayout() {
+    const { layouts } = this;
+    layouts.forEach(item => {
+      item.drawChartLayout();
+    });
   }
 
 
@@ -209,15 +217,5 @@ export default class MainLayout extends Area {
         item.onMouseMove(place, leftMouseDownStatus);
       });
     }
-  }
-
-  onMouseLeave(place) {
-    this.layouts.forEach(item => {
-      item.onMouseLeave(place);
-    });
-  }
-
-  onMouseUp() {
-    console.log('onMouseUp');
   }
 }

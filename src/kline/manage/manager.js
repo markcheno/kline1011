@@ -14,9 +14,12 @@ export default class Manager {
     this.option = {};
     this.dataSource = new DataSource();
     this.theme = new Theme();
-    this.candlestickMovePoint = {};
-    this.movePoints = [];
-    this.requestPending = false;
+    this.requestOption = {
+      // 请求pending状态
+      requestPending: false,
+      // 数据是否已经加载完毕
+      noData: false,
+    };
     Manager.instance = this;
   }
 
@@ -78,15 +81,8 @@ export default class Manager {
 
 
   // 重绘主视图
-  redrawMain(x = 0) {
+  redrawMain() {
     this.layout.drawMainLayout();
-    const { layouts } = this.layout;
-    // for (let i = layouts.length - 1; i >= 0; i--) {
-    //   layouts[i].drawChartLayout(x);
-    // }
-    layouts.forEach(item => {
-      item.drawChartLayout(x);
-    });
   }
 
   // 重绘over视图
@@ -109,61 +105,83 @@ export default class Manager {
     this.requestData();
   }
 
-  // 请求数据
+  // 首次请求数据
   requestData() {
-    const { setting } = this;
     this.getBars({
-      firstDataRequest: true,
       startTime: new Date().getTime(),
-      symbol: setting.getSymbol(),
-      period: setting.getPeriod(),
-      chartType: setting.chartType,
+      firstDataRequest: true,
+    });
+  }
+
+  // load more 数据
+  loadMoreData() {
+    const { dataSource } = this;
+    const { firstIndex } = dataSource;
+    const firstData = dataSource.getDataByIndex(firstIndex);
+    this.getBars({
+      startTime: firstData.time,
+      firstDataRequest: false,
     });
   }
 
   // 请求数据
   getBars(requestParam) {
-    if (this.requestPending) return;
-    this.requestPending = true;
+    const { requestPending } = this.requestOption;
+    if (requestPending) return;
+    this.requestOption.requestPending = true;
     const { datafeed } = this.getOption();
+    const { setting } = this;
     // 计算当前蜡烛图最大可显示的数量
-    const requestCount = this.dataSource.maxCountInLayout * 3;
-    const { firstDataRequest, startTime, symbol, period, chartType } = requestParam;
-    datafeed.getBars(chartType, symbol, period, startTime, requestCount, this.onHistoryCallback, firstDataRequest);
+    const requestCount = this.dataSource.maxCountInLayout * 2;
+    const { startTime, firstDataRequest } = requestParam;
+    datafeed.getBars({
+      chartType: setting.chartType,
+      symbol: setting.getSymbol(),
+      period: setting.getPeriod(),
+      startTime,
+      requestCount,
+      firstDataRequest,
+      onHistoryCallback: this.onHistoryCallback,
+    });
   }
 
   // 请求历史数据处理
-  onHistoryCallback(data, option = {
-    firstDataRequest: false,
-  }) {
+  onHistoryCallback(data, option) {
+    const { firstDataRequest } = option;
     const that = Manager.instance;
     const { dataSource } = that;
-    dataSource.updateData(data);
-    that.initLayout();
+    // 首次加载与loadmore加载分开处理
+    firstDataRequest ? dataSource.initData(data) : dataSource.updateData(data);
+    firstDataRequest && that.initLayout();
     that.redrawMain();
-    that.requestPending = false;
-    option.firstDataRequest || Control.leftMousePut();
+    that.requestOption.requestPending = false;
+  }
+
+  // 校验数据当前请求状态 return 再次请求 无需请求 请求完成(已经加载完所有数据)
+  checkDataRequestStatus() {
+    const { dataSource } = this;
+    const { firstIndex, candleLeftOffest } = dataSource;
+    if (firstIndex <= 0 && candleLeftOffest >= 0) {
+      this.loadMoreData();
+    }
   }
 
   onMouseDown(place) {
     this.layout.onMouseDown(place);
-    // this.movePoints = [].concat(JSON.parse(JSON.stringify(this.candlestickMovePoint)));
   }
 
   onMouseMove(place, leftMouseDownStatus) {
-    // eslint-disable-next-line no-unused-expressions
     this.layout && this.layout.onMouseMove(place, leftMouseDownStatus);
   }
 
+  onMouseLeave() {
+    this.checkDataRequestStatus();
+    console.log('onLeave');
+    Control.clearOverView();
+  }
+
   onMouseUp() {
-    this.layout.onMouseUp();
+    this.checkDataRequestStatus();
+    console.log('onMouseUp');
   }
-
-  onMouseLeave(e) {
-    this.layout.onMouseLeave(e);
-  }
-
-  // updateCandlestickMovePoint(points) {
-  //   this.candlestickMovePoint = points;
-  // }
 }

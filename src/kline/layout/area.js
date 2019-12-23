@@ -76,10 +76,6 @@ export class Area {
 
   onMouseMove() {}
 
-  onMouseLeave() {
-    Control.clearOverView();
-  }
-
   onMouseUp() {}
 }
 
