@@ -216,4 +216,8 @@ export default class MainLayout extends Area {
       item.onMouseLeave(place);
     });
   }
+
+  onMouseUp() {
+    console.log('onMouseUp');
+  }
 }

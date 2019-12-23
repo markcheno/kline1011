@@ -8,7 +8,6 @@ export class Area {
     this.top = 0;
     this.bottom = 0;
     this.oldPlace = {};
-    this.lastMoveLength = 0;
   }
 
   getName() {
@@ -92,6 +91,7 @@ export class ChartArea extends Area {
 
   onMouseDown(place) {
     this.oldPlace = place;
+    this.lastMoveX = 0;
     Control.showCursor('move');
     Control.startMove();
     Control.clearOverView();

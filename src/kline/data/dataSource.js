@@ -1,5 +1,4 @@
 import Manager from '../manage/manager';
-import Control from '../manage/control';
 
 export default class DataSource {
   // 更新数据策略
@@ -181,45 +180,78 @@ export default class DataSource {
     });
   }
 
-  // 视图往右移动 first-- last++
-  chartToRightMove() {
-
-  }
-
-  // 视图往左移动 first++ last--
-  chartToLeftMove() {
-
-  }
-
+  // 移动
   move(x, direction, area) {
     // 右移大于0, 左移小于0
+    if (this.limitLeftAndRight(x, direction)) return;
     this.candleLeftOffest = this.savedCandleLeftOffest + x;
-    console.table({ candleLeftOffest: this.candleLeftOffest });
     const maxOffest = 0 - this.getColumnWidth();
     if (direction === 'right') {
-      if (this.candleLeftOffest >= 0) {
-        area.updateMoveStartPlace({ x: area.oldPlace.x + x });
-        this.candleLeftOffest = maxOffest;
-        this.savedCandleLeftOffest = this.candleLeftOffest;
-        this.firstIndex -= 1;
-        this.lastIndex = this.validateLastIndex();
-      }
+      this.chartToRightMove(x, area, maxOffest);
     } else if (direction === 'left') {
-      if (this.candleLeftOffest <= maxOffest) {
-        area.updateMoveStartPlace({ x: area.oldPlace.x + x });
-        this.candleLeftOffest = 0;
-        this.savedCandleLeftOffest = this.candleLeftOffest;
-        this.firstIndex += 1;
-        this.lastIndex = this.validateLastIndex();
-      }
+      this.chartToLeftMove(x, area, maxOffest);
     }
     this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
+  // 最左最右边界 return true 表示已到达边界
+  limitLeftAndRight(x, direction) {
+    if (direction === 'left') {
+      // 最右边界
+      const max = this.getAllData().length - 1;
+      const lastIndexLimit = max - Math.round(this.maxCountInArea / 2);
+      if (this.firstIndex >= lastIndexLimit) return true;
+    }
+    if (direction === 'right') {
+      // 最左边界
+      if (this.firstIndex <= 0) {
+        const maxLeftOffset = (Manager.instance.canvas.mainCanvas.width - this.rangeWidth) / 2;
+        this.candleLeftOffest = Math.min(this.savedCandleLeftOffest + x, maxLeftOffset);
+        this.validateLastIndex();
+        this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // 视图往右移动 first-- last++
+  chartToRightMove(x, area, maxOffest) {
+    if (this.candleLeftOffest >= 0) {
+      area.updateMoveStartPlace({ x: area.oldPlace.x + x });
+      this.candleLeftOffest = maxOffest;
+      this.savedCandleLeftOffest = this.candleLeftOffest;
+      this.firstIndex -= 1;
+    }
+    this.validateLastIndex();
+  }
+
+  // 视图往左移动 first++ last--
+  chartToLeftMove(x, area, maxOffest) {
+    if (this.candleLeftOffest <= maxOffest) {
+      area.updateMoveStartPlace({ x: area.oldPlace.x + x });
+      this.candleLeftOffest = 0;
+      this.savedCandleLeftOffest = this.candleLeftOffest;
+      this.firstIndex += 1;
+    }
+    this.validateLastIndex();
+  }
+
+  // 动态加载下一阶段的数据
+  // loadNext
+
   validateLastIndex() {
+    const { candleLeftOffest } = this;
+    let index = 0;
+    if (candleLeftOffest > 0) {
+      const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth - candleLeftOffest;
+      const columnWidth = this.getColumnWidth();
+      index = this.firstIndex + Math.ceil(width / columnWidth) - 1;
+    } else {
+      index = this.firstIndex + this.maxCountInArea - 1;
+    }
     const maxIndex = this.getAllData().length - 1;
-    const index = this.firstIndex + this.maxCountInArea - 1;
-    return Math.min(maxIndex, index);
+    this.lastIndex = Math.min(maxIndex, index);
   }
 
   startMove() {
@@ -236,7 +268,7 @@ export default class DataSource {
       this.scale = candleStickModeItemLength - 1;
     }
     this.updateMaxCountInArea();
-    this.lastIndex = this.validateLastIndex();
+    this.validateLastIndex();
     this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 

@@ -156,6 +156,7 @@ export default class Manager {
   }
 
   onMouseUp() {
+    this.layout.onMouseUp();
   }
 
   onMouseLeave(e) {
