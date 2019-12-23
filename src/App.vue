@@ -48,6 +48,7 @@ class Datafeed {
           }));
           onHistoryCallback(candle, {
             firstDataRequest,
+            noData: !candle.length,
           });
         } else if (chartType === 'line') {
           const line = res.data.data[0].region;

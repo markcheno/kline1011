@@ -147,9 +147,10 @@ export default class Manager {
 
   // 请求历史数据处理
   onHistoryCallback(data, option) {
-    const { firstDataRequest } = option;
+    const { firstDataRequest, noData } = option;
     const that = Manager.instance;
     const { dataSource } = that;
+    that.requestOption.noData = noData;
     // 首次加载与loadmore加载分开处理
     firstDataRequest ? dataSource.initData(data) : dataSource.updateData(data);
     firstDataRequest && that.initLayout();
@@ -157,10 +158,11 @@ export default class Manager {
     that.requestOption.requestPending = false;
   }
 
-  // 校验数据当前请求状态 return 再次请求 无需请求 请求完成(已经加载完所有数据)
+  // 校验数据当前请求状态 再次请求 无需请求 请求完成(已经加载完所有数据)
   checkDataRequestStatus() {
     const { dataSource } = this;
     const { firstIndex, candleLeftOffest } = dataSource;
+    if (this.requestOption.noData) return;
     if (firstIndex <= 0 && candleLeftOffest >= 0) {
       this.loadMoreData();
     }
