@@ -765,6 +765,7 @@ export class SelectionPlotter extends Plotter {
       to: { x: layout.getRight(), y },
     });
     context.setLineDash([]);
+    crossCursorSelectAt.index = xInfo.index;
     return {
       index: xInfo.index,
       y,

@@ -83,6 +83,7 @@ export default class Control {
     if (Manager.instance.setting.chartType === 'line') return;
     Manager.instance.dataSource.scaleView(delta > 0 ? 1 : -1);
     Control.redrawMainView();
+    Control.redrawOverView();
   }
 
   static updateCrossCursorSelectAt(place) {

@@ -34,6 +34,7 @@ export default class DataSource {
     this.crossCursorSelectAt = {
       x: 0,
       y: 0,
+      index: -1,
     };
     this.lineTimeArray = [];
   }
@@ -262,9 +263,6 @@ export default class DataSource {
     this.validateLastIndex();
   }
 
-  // 动态加载下一阶段的数据
-  // loadNext
-
   validateLastIndex() {
     const { candleLeftOffest } = this;
     let index = 0;
@@ -285,16 +283,30 @@ export default class DataSource {
 
   // 放大缩小
   scaleView(s) {
-    const candleStickModeItemLength = DataSource.candleStick.itemWidth.length;
+    console.log(this.crossCursorSelectAt.index);
+    const maxScale = DataSource.candleStick.itemWidth.length - 1;
     this.scale += s;
     if (this.scale < 0) {
       this.scale = 0;
-    } else if (this.scale >= candleStickModeItemLength) {
-      this.scale = candleStickModeItemLength - 1;
+    } else if (this.scale > maxScale) {
+      this.scale = maxScale;
     }
+    const oldMaxCountInArea = this.maxCountInArea;
+    // 重新设置区间内最大个数
+    this.updateMaxCountInLayout();
     this.updateMaxCountInArea();
-    this.validateLastIndex();
+    // 重新设置缩放后的firstIndex
+    this.resetScaleIndex(oldMaxCountInArea);
     this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
+  }
+
+  resetScaleIndex(oldMaxCountInArea) {
+    const { firstIndex, crossCursorSelectAt, maxCountInArea } = this;
+    const selectedIndex = crossCursorSelectAt.index;
+    const reduce = maxCountInArea - oldMaxCountInArea;
+    const radio = selectedIndex / oldMaxCountInArea;
+    this.firstIndex = Math.max(0, firstIndex - Math.round(reduce * radio));
+    this.validateLastIndex();
   }
 
   // 更新十字线选中数据
