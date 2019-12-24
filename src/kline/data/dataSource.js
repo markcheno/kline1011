@@ -129,7 +129,8 @@ export default class DataSource {
   // 初始化当前蜡烛视图数据
   initCandleCurrentData() {
     this.lastIndex = this.data.length - 1;
-    this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
+    // 初始化时, 右侧间隔预留了一点距离
+    this.firstIndex = this.lastIndex - this.maxCountInArea + 3;
     this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
