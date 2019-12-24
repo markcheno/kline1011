@@ -160,7 +160,8 @@ export default class Manager {
 
   // 校验数据当前请求状态 再次请求 无需请求 请求完成(已经加载完所有数据)
   checkDataRequestStatus() {
-    const { dataSource } = this;
+    const { dataSource, setting } = this;
+    if (setting.chartType === 'line') return;
     const { firstIndex, candleLeftOffest } = dataSource;
     if (this.requestOption.noData) return;
     if (firstIndex <= 0 && candleLeftOffest >= 0) {

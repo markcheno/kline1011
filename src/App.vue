@@ -97,8 +97,8 @@ export default {
       height: 650,
       datafeed: new Datafeed(),
       symbol: {
-        id: 6,
-        name: '白银T+D',
+        id: 12,
+        name: '现货黄金',
       },
       period: 6,
     });
