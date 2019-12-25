@@ -578,10 +578,18 @@ export class RangeInfoPlotter extends Plotter {
     this.Font = theme.Font.Default;
   }
 
-  draw(layout, y) {
+  draw(layout, option) {
+    const { index, y } = option;
+    const { decimalDigits, chartType } = this.manager.setting;
     const area = layout.rangeArea;
     const context = this.overlayContext;
-    const value = parseInt(layout.range.toValue(y), 10);
+    let value;
+    if (chartType === 'candle') {
+      value = layout.range.toValue(y).toFixed(decimalDigits);
+    } else if (chartType === 'line') {
+      const data = this.manager.dataSource.getCurrentData();
+      value = data[index].close;
+    }
     const { left } = area.getPlace();
     const width = area.getWidth();
     const textWidth = context.measureText(value).width;

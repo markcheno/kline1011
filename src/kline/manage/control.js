@@ -91,6 +91,12 @@ export default class Control {
   }
 
   static clearOverView() {
+    // const { setting } = Manager.instance;
+    // const { chartType } = setting;
+    // 分时图 十字线常驻
+    // if (chartType === 'line') return;
+    const result = Manager.instance.dataSource.isCrossLinelocked();
+    if (result) return;
     Manager.instance.layout.clearOverLayout();
   }
 }

@@ -74,13 +74,13 @@ class ChartLayout extends Area {
 
   drawChartLayoutOverInfo(selectedInfo) {
     new Plotters[this.chartInfoPlotters]().draw(this, selectedInfo.index);
-    this.drawChartLayoutRangeInfo(selectedInfo.y);
+    this.drawChartLayoutRangeInfo(selectedInfo);
   }
 
-  drawChartLayoutRangeInfo(y) {
+  drawChartLayoutRangeInfo(option) {
     const { top, bottom } = this.rangeArea;
-    if (y <= top || y >= bottom) return;
-    new Plotters.RangeInfoPlotter().draw(this, y);
+    if (option.y <= top || option.y >= bottom) return;
+    new Plotters.RangeInfoPlotter().draw(this, option);
   }
 
   // 初始化

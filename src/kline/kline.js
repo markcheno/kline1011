@@ -34,6 +34,11 @@ export default class Kline {
     $(this.element).html(mainView);
   }
 
+  updateLastData(data) {
+    // 更新最后一个点
+    this.manager.updateLastData(data);
+  }
+
   switchSymbol(symbol) {
     this.manager.switchSymbol(symbol);
   }

@@ -90,6 +90,44 @@ export default class DataSource {
     this.updateCandleCurrentData(appendLength);
   }
 
+  // 动态更新最后一个点的数据
+  updateLastData(data) {
+    const { chartType } = Manager.instance.setting;
+    const { lastIndex } = this;
+    if (chartType === 'line') {
+      // 校验时间, 判断是否需要补点
+      const { time } = this.getDataByIndex(lastIndex);
+      if (data.time - time <= 60000) {
+        this.data[lastIndex].close = data.close;
+      } else {
+        const updateTime = data.time;
+        this.lastIndex += 1;
+        this.data[this.lastIndex] = {
+          open: data.open,
+          high: data.high,
+          low: data.low,
+          close: data.close,
+          time: moment(moment(updateTime).format('YYYY-MM-DD HH:mm')).valueOf(),
+        };
+      }
+      Manager.instance.redrawMain();
+      const islocked = this.isCrossLinelocked();
+      if (islocked) {
+        const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
+        this.crossCursorSelectAt.x = width - 20;
+        Manager.instance.redrawOver();
+      }
+    }
+  }
+
+  // 校验十字线是否被固定
+  isCrossLinelocked() {
+    const { chartType } = Manager.instance.setting;
+    if (chartType === 'candle') return false;
+    if (this.crossCursorSelectAt.index === this.lastIndex) return true;
+    return false;
+  }
+
   // 区别处理蜡烛图和分时数据
   dataFilterHandle(chartType, data) {
     if (chartType === 'candle') {
@@ -97,11 +135,13 @@ export default class DataSource {
     } else if (chartType === 'line') {
       let line = [];
       const lineTimeArray = [];
+      let maxIndex = 0;
       data.forEach((element, index) => {
         // 如果不足, 空补全
         const { start, end } = element;
         let { quotes } = element;
         const number = (end - start) / 60000;
+        maxIndex += quotes.length;
         if (quotes.length < number) {
           quotes = quotes.concat(new Array(number - quotes.length));
         }
@@ -119,7 +159,7 @@ export default class DataSource {
         }
       });
       this.lineTimeArray = lineTimeArray;
-      // Manager.instance.timel
+      this.lastIndex = maxIndex - 1;
       this.data = line;
     }
   }
@@ -143,7 +183,7 @@ export default class DataSource {
 
   // 初始化当前分时视图数据
   initLineData() {
-    this.lastIndex = this.data.length - 1;
+    // lastIndex 在初始化时单独被设置了
     this.firstIndex = 0;
     this.currentData = this.getAllData();
   }
@@ -170,6 +210,7 @@ export default class DataSource {
   }
 
   calcMaxAndMinByIndicator(data, indicator, boundaryGap) {
+    const { decimalDigits } = Manager.instance.setting;
     let min = Array.prototype.toString.call(indicator.min) === '[object String]'
       ? Number.MAX_SAFE_INTEGER
       : indicator.min;
@@ -184,8 +225,8 @@ export default class DataSource {
     const bottom = boundaryGap[1].split('%')[0] / 100;
     const reduce = max - min;
     return {
-      min: min - reduce * bottom,
-      max: max + reduce * top,
+      min: (min - reduce * bottom).toFixed(decimalDigits),
+      max: (max + reduce * top).toFixed(decimalDigits),
     };
   }
 
@@ -201,7 +242,7 @@ export default class DataSource {
         context.measureText(result.min).width,
         context.measureText(result.max).width,
       );
-      this.updateMaxRangeWidth(rangeWidth + 25);
+      this.updateMaxRangeWidth(rangeWidth + 30);
     });
   }
 
@@ -282,7 +323,6 @@ export default class DataSource {
 
   // 放大缩小
   scaleView(s) {
-    console.log(this.crossCursorSelectAt.index);
     const maxScale = DataSource.candleStick.itemWidth.length - 1;
     this.scale += s;
     if (this.scale < 0) {
@@ -310,6 +350,6 @@ export default class DataSource {
 
   // 更新十字线选中数据
   updateCrossCursorSelectAt(place) {
-    this.crossCursorSelectAt = { ...place };
+    this.crossCursorSelectAt = { ...place, index: -1 };
   }
 }

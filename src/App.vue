@@ -63,7 +63,6 @@ class Datafeed {
               volume: Number(item.v),
             }));
           });
-          console.log('line', line);
           onHistoryCallback(line, {
             firstDataRequest,
           });
@@ -99,11 +98,11 @@ export default {
       height: 650,
       datafeed: new Datafeed(),
       symbol: {
-        id: 12,
-        name: '现货黄金',
+        id: 22,
+        name: '美元指数',
       },
       period: 6,
-      decimalDigits: 2,
+      decimalDigits: 3,
     });
     this.socketHandle(socket);
   },
@@ -115,10 +114,9 @@ export default {
       this.kline.switchPeriod(period);
     },
     socketHandle(socket) {
-      console.log('socket.id', socket.id);
       socket.emit('subscribeDelete', { token: socket.id, qid: ['all'] });
       socket.emit('subscribeRegister', {
-        qid: [12],
+        qid: [22],
         token: socket.id,
       });
     },
@@ -134,9 +132,19 @@ export default {
       socket.on('connectResponse', () => {
         socket.removeListener('subscribeResponse');
         socket.removeEventListener('subscribeResponse');
+        let lastPrice = 0;
         socket.on('subscribeResponse', (data) => {
           const socketData = JSON.parse(data).quote;
-          console.log('socketData', socketData);
+          if (lastPrice !== socketData.nowPrice) {
+            this.kline.updateLastData({
+              open: Number(socketData.open),
+              high: Number(socketData.top),
+              low: Number(socketData.low),
+              close: Number(socketData.nowPrice),
+              time: Number(socketData.updatetime),
+            });
+            lastPrice = socketData.nowPrice;
+          }
         });
       });
       return socket;

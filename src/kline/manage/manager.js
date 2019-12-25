@@ -159,6 +159,11 @@ export default class Manager {
     that.requestOption.requestPending = false;
   }
 
+  // 更新最后一个点的数据
+  updateLastData(data) {
+    this.dataSource.updateLastData(data);
+  }
+
   // 校验数据当前请求状态 再次请求 无需请求 请求完成(已经加载完所有数据)
   checkDataRequestStatus() {
     const { dataSource, setting } = this;
@@ -180,12 +185,10 @@ export default class Manager {
 
   onMouseLeave() {
     this.checkDataRequestStatus();
-    console.log('onLeave');
     Control.clearOverView();
   }
 
   onMouseUp() {
     this.checkDataRequestStatus();
-    console.log('onMouseUp');
   }
 }

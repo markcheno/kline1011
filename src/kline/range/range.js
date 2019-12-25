@@ -21,6 +21,7 @@ export default class Range {
   }
 
   calcMaxAndMinByIndicator(data) {
+    const { decimalDigits } = Manager.instance.setting;
     const { indicator } = this;
     let min = Array.prototype.toString.call(indicator.min) === '[object String]' ? Number.MAX_SAFE_INTEGER : indicator.min;
     let max = Array.prototype.toString.call(indicator.max) === '[object String]' ? Number.MIN_SAFE_INTEGER : indicator.max;
@@ -32,8 +33,8 @@ export default class Range {
     const bottom = this.boundaryGap[1].split('%')[0] / 100;
     const reduce = max - min;
     return {
-      min: min - reduce * bottom,
-      max: max + reduce * top,
+      min: (min - reduce * bottom).toFixed(decimalDigits),
+      max: (max + reduce * top).toFixed(decimalDigits),
     };
   }
 
