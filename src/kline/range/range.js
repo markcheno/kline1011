@@ -97,13 +97,14 @@ export default class Range {
 
   // 更新刻度
   updateGradations() {
+    const { decimalDigits } = Manager.instance.setting;
     const interval = this.calcInterval();
     this.gradations = [];
     // 开始位置取整
-    let start = Math.floor(this.maxValue / interval) * interval;
+    let start = this.maxValue / interval * interval;
     do {
       this.gradations.push({
-        text: start,
+        text: start.toFixed(decimalDigits),
         y: this.toY(start) + 0.5,
       });
       start -= interval;

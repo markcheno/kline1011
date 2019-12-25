@@ -19,8 +19,6 @@ export default class DataSource {
     this.data = [];
     // 当前时间段数据
     this.currentData = [];
-    // 保留小数点
-    this.decimalDigits = 0;
     // range 宽度
     this.rangeWidth = 0;
     this.firstIndex = -1;

@@ -2,6 +2,8 @@ export default class Setting {
   constructor() {
     this.symbol = null;
     this.period = null;
+    // 保留小数点
+    this.decimalDigits = 2;
     this.chartPadding = {
       left: 0,
       right: 0,
@@ -55,9 +57,10 @@ export default class Setting {
   }
 
   init(option) {
-    const { symbol, period } = option;
+    const { symbol, period, decimalDigits } = option;
     this.setPeriod(period);
     this.setSymbol(symbol);
+    this.setDecimalDigits(decimalDigits);
   }
 
   setSymbol(symbol) {
@@ -66,6 +69,10 @@ export default class Setting {
 
   setPeriod(period) {
     this.period = period;
+  }
+
+  setDecimalDigits(decimalDigits) {
+    this.decimalDigits = decimalDigits;
   }
 
   getSymbol() {

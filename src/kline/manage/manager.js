@@ -31,6 +31,7 @@ export default class Manager {
     this.setting.init({
       symbol: this.option.symbol,
       period: this.option.period,
+      decimalDigits: this.option.decimalDigits,
     });
     return this.option;
   }

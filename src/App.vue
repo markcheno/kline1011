@@ -14,6 +14,7 @@
 
 <script>
 
+import io from 'socket.io-client';
 import Kline from './kline/entry';
 
 class Datafeed {
@@ -91,6 +92,7 @@ export default {
     };
   },
   mounted() {
+    const socket = this.initPriceSocket();
     this.kline = new Kline({
       element: '#kline_container',
       width: 1200,
@@ -101,7 +103,9 @@ export default {
         name: '现货黄金',
       },
       period: 6,
+      decimalDigits: 2,
     });
+    this.socketHandle(socket);
   },
   methods: {
     changeSymbol(symbol) {
@@ -109,6 +113,33 @@ export default {
     },
     changePeriod(period) {
       this.kline.switchPeriod(period);
+    },
+    socketHandle(socket) {
+      console.log('socket.id', socket.id);
+      socket.emit('subscribeDelete', { token: socket.id, qid: ['all'] });
+      socket.emit('subscribeRegister', {
+        qid: [12],
+        token: socket.id,
+      });
+    },
+    connectSocket(socket) {
+      socket.id
+        ? this.socketHandle(socket)
+        : socket.on('connectResponse', () => {
+          this.socketHandle(socket);
+        });
+    },
+    initPriceSocket() {
+      const socket = io('https://wssof.gkoudai.com');
+      socket.on('connectResponse', () => {
+        socket.removeListener('subscribeResponse');
+        socket.removeEventListener('subscribeResponse');
+        socket.on('subscribeResponse', (data) => {
+          const socketData = JSON.parse(data).quote;
+          console.log('socketData', socketData);
+        });
+      });
+      return socket;
     },
   },
 };
