@@ -98,11 +98,11 @@ export default {
       height: 650,
       datafeed: new Datafeed(),
       symbol: {
-        id: 22,
-        name: '美元指数',
+        id: 12,
+        name: '现货黄金',
       },
       period: 6,
-      decimalDigits: 3,
+      decimalDigits: 2,
     });
     this.socketHandle(socket);
   },
@@ -116,7 +116,7 @@ export default {
     socketHandle(socket) {
       socket.emit('subscribeDelete', { token: socket.id, qid: ['all'] });
       socket.emit('subscribeRegister', {
-        qid: [22],
+        qid: [12],
         token: socket.id,
       });
     },
@@ -136,6 +136,7 @@ export default {
         socket.on('subscribeResponse', (data) => {
           const socketData = JSON.parse(data).quote;
           if (lastPrice !== socketData.nowPrice) {
+            console.log('socketData', socketData);
             this.kline.updateLastData({
               open: Number(socketData.open),
               high: Number(socketData.top),

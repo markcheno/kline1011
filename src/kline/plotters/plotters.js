@@ -147,6 +147,8 @@ export class LineChartPlotter extends Plotter {
     this.fillColor = theme.Line.fillColor;
     this.strokeColor = theme.Line.strokeColor;
     this.strokeLineWidth = theme.Line.strokeLineWidth;
+    this.averageLineColor = theme.Line.averageLineColor;
+    this.averageLineWidth = theme.Line.averageLineWidth;
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
     this.Font = theme.Font.Default;
@@ -156,6 +158,7 @@ export class LineChartPlotter extends Plotter {
     };
   }
 
+  // 绘制区域
   drawFillLines(context, places, bottom) {
     context.beginPath();
     context.moveTo(0, bottom);
@@ -168,15 +171,50 @@ export class LineChartPlotter extends Plotter {
     context.fill();
   }
 
-  drawLineStorkeLines(context, places) {
+  // 绘制折线
+  drawLineStorkeLines(context, places, option) {
+    const { color, lineWidth } = option;
     context.beginPath();
     places.forEach(item => {
       const { x, y } = item;
       context.lineTo(x, y);
     });
-    context.strokeStyle = this.strokeColor;
-    context.lineWidth = this.strokeLineWidth;
+    context.strokeStyle = color;
+    context.lineWidth = lineWidth;
     context.stroke();
+  }
+
+  // 绘制动态点
+  showLinePoint(place) {
+    const point = $('#chart_canvasGroup .line-point');
+    point.show();
+    const { x, y } = place;
+    point.css('left', `${x - 20}px`);
+    point.css('top', `${y - 20}px`);
+  }
+
+  // 绘制分时图均价 todo 成交量单独处理
+  drawAverageLine(range, interval) {
+    const { dataSource } = this.manager;
+    const context = this.mainContext;
+    const data = dataSource.getCurrentData();
+    const places = [];
+    let priceToTal = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (data[i]) {
+        const { close } = data[i];
+        priceToTal += close;
+        const x = i * interval;
+        const y = range.toY(priceToTal / (i + 1));
+        places.push({
+          x, y,
+        });
+      }
+    }
+    this.drawLineStorkeLines(context, places, {
+      color: this.averageLineColor,
+      lineWidth: this.averageLineWidth,
+    });
   }
 
   draw(layout) {
@@ -219,8 +257,13 @@ export class LineChartPlotter extends Plotter {
         }
       }
     }
-    this.drawLineStorkeLines(context, places);
+    this.drawLineStorkeLines(context, places, {
+      color: this.strokeColor,
+      lineWidth: this.strokeLineWidth,
+    });
     this.drawFillLines(context, places, bottom);
+    this.showLinePoint(places[places.length - 1]);
+    this.drawAverageLine(range, interval);
     this.drawMaxMin({
       mainContext: context,
       maxMin: this.maxMin,
@@ -283,10 +326,10 @@ export class CandlestickPlotter extends Plotter {
     return width;
   }
 
-  // 计算蜡烛图顺滑移动的距离点
-  // updateCandlestickMovePoint(points) {
-  //   this.manager.updateCandlestickMovePoint(points);
-  // }
+  hideLinePoint() {
+    const point = $('#chart_canvasGroup .line-point');
+    point.hide();
+  }
 
   draw(layout) {
     const { range, chartArea } = layout;
@@ -360,6 +403,7 @@ export class CandlestickPlotter extends Plotter {
       context.fillStyle = this.NegativeColor;
       this.drawReacts(context, fillNegRects);
     }
+    this.hideLinePoint();
     this.drawMaxMin({
       mainContext: context,
       maxMin: this.maxMin,

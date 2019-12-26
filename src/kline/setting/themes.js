@@ -12,6 +12,8 @@ export default class Theme {
       fillColor: 'rgba(45, 113, 174, .2)',
       strokeColor: '#2D71AE',
       strokeLineWidth: 2,
+      averageLineColor: '#e7b269',
+      averageLineWidth: 1.5,
     };
     this.Font = {
       Default: '12px Tahoma',

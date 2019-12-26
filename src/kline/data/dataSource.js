@@ -94,13 +94,16 @@ export default class DataSource {
   updateLastData(data) {
     const { chartType } = Manager.instance.setting;
     const { lastIndex } = this;
+    let islocked = false;
     if (chartType === 'line') {
       // 校验时间, 判断是否需要补点
       const { time } = this.getDataByIndex(lastIndex);
       if (data.time - time <= 60000) {
         this.data[lastIndex].close = data.close;
+        islocked = this.isCrossLinelocked();
       } else {
         const updateTime = data.time;
+        islocked = this.isCrossLinelocked();
         this.lastIndex += 1;
         this.data[this.lastIndex] = {
           open: data.open,
@@ -111,12 +114,20 @@ export default class DataSource {
         };
       }
       Manager.instance.redrawMain();
-      const islocked = this.isCrossLinelocked();
       if (islocked) {
         const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
-        this.crossCursorSelectAt.x = width - 20;
+        this.crossCursorSelectAt.x = width;
         Manager.instance.redrawOver();
       }
+    }
+  }
+
+  isInitShowCross() {
+    const { chartType } = Manager.instance.setting;
+    if (chartType === 'line') {
+      const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
+      this.crossCursorSelectAt.x = width;
+      Manager.instance.redrawOver();
     }
   }
 

@@ -30,16 +30,17 @@ export default class Setting {
         max: 'high',
       },
     }];
+    // {
+    //   name: 'volumeChartLayout',
+    //   chartPlotters: 'VolumePlotter',
+    //   chartInfoPlotters: 'VolumeInfoPlotter',
+    //   boundaryGap: ['15%', '0%'],
+    //   indicator: {
+    //     min: 0,
+    //     max: 'volume',
+    //   },
+    // }
     this.lineChart = [{
-      name: 'volumeChartLayout',
-      chartPlotters: 'VolumePlotter',
-      chartInfoPlotters: 'VolumeInfoPlotter',
-      boundaryGap: ['15%', '0%'],
-      indicator: {
-        min: 0,
-        max: 'volume',
-      },
-    }, {
       name: 'lineChartLayout',
       chartPlotters: 'LineChartPlotter',
       chartInfoPlotters: 'LineChartInfoPlotter',

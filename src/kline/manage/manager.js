@@ -153,9 +153,16 @@ export default class Manager {
     const { dataSource } = that;
     that.requestOption.noData = noData;
     // 首次加载与loadmore加载分开处理
-    firstDataRequest ? dataSource.initData(data) : dataSource.updateData(data);
-    firstDataRequest && that.initLayout();
-    that.redrawMain();
+    if (firstDataRequest) {
+      dataSource.initData(data);
+      that.initLayout();
+      that.redrawMain();
+      // 分时图初始化需显示十字线
+      dataSource.isInitShowCross();
+    } else {
+      dataSource.updateData(data);
+      that.redrawMain();
+    }
     that.requestOption.requestPending = false;
   }
 
