@@ -56,7 +56,7 @@ export default class DataSource {
   updateMaxCountInArea() {
     const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
     const columnWidth = this.getColumnWidth();
-    this.maxCountInArea = Math.ceil(width / columnWidth);
+    this.maxCountInArea = Math.ceil(width / columnWidth) + 1;
   }
 
   // 计算整个图表中最大蜡烛图个数

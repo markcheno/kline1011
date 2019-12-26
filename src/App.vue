@@ -136,7 +136,7 @@ export default {
         socket.on('subscribeResponse', (data) => {
           const socketData = JSON.parse(data).quote;
           if (lastPrice !== socketData.nowPrice) {
-            console.log('socketData', socketData);
+            console.log('socketData', socketData.nowPrice);
             this.kline.updateLastData({
               open: Number(socketData.open),
               high: Number(socketData.top),
