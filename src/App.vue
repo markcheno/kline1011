@@ -91,7 +91,7 @@ export default {
     };
   },
   mounted() {
-    const socket = this.initPriceSocket();
+    // const socket = this.initPriceSocket();
     this.kline = new Kline({
       element: '#kline_container',
       width: 1200,
@@ -104,7 +104,7 @@ export default {
       period: 6,
       decimalDigits: 2,
     });
-    this.socketHandle(socket);
+    // this.socketHandle(socket);
   },
   methods: {
     changeSymbol(symbol) {
@@ -136,7 +136,6 @@ export default {
         socket.on('subscribeResponse', (data) => {
           const socketData = JSON.parse(data).quote;
           if (lastPrice !== socketData.nowPrice) {
-            console.log('socketData', socketData.nowPrice);
             this.kline.updateLastData({
               open: Number(socketData.open),
               high: Number(socketData.top),

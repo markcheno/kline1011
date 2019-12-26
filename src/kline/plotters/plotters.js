@@ -309,6 +309,7 @@ export class CandlestickPlotter extends Plotter {
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
     this.GridColor = theme.Color.Grid;
+    this.MALineColor = theme.Line.MA;
     this.Font = theme.Font.Default;
     this.maxMin = {
       min: { x: -1, y: Number.MIN_SAFE_INTEGER, value: 0 },
@@ -331,6 +332,32 @@ export class CandlestickPlotter extends Plotter {
     point.hide();
   }
 
+  drawMALines(context, places, option) {
+    const { color, lineWidth } = option;
+    context.beginPath();
+    places.forEach((item, index) => {
+      const { x, y } = item;
+      if (index === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
+    });
+    context.strokeStyle = color;
+    context.lineWidth = lineWidth;
+    context.stroke();
+  }
+
+  drawMA(data) {
+    const context = this.mainContext;
+    Object.values(data).forEach((item, index) => {
+      this.drawMALines(context, item, {
+        color: this.MALineColor[index],
+        lineWidth: 1,
+      });
+    });
+  }
+
   draw(layout) {
     const { range, chartArea } = layout;
     const { dataSource } = this.manager;
@@ -347,6 +374,10 @@ export class CandlestickPlotter extends Plotter {
     const fillPosRects = [];
     const fillNegRects = [];
     const fillNegLines = [];
+    const MAObj = {};
+    [5, 10, 20].forEach(item => {
+      MAObj[`MA${item}`] = [];
+    });
     pointsPlaces = { x: [], y: [] };
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
@@ -360,6 +391,14 @@ export class CandlestickPlotter extends Plotter {
       pointsPlaces.x.push(leftLineX);
       const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
       const lineRectWidth = this.toReactWidth(leftLineX, 1);
+      // MA线
+      Object.keys(MAObj).forEach(item => {
+        const MAdata = data[item];
+        MAObj[item].push({
+          x: leftLineX,
+          y: range.toY(MAdata),
+        });
+      });
       // 蜡烛图最大最小值
       if (highPlace < maxMin.max.y) {
         maxMin.max = {
@@ -403,6 +442,7 @@ export class CandlestickPlotter extends Plotter {
       context.fillStyle = this.NegativeColor;
       this.drawReacts(context, fillNegRects);
     }
+    this.drawMA(MAObj);
     this.hideLinePoint();
     this.drawMaxMin({
       mainContext: context,

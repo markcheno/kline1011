@@ -14,6 +14,7 @@ export default class Theme {
       strokeLineWidth: 2,
       averageLineColor: '#e7b269',
       averageLineWidth: 1.5,
+      MA: ['#a920ae', '#ffbb22', '#a8a8a8'],
     };
     this.Font = {
       Default: '12px Tahoma',

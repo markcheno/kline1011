@@ -1,4 +1,5 @@
 import Manager from '../manage/manager';
+import calcMAIndicator from '../manage/indicators';
 
 export default class DataSource {
   // 更新数据策略
@@ -83,8 +84,15 @@ export default class DataSource {
 
   // loadmore更新数据
   updateData(data) {
+    const { decimalDigits } = Manager.instance.setting;
     const appendLength = data.length;
     this.data = data.concat(this.data);
+    const MAArray = [5, 10, 20];
+    calcMAIndicator(this.data, {
+      decimalDigits,
+      range: [0, appendLength - 1 + Math.max(...MAArray)],
+      MAArray: [5, 10, 20],
+    });
     // 更新range width
     this.updateRangeWidth();
     this.updateCandleCurrentData(appendLength);
@@ -141,8 +149,14 @@ export default class DataSource {
 
   // 区别处理蜡烛图和分时数据
   dataFilterHandle(chartType, data) {
+    const { decimalDigits } = Manager.instance.setting;
     if (chartType === 'candle') {
       this.data = data;
+      calcMAIndicator(this.data, {
+        decimalDigits,
+        range: [0, data.length - 1],
+        MAArray: [5, 10, 20],
+      });
     } else if (chartType === 'line') {
       let line = [];
       const lineTimeArray = [];
