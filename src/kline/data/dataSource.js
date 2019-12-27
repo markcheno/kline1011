@@ -72,7 +72,7 @@ export default class DataSource {
     const { chartType } = Manager.instance.setting;
     this.dataFilterHandle(chartType, data);
     // 更新range width
-    this.updateRangeWidth();
+    this.updateRangeWidth(this.getAllData());
     if (chartType === 'candle') {
       this.updateMaxCountInArea();
       // 更新区间内的时间
@@ -88,13 +88,15 @@ export default class DataSource {
     const appendLength = data.length;
     this.data = data.concat(this.data);
     const MAArray = [5, 10, 20];
+    const first = 0;
+    const last = appendLength - 1 + Math.max(...MAArray);
     calcMAIndicator(this.data, {
       decimalDigits,
-      range: [0, appendLength - 1 + Math.max(...MAArray)],
+      range: [first, last],
       MAArray: [5, 10, 20],
     });
     // 更新range width
-    this.updateRangeWidth();
+    this.updateRangeWidth(data.slice(first, last));
     this.updateCandleCurrentData(appendLength);
   }
 
@@ -234,40 +236,22 @@ export default class DataSource {
     }
   }
 
-  calcMaxAndMinByIndicator(data, indicator, boundaryGap) {
-    const { decimalDigits } = Manager.instance.setting;
-    let min = Array.prototype.toString.call(indicator.min) === '[object String]'
-      ? Number.MAX_SAFE_INTEGER
-      : indicator.min;
-    let max = Array.prototype.toString.call(indicator.max) === '[object String]'
-      ? Number.MIN_SAFE_INTEGER
-      : indicator.max;
-    data.forEach(item => {
-      if (min > item[indicator.min]) min = item[indicator.min];
-      if (max < item[indicator.max]) max = item[indicator.max];
-    });
-    const top = boundaryGap[0].split('%')[0] / 100;
-    const bottom = boundaryGap[1].split('%')[0] / 100;
-    const reduce = max - min;
-    return {
-      min: (min - reduce * bottom).toFixed(decimalDigits),
-      max: (max + reduce * top).toFixed(decimalDigits),
-    };
-  }
-
   // 更新range的最大宽度
-  updateRangeWidth() {
+  updateRangeWidth(data) {
     const manager = Manager.instance;
-    const data = this.getAllData();
     const context = manager.canvas.mainContext;
-    const chart = manager.setting.getChart();
-    chart.forEach(item => {
-      const result = this.calcMaxAndMinByIndicator(data, item.indicator, item.boundaryGap);
-      const rangeWidth = Math.max(
-        context.measureText(result.min).width,
-        context.measureText(result.max).width,
-      );
-      this.updateMaxRangeWidth(rangeWidth + 30);
+    const Font = manager.theme.Default;
+    context.font = Font;
+    const { layout } = manager;
+    layout.layouts.forEach(item => {
+      if (item.range) {
+        const result = item.range.calcMaxAndMinByIndicator(data);
+        const rangeWidth = Math.max(
+          context.measureText(result.min).width,
+          context.measureText(result.max).width,
+        );
+        this.updateMaxRangeWidth(rangeWidth + 30);
+      }
     });
   }
 

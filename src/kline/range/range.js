@@ -20,17 +20,18 @@ export default class Range {
     this.gradations = [];
   }
 
+  // 计算range区间内的大小值 根据该range的配置 及 指标数据综合计算
   calcMaxAndMinByIndicator(data) {
     const { decimalDigits } = Manager.instance.setting;
-    const { indicator } = this;
+    const { indicator, boundaryGap } = this;
     let min = Array.prototype.toString.call(indicator.min) === '[object String]' ? Number.MAX_SAFE_INTEGER : indicator.min;
     let max = Array.prototype.toString.call(indicator.max) === '[object String]' ? Number.MIN_SAFE_INTEGER : indicator.max;
     data.forEach(item => {
       if (min > item[indicator.min]) min = item[indicator.min];
       if (max < item[indicator.max]) max = item[indicator.max];
     });
-    const top = this.boundaryGap[0].split('%')[0] / 100;
-    const bottom = this.boundaryGap[1].split('%')[0] / 100;
+    const top = boundaryGap[0].split('%')[0] / 100;
+    const bottom = boundaryGap[1].split('%')[0] / 100;
     const reduce = max - min;
     return {
       min: (min - reduce * bottom).toFixed(decimalDigits),

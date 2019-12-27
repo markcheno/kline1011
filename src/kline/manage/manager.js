@@ -51,7 +51,6 @@ export default class Manager {
   // 初始化布局
   initLayout() {
     this.layout = new MainLayout('mainLayout');
-    this.layoutResize();
   }
 
   // 调整各个layout, area的大小 与 位置
@@ -154,13 +153,15 @@ export default class Manager {
     that.requestOption.noData = noData;
     // 首次加载与loadmore加载分开处理
     if (firstDataRequest) {
-      dataSource.initData(data);
       that.initLayout();
+      dataSource.initData(data);
+      that.layoutResize();
       that.redrawMain();
       // 分时图初始化需显示十字线
       dataSource.isInitShowCross();
     } else {
       dataSource.updateData(data);
+      that.layoutResize();
       that.redrawMain();
     }
     that.requestOption.requestPending = false;
