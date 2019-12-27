@@ -92,7 +92,8 @@ export class ClearPlotter extends Plotter {
   }
 
   draw(layout) {
-    this.context.clearRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
+    const { left, top, right, bottom } = layout.getPlace();
+    this.context.clearRect(left, top, right - left, bottom - top);
   }
 }
 
@@ -107,7 +108,8 @@ export class BackgroundPlotter extends Plotter {
   draw(layout) {
     const context = this.mainContext;
     context.fillStyle = this.color;
-    context.fillRect(layout.getLeft(), layout.getTop(), layout.getWidth(), layout.getHeight());
+    const { left, top, right, bottom } = layout.getPlace();
+    context.fillRect(left, top, right - left, bottom - top);
   }
 }
 
@@ -121,10 +123,11 @@ export class BackgroundGridPlotter extends Plotter {
 
   // 绘制 不同chartArea的range横线
   draw(layout) {
-    const area = layout.chartArea;
+    const area = layout.getChartArea();
+    const rangeData = layout.getRangeData();
     const context = this.mainContext;
     const { left, right } = area.getPlace();
-    const gradations = layout.range.getGradations();
+    const gradations = rangeData.getGradations();
     const grids = gradations.map(item => ({
       from: {
         x: left + 0.5,
@@ -194,7 +197,7 @@ export class LineChartPlotter extends Plotter {
   }
 
   // 绘制分时图均价 todo 成交量单独处理
-  drawAverageLine(range, interval) {
+  drawAverageLine(rangeData, interval) {
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const data = dataSource.getCurrentData();
@@ -205,7 +208,7 @@ export class LineChartPlotter extends Plotter {
         const { close } = data[i];
         priceToTal += close;
         const x = i * interval;
-        const y = range.toY(priceToTal / (i + 1));
+        const y = rangeData.toY(priceToTal / (i + 1));
         places.push({
           x, y,
         });
@@ -218,12 +221,13 @@ export class LineChartPlotter extends Plotter {
   }
 
   draw(layout) {
-    const { range, chartArea } = layout;
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
     const { dataSource } = this.manager;
+    const { right, left, bottom } = chartArea;
     const context = this.mainContext;
     const data = dataSource.getCurrentData();
-    const width = chartArea.getWidth();
-    const bottom = chartArea.getBottom();
+    const width = right - left;
     const size = data.length;
     const interval = width / size;
     const places = [];
@@ -233,7 +237,7 @@ export class LineChartPlotter extends Plotter {
       if (data[i]) {
         const { close } = data[i];
         const x = i * interval;
-        const y = range.toY(close);
+        const y = rangeData.toY(close);
         pointsPlaces.x.push(x);
         pointsPlaces.y.push(y);
         places.push({
@@ -263,7 +267,7 @@ export class LineChartPlotter extends Plotter {
     });
     this.drawFillLines(context, places, bottom);
     this.showLinePoint(places[places.length - 1]);
-    this.drawAverageLine(range, interval);
+    this.drawAverageLine(rangeData, interval);
     this.drawMaxMin({
       mainContext: context,
       maxMin: this.maxMin,
@@ -283,7 +287,7 @@ export class LineChartInfoPlotter extends Plotter {
   }
 
   draw(layout, index) {
-    const { chartArea } = layout;
+    const chartArea = layout.getChartArea();
     const { dataSource } = this.manager;
     const context = this.overlayContext;
     const currentData = dataSource.getCurrentData();
@@ -315,16 +319,6 @@ export class CandlestickPlotter extends Plotter {
       min: { x: -1, y: Number.MIN_SAFE_INTEGER, value: 0 },
       max: { x: -1, y: Number.MAX_SAFE_INTEGER, value: 0 },
     };
-  }
-
-  toMaxX(x) {
-    if (x > this.areaRight) return this.areaRight;
-    return x;
-  }
-
-  toReactWidth(x, width) {
-    if (x + width > this.areaRight) return this.areaRight - x;
-    return width;
   }
 
   hideLinePoint() {
@@ -359,7 +353,8 @@ export class CandlestickPlotter extends Plotter {
   }
 
   draw(layout) {
-    const { range, chartArea } = layout;
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
@@ -367,7 +362,8 @@ export class CandlestickPlotter extends Plotter {
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     const { maxMin } = this;
-    this.areaRight = chartArea.getRight();
+    const { right } = chartArea.getPlace();
+    this.areaRight = right;
     let columnLeft = candleLeftOffest;
     // 从前往后绘制
     const fillPosLines = [];
@@ -382,21 +378,23 @@ export class CandlestickPlotter extends Plotter {
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
       const { open, close, high, low } = data;
-      const highPlace = range.toY(high);
-      const lowPlace = range.toY(low);
-      const closePlace = range.toY(close);
-      const openPlace = range.toY(open);
-      const leftX = this.toMaxX(columnLeft);
-      const leftLineX = this.toMaxX(columnLeft + itemCenterOffset);
+      const highPlace = rangeData.toY(high);
+      const lowPlace = rangeData.toY(low);
+      const closePlace = rangeData.toY(close);
+      const openPlace = rangeData.toY(open);
+      const leftX = columnLeft;
+      const leftLineX = columnLeft + itemCenterOffset;
       pointsPlaces.x.push(leftLineX);
-      const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
-      const lineRectWidth = this.toReactWidth(leftLineX, 1);
+      const rectWidth = 2 * itemCenterOffset;
+      const lineRectWidth = 1;
       // MA线
+      const MAX = columnLeft + itemCenterOffset;
+      // eslint-disable-next-line no-loop-func
       Object.keys(MAObj).forEach(item => {
         const MAdata = data[item];
         MAObj[item].push({
-          x: leftLineX,
-          y: range.toY(MAdata),
+          x: MAX,
+          y: rangeData.toY(MAdata),
         });
       });
       // 蜡烛图最大最小值
@@ -463,7 +461,7 @@ export class CandlestickInfoPlotter extends Plotter {
   }
 
   draw(layout, index) {
-    const { chartArea } = layout;
+    const chartArea = layout.getChartArea();
     const { dataSource } = this.manager;
     const context = this.overlayContext;
     const currentData = dataSource.getCurrentData();
@@ -613,14 +611,25 @@ export class RangePlotter extends Plotter {
     const { theme } = this.manager;
     this.GridColor = theme.Color.Grid;
     this.Font = theme.Font.Default;
+    this.Background = theme.Color.Background;
+  }
+
+  // 清除越界的图案
+  clearRangeArea(area) {
+    const { left, right, top, bottom } = area.getPlace();
+    this.mainContext.clearRect(left, top, right - left, bottom - top);
+    this.mainContext.fillStyle = this.Background;
+    this.mainContext.fillRect(left, top, right - left, bottom - top);
   }
 
   draw(layout) {
-    const area = layout.rangeArea;
+    const rangeArea = layout.getRangeArea();
+    const rangeData = layout.getRangeData();
     const context = this.mainContext;
-    const gradations = layout.range.getGradations();
-    let { left, right, top, bottom } = area.getPlace();
-    const center = area.getCenter() + 0.5;
+    const gradations = rangeData.getGradations();
+    let { left, right, top, bottom } = rangeArea.getPlace();
+    this.clearRangeArea(rangeArea);
+    const center = rangeArea.getCenter() + 0.5;
     left += 0.5;
     right += 0.5;
     top += 0.5;
@@ -665,17 +674,18 @@ export class RangeInfoPlotter extends Plotter {
   draw(layout, option) {
     const { index, y } = option;
     const { decimalDigits, chartType } = this.manager.setting;
-    const area = layout.rangeArea;
+    const rangeArea = layout.getRangeArea();
+    const rangeData = layout.getRangeData();
     const context = this.overlayContext;
     let value;
     if (chartType === 'candle') {
-      value = layout.range.toValue(y).toFixed(decimalDigits);
+      value = rangeData.toValue(y).toFixed(decimalDigits);
     } else if (chartType === 'line') {
       const data = this.manager.dataSource.getCurrentData();
       value = data[index].close;
     }
-    const { left } = area.getPlace();
-    const width = area.getWidth();
+    const { left, right } = rangeArea.getPlace();
+    const width = right - left;
     const textWidth = context.measureText(value).width;
     context.font = this.Font;
     context.fillStyle = this.GridColor;
@@ -701,18 +711,9 @@ export class VolumePlotter extends Plotter {
     this.GridColor = theme.Color.Grid;
   }
 
-  toMaxX(x) {
-    if (x > this.areaRight) return this.areaRight;
-    return x;
-  }
-
-  toReactWidth(x, width) {
-    if (x + width > this.areaRight) return this.areaRight - x;
-    return width;
-  }
-
   draw(layout) {
-    const { range, chartArea } = layout;
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
     const { dataSource, setting } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
@@ -739,10 +740,10 @@ export class VolumePlotter extends Plotter {
       const data = currentData[i];
       if (!data) continue;
       const { volume, close, open } = data;
-      const volumePlace = range.toY(volume);
-      const lowPlace = range.toY(0);
-      const leftX = this.toMaxX(columnLeft);
-      const rectWidth = this.toReactWidth(leftX, 2 * itemCenterOffset);
+      const volumePlace = rangeData.toY(volume);
+      const lowPlace = rangeData.toY(0);
+      const leftX = columnLeft;
+      const rectWidth = 2 * itemCenterOffset;
       // 涨
       if (close >= open) {
         fillPosRects.push({ x: leftX, y: volumePlace - this.paddingBottom, width: rectWidth, height: lowPlace - volumePlace });
@@ -777,7 +778,7 @@ export class VolumeInfoPlotter extends Plotter {
   }
 
   draw(layout, index) {
-    const { chartArea } = layout;
+    const chartArea = layout.getChartArea();
     const { dataSource } = this.manager;
     const context = this.overlayContext;
     const currentData = dataSource.getCurrentData();
@@ -847,14 +848,15 @@ export class SelectionPlotter extends Plotter {
     const xInfo = this.searchInsert(crossCursorSelectAt.x);
     const x = xInfo.value;
     const y = this.getCrossLineY(crossCursorSelectAt.y + 0.5, xInfo.index);
+    const { right, bottom } = layout.getPlace();
     context.setLineDash([5, 5]);
     this.drawLine(context, {
       from: { x, y: 0 },
-      to: { x, y: layout.getBottom() - this.timelineAreaHeight },
+      to: { x, y: bottom - this.timelineAreaHeight },
     });
     this.drawLine(context, {
       from: { x: 0, y },
-      to: { x: layout.getRight(), y },
+      to: { x: right, y },
     });
     context.setLineDash([]);
     crossCursorSelectAt.index = xInfo.index;

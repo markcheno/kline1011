@@ -4,12 +4,18 @@ import Range from '../range/range';
 import Manager from '../manage/manager';
 import * as Plotters from '../plotters/plotters';
 
-class TimelineLayout extends Area {
+class Layout extends Area {
   constructor(name) {
     super(name);
-    this.timelineArea = {};
+    delete this.mouseDownPlace;
+  }
+}
+
+class TimelineLayout extends Layout {
+  constructor(name) {
+    super(name);
+    this.timelineArea = new TimelineArea('timelineArea');
     this.timeline = new Timeline('timeline');
-    this.initLayout();
   }
 
   drawChartLayout() {
@@ -21,19 +27,11 @@ class TimelineLayout extends Area {
     new Plotters.TimelineInfoPlotter().draw(this, selectedInfo.index);
   }
 
-  initLayout() {
-    this.updateTimelineArea(new TimelineArea('timelineArea'));
-  }
-
   updateLayout(place) {
     this.layout(place);
     const { left, right, top, bottom } = place;
     const { rangeWidth } = Manager.instance.dataSource;
     this.timelineArea.layout({ left, right: right - rangeWidth, top, bottom });
-  }
-
-  updateTimelineArea(area) {
-    this.timelineArea = area;
   }
 
   onMouseDown(place) {
@@ -47,86 +45,96 @@ class TimelineLayout extends Area {
   }
 }
 
-class ChartLayout extends Area {
+class ChartLayout extends Layout {
   constructor(option) {
     super(option.name);
-    this.chartArea = {};
-    this.rangeArea = {};
-    this.chartPlotters = option.chartPlotters;
-    this.chartInfoPlotters = option.chartInfoPlotters;
-    this.range = new Range({
-      name: `${option.name}Range`,
-      boundaryGap: option.boundaryGap,
-      indicator: option.indicator,
-    });
-    this.initLayout();
+    this.chart = {
+      area: new ChartArea(`${this.name}Area`),
+      mainPlotter: option.chartPlotters,
+      infoPlotter: option.chartInfoPlotters,
+    };
+    this.range = {
+      area: new RangeArea(`${this.name}Range`),
+      data: new Range({
+        name: `${option.name}Range`,
+        boundaryGap: option.boundaryGap,
+        indicator: option.indicator,
+        chartIndicator: option.chartIndicator,
+      }),
+    };
   }
 
   drawChartLayout() {
     // 更新chart的range
-    this.range.updateRange(this);
+    this.getRangeData().updateRange(this);
     new Plotters.BackgroundGridPlotter().draw(this);
+    // 绘制主视图
+    new Plotters[this.chart.mainPlotter]().draw(this);
     // 绘制range
     new Plotters.RangePlotter().draw(this);
-    // 绘制主视图
-    new Plotters[this.chartPlotters]().draw(this);
   }
 
   drawChartLayoutOverInfo(selectedInfo) {
-    new Plotters[this.chartInfoPlotters]().draw(this, selectedInfo.index);
+    new Plotters[this.chart.infoPlotter]().draw(this, selectedInfo.index);
     this.drawChartLayoutRangeInfo(selectedInfo);
   }
 
   drawChartLayoutRangeInfo(option) {
-    const { top, bottom } = this.rangeArea;
+    const { top, bottom } = this.getRangeArea();
     if (option.y <= top || option.y >= bottom) return;
     new Plotters.RangeInfoPlotter().draw(this, option);
-  }
-
-  // 初始化
-  initLayout() {
-    this.updateChartArea(new ChartArea(`${this.name}Area`));
-    this.updateRangeArea(new RangeArea(`${this.name}Range`));
   }
 
   // 根据area的变化调整layout布局
   updateLayout(place) {
     this.layout(place);
+    const chartArea = this.getChartArea();
+    const rangeArea = this.getRangeArea();
     const { left, right, top, bottom } = place;
     const { rangeWidth } = Manager.instance.dataSource;
-    this.chartArea.layout({ left, right: right - rangeWidth, top, bottom });
-    this.rangeArea.layout({ left: right - rangeWidth, right, top, bottom });
-  }
-
-  // 设置chartArea
-  updateChartArea(area) {
-    this.chartArea = area;
-  }
-
-  // 设置rangeArea
-  updateRangeArea(area) {
-    this.rangeArea = area;
+    chartArea.layout({ left, right: right - rangeWidth, top, bottom });
+    rangeArea.layout({ left: right - rangeWidth, right, top, bottom });
   }
 
   onMouseDown(place) {
     const { x, y } = place;
-    if (this.chartArea.contains(x, y)) this.chartArea.onMouseDown(place);
-    if (this.rangeArea.contains(x, y)) this.rangeArea.onMouseDown(place);
+    const chartArea = this.getChartArea();
+    const rangeArea = this.getRangeArea();
+    if (chartArea.contains(x, y)) chartArea.onMouseDown(place);
+    if (rangeArea.contains(x, y)) rangeArea.onMouseDown(place);
   }
 
   onMouseMove(place, leftMouseDownStatus) {
     const { x, y } = place;
-    if (this.chartArea.contains(x, y)) this.chartArea.onMouseMove(place, leftMouseDownStatus);
-    if (this.rangeArea.contains(x, y)) this.rangeArea.onMouseMove(place, leftMouseDownStatus);
+    const chartArea = this.getChartArea();
+    const rangeArea = this.getRangeArea();
+    if (chartArea.contains(x, y)) chartArea.onMouseMove(place, leftMouseDownStatus);
+    if (rangeArea.contains(x, y)) rangeArea.onMouseMove(place, leftMouseDownStatus);
+  }
+
+  getChartArea() {
+    return this.chart.area;
+  }
+
+  getRangeArea() {
+    return this.range.area;
+  }
+
+  getRangeData() {
+    return this.range.data;
   }
 }
 
 // 整体布局
-export default class MainLayout extends Area {
+export default class MainLayout extends Layout {
   constructor(name) {
     super(name);
     this.layouts = [];
     this.initLayout();
+  }
+
+  getLayouts() {
+    return this.layouts;
   }
 
   // 初始化布局
@@ -147,12 +155,10 @@ export default class MainLayout extends Area {
   }
 
   drawChartLayout() {
-    const { layouts } = this;
-    layouts.forEach(item => {
+    this.layouts.forEach(item => {
       item.drawChartLayout();
     });
   }
-
 
   // 请空over图
   clearOverLayout() {

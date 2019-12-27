@@ -7,61 +7,29 @@ export class Area {
     this.right = 0;
     this.top = 0;
     this.bottom = 0;
-    this.oldPlace = {};
+    this.mouseDownPlace = {};
   }
 
   getName() {
     return this.name;
   }
 
-  getLeft() {
-    return this.left;
-  }
-
-  getRight() {
-    return this.right;
-  }
-
-  getTop() {
-    return this.top;
-  }
-
-  getBottom() {
-    return this.bottom;
-  }
-
   getCenter() {
     return (this.right + this.left) / 2;
   }
 
-  getWidth() {
-    return this.right - this.left;
-  }
-
-  getHeight() {
-    return this.bottom - this.top;
-  }
-
   getPlace() {
     return {
-      left: this.getLeft(),
-      top: this.getTop(),
-      right: this.getRight(),
-      bottom: this.getBottom(),
-    };
-  }
-
-  getRect() {
-    return {
-      x: this.getLeft(),
-      y: this.getTop(),
-      width: this.getWidth(),
-      height: this.getHeight(),
+      left: this.left,
+      top: this.top,
+      right: this.right,
+      bottom: this.bottom,
     };
   }
 
   contains(x, y) {
-    return x >= this.getLeft() && x <= this.getRight() && y >= this.getTop() && y <= this.getBottom();
+    const { left, top, right, bottom } = this.getPlace();
+    return x >= left && x <= right && y >= top && y <= bottom;
   }
 
   layout(place) {
@@ -86,7 +54,7 @@ export class ChartArea extends Area {
   }
 
   onMouseDown(place) {
-    this.oldPlace = place;
+    this.mouseDownPlace = place;
     this.lastMoveX = 0;
     Control.showCursor('move');
     Control.startMove();
@@ -96,9 +64,9 @@ export class ChartArea extends Area {
   // 更新移动起始的触摸点
   updateMoveStartPlace(place) {
     const { x, y } = place;
-    this.oldPlace = {
-      x: x || this.oldPlace.x,
-      y: y || this.oldPlace.y,
+    this.mouseDownPlace = {
+      x: x || this.mouseDownPlace.x,
+      y: y || this.mouseDownPlace.y,
     };
     this.lastMoveX = 0;
   }
@@ -106,7 +74,7 @@ export class ChartArea extends Area {
   onMouseMove(place, status) {
     if (status) {
       Control.showCursor('move');
-      const moveX = place.x - this.oldPlace.x || 0;
+      const moveX = place.x - this.mouseDownPlace.x || 0;
       if (this.lastMoveX !== moveX) {
         const direction = moveX - this.lastMoveX > 0 ? 'right' : 'left';
         this.lastMoveX = moveX;

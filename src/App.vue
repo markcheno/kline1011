@@ -102,7 +102,7 @@ export default {
         name: '现货黄金',
       },
       period: 6,
-      decimalDigits: 2,
+      decimalDigits: 0,
     });
     // this.socketHandle(socket);
   },

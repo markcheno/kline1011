@@ -7,6 +7,8 @@ export default class Range {
     this.boundaryGap = ['0%', '0%'];
     // range的标识字段
     this.indicator = {};
+    // 视图上指标
+    this.chartIndicator = {};
     Object.assign(this, option);
     // range 上的最大值, 最小值
     this.minValue = 0;
@@ -23,12 +25,19 @@ export default class Range {
   // 计算range区间内的大小值 根据该range的配置 及 指标数据综合计算
   calcMaxAndMinByIndicator(data) {
     const { decimalDigits } = Manager.instance.setting;
-    const { indicator, boundaryGap } = this;
+    const { indicator, boundaryGap, chartIndicator } = this;
     let min = Array.prototype.toString.call(indicator.min) === '[object String]' ? Number.MAX_SAFE_INTEGER : indicator.min;
     let max = Array.prototype.toString.call(indicator.max) === '[object String]' ? Number.MIN_SAFE_INTEGER : indicator.max;
+    // 二维数组扁平化
+    const indicatorArray = chartIndicator ? Array.prototype.concat.apply([], Object.values(chartIndicator)) : [];
     data.forEach(item => {
-      if (min > item[indicator.min]) min = item[indicator.min];
-      if (max < item[indicator.max]) max = item[indicator.max];
+      const indicatorValueArray = indicatorArray.map(elemet => item[elemet]);
+      const indicatorMax = [item[indicator.max], ...indicatorValueArray];
+      const indicatorMin = [item[indicator.min], ...indicatorValueArray];
+      const minNow = Math.min(...indicatorMin);
+      const maxNow = Math.max(...indicatorMax);
+      if (min > minNow) min = minNow;
+      if (max < maxNow) max = maxNow;
     });
     const top = boundaryGap[0].split('%')[0] / 100;
     const bottom = boundaryGap[1].split('%')[0] / 100;
@@ -68,9 +77,8 @@ export default class Range {
   // 更新range
   updateRange(layout) {
     this.updateRangeMinAndMAx();
-    const area = layout.rangeArea;
-    const top = area.getTop();
-    const bottom = area.getBottom();
+    const area = layout.getRangeArea();
+    const { top, bottom } = area.getPlace();
     this.height = bottom - top;
     this.top = top;
     this.ratio = this.height / (this.maxValue - this.minValue);

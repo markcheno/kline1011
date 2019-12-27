@@ -243,9 +243,9 @@ export default class DataSource {
     const Font = manager.theme.Default;
     context.font = Font;
     const { layout } = manager;
-    layout.layouts.forEach(item => {
+    layout.getLayouts().forEach(item => {
       if (item.range) {
-        const result = item.range.calcMaxAndMinByIndicator(data);
+        const result = item.getRangeData().calcMaxAndMinByIndicator(data);
         const rangeWidth = Math.max(
           context.measureText(result.min).width,
           context.measureText(result.max).width,
@@ -293,7 +293,7 @@ export default class DataSource {
   // 视图往右移动 first-- last++
   chartToRightMove(x, area, maxOffest) {
     if (this.candleLeftOffest >= 0) {
-      area.updateMoveStartPlace({ x: area.oldPlace.x + x });
+      area.updateMoveStartPlace({ x: area.mouseDownPlace.x + x });
       this.candleLeftOffest = maxOffest;
       this.savedCandleLeftOffest = this.candleLeftOffest;
       this.firstIndex -= 1;
@@ -304,7 +304,7 @@ export default class DataSource {
   // 视图往左移动 first++ last--
   chartToLeftMove(x, area, maxOffest) {
     if (this.candleLeftOffest <= maxOffest) {
-      area.updateMoveStartPlace({ x: area.oldPlace.x + x });
+      area.updateMoveStartPlace({ x: area.mouseDownPlace.x + x });
       this.candleLeftOffest = 0;
       this.savedCandleLeftOffest = this.candleLeftOffest;
       this.firstIndex += 1;

@@ -25,22 +25,24 @@ export default class Setting {
       chartPlotters: 'CandlestickPlotter',
       chartInfoPlotters: 'CandlestickInfoPlotter',
       boundaryGap: ['10%', '10%'],
+      chartIndicator: {
+        MA: ['MA5', 'MA10', 'MA20'],
+      },
       indicator: {
         min: 'low',
         max: 'high',
       },
     }];
-    // {
-    //   name: 'volumeChartLayout',
-    //   chartPlotters: 'VolumePlotter',
-    //   chartInfoPlotters: 'VolumeInfoPlotter',
-    //   boundaryGap: ['15%', '0%'],
-    //   indicator: {
-    //     min: 0,
-    //     max: 'volume',
-    //   },
-    // }
     this.lineChart = [{
+      name: 'volumeChartLayout',
+      chartPlotters: 'VolumePlotter',
+      chartInfoPlotters: 'VolumeInfoPlotter',
+      boundaryGap: ['15%', '0%'],
+      indicator: {
+        min: 0,
+        max: 'volume',
+      },
+    }, {
       name: 'lineChartLayout',
       chartPlotters: 'LineChartPlotter',
       chartInfoPlotters: 'LineChartInfoPlotter',
