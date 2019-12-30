@@ -46,4 +46,12 @@ export default class Kline {
   switchPeriod(period) {
     this.manager.switchPeriod(period);
   }
+
+  switchLine() {
+    this.manager.switchLine();
+  }
+
+  switchCandle() {
+    this.manager.switchCandle();
+  }
 }

@@ -3,6 +3,7 @@ import Setting from '../setting/setting';
 import Theme from '../setting/themes';
 import DataSource from '../data/dataSource';
 import Control from './control';
+import { layoutIndicator } from './indicators';
 // 保存kline的实例
 export default class Manager {
   static instance
@@ -24,15 +25,15 @@ export default class Manager {
   }
 
   setOption(option) {
+    this.setting.init({
+      symbol: option.symbol,
+      period: option.period,
+      decimalDigits: option.decimalDigits,
+    });
     this.option = option;
   }
 
   getOption() {
-    this.setting.init({
-      symbol: this.option.symbol,
-      period: this.option.period,
-      decimalDigits: this.option.decimalDigits,
-    });
     return this.option;
   }
 
@@ -50,6 +51,11 @@ export default class Manager {
 
   // 初始化布局
   initLayout() {
+    const symbol = this.setting.getSymbol().id;
+    const isShowVolume = symbol === 6;
+    if (isShowVolume) {
+      this.setting.addChart(layoutIndicator.volume);
+    }
     this.layout = new MainLayout('mainLayout');
   }
 
@@ -102,6 +108,16 @@ export default class Manager {
 
   switchPeriod(period) {
     this.setting.setPeriod(period);
+    this.requestData();
+  }
+
+  switchLine() {
+    this.setting.setChartType('line');
+    this.requestData();
+  }
+
+  switchCandle() {
+    this.setting.setChartType('candle');
     this.requestData();
   }
 

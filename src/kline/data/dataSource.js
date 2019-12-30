@@ -1,5 +1,5 @@
 import Manager from '../manage/manager';
-import calcIndicator from '../manage/indicators';
+import { calcIndicator } from '../manage/indicators';
 
 export default class DataSource {
   // 更新数据策略
@@ -88,7 +88,6 @@ export default class DataSource {
 
   // loadmore更新数据
   updateData(data) {
-    debugger;
     const appendLength = data.length;
     this.data = data.concat(this.data);
     const needReloadLastIndex = calcIndicator({

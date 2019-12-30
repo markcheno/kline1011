@@ -7,7 +7,8 @@
       :key="index"
       @click="changePeriod(item.type)"
     >{{item.text}}</button>
-    <button>切换分时图</button>
+    <button @click="changeLine">切换分时图</button>
+    <button @click="changeCandle">切换蜡烛图</button>
     <div id="kline_container"></div>
   </div>
 </template>
@@ -102,7 +103,7 @@ export default {
         name: '现货黄金',
       },
       period: 6,
-      decimalDigits: 0,
+      decimalDigits: 2,
     });
     // this.socketHandle(socket);
   },
@@ -112,6 +113,12 @@ export default {
     },
     changePeriod(period) {
       this.kline.switchPeriod(period);
+    },
+    changeLine() {
+      this.kline.switchLine();
+    },
+    changeCandle() {
+      this.kline.switchCandle();
     },
     socketHandle(socket) {
       socket.emit('subscribeDelete', { token: socket.id, qid: ['all'] });

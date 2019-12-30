@@ -10,17 +10,8 @@ export default class Setting {
     };
     this.timelineAreaHeight = 30;
     // candle 蜡烛图 line 分时图
-    this.chartType = 'candle';
+    this.chartType = 'line';
     this.candlechart = [{
-      name: 'volumeChartLayout',
-      chartPlotters: 'VolumePlotter',
-      chartInfoPlotters: 'VolumeInfoPlotter',
-      boundaryGap: ['15%', '0%'],
-      indicator: {
-        min: 0,
-        max: 'volume',
-      },
-    }, {
       name: 'mainChartLayout',
       chartPlotters: 'CandlestickPlotter',
       chartInfoPlotters: 'CandlestickInfoPlotter',
@@ -34,15 +25,6 @@ export default class Setting {
       },
     }];
     this.lineChart = [{
-      name: 'volumeChartLayout',
-      chartPlotters: 'VolumePlotter',
-      chartInfoPlotters: 'VolumeInfoPlotter',
-      boundaryGap: ['15%', '0%'],
-      indicator: {
-        min: 0,
-        max: 'volume',
-      },
-    }, {
       name: 'lineChartLayout',
       chartPlotters: 'LineChartPlotter',
       chartInfoPlotters: 'LineChartInfoPlotter',
@@ -52,6 +34,17 @@ export default class Setting {
         max: 'high',
       },
     }];
+  }
+
+  // 添加视图
+  addChart(item) {
+    const chart = this.chartType === 'candle' ? this.candlechart : this.lineChart;
+    // 去重
+    let isRepeat = false;
+    chart.forEach(element => {
+      if (element.name === item.name) isRepeat = true;
+    });
+    isRepeat || chart.unshift(item);
   }
 
   getChart() {
@@ -75,6 +68,10 @@ export default class Setting {
 
   setDecimalDigits(decimalDigits) {
     this.decimalDigits = decimalDigits;
+  }
+
+  setChartType(type) {
+    this.chartType = type;
   }
 
   getSymbol() {

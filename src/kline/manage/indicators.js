@@ -1,4 +1,29 @@
 // 指标相关
+const layoutIndicator = {
+  volume: {
+    name: 'volumeChartLayout',
+    chartPlotters: 'VolumePlotter',
+    chartInfoPlotters: 'VolumeInfoPlotter',
+    boundaryGap: ['15%', '0%'],
+    indicator: {
+      min: 0,
+      max: 'volume',
+    },
+  },
+  MACD: {
+    name: 'MACDChartLayout',
+    chartPlotters: 'MACDPlotter',
+    chartInfoPlotters: 'MACDInfoPlotter',
+    boundaryGap: ['10%', '10%'],
+    chartIndicator: {
+      MACD: ['DIF', 'DEA'],
+    },
+    indicator: {
+      min: 'MACD',
+      max: 'MACD',
+    },
+  },
+};
 
 // 计算 MA 指标
 function calcMAIndicator(option) {
@@ -29,7 +54,18 @@ function calcMAIndicator(option) {
       calc(item, i, allData[i]);
     });
   }
+  return Math.max(...MASize);
 }
+
+// // 计算基础数 EMA 指数移动平均线
+// function calcEMAIndicator() {
+//   const { allData, appendLength, setting } = option;
+// }
+
+// function calcMACDIndicator(option) {
+//   const { allData, appendLength, decimalDigits, MAArray } = option;
+// }
+
 
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
@@ -60,4 +96,4 @@ function calcIndicator(option) {
   return needReloadLastIndex;
 }
 
-export default calcIndicator;
+export { layoutIndicator, calcIndicator };
