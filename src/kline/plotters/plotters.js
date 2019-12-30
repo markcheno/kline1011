@@ -495,6 +495,7 @@ export class CandlestickInfoPlotter extends Plotter {
 
   draw(layout, index) {
     const chartArea = layout.getChartArea();
+    const chartIndicator = layout.getChartIndicator();
     const { dataSource } = this.manager;
     const context = this.overlayContext;
     const currentData = dataSource.getCurrentData();
@@ -505,7 +506,8 @@ export class CandlestickInfoPlotter extends Plotter {
     const y = top + 15;
     let x = left;
     const textArray = [`开盘价: ${data.open}`, `最低价: ${data.low}`, `最高价: ${data.high}`, `收盘价: ${data.close}`];
-    textArray.forEach(item => {
+    const chartIndicatorArray = Array.prototype.concat.apply([], Object.values(chartIndicator)).map(item => `${item}: ${data[item]}`);
+    chartIndicatorArray.concat(textArray).forEach(item => {
       context.fillText(item, x, y);
       x += context.measureText(item).width + 10;
     });
