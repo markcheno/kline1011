@@ -52,6 +52,8 @@ class ChartLayout extends Layout {
       area: new ChartArea(`${this.name}Area`),
       mainPlotter: option.chartPlotters,
       infoPlotter: option.chartInfoPlotters,
+      chartIndicatorPlotter: 'ChartIndicatorPlotter',
+      chartIndicator: option.chartIndicator,
     };
     this.range = {
       area: new RangeArea(`${this.name}Range`),
@@ -65,11 +67,14 @@ class ChartLayout extends Layout {
   }
 
   drawChartLayout() {
+    const { mainPlotter, chartIndicatorPlotter } = this.chart;
     // 更新chart的range
     this.getRangeData().updateRange(this);
     new Plotters.BackgroundGridPlotter().draw(this);
     // 绘制主视图
-    new Plotters[this.chart.mainPlotter]().draw(this);
+    new Plotters[mainPlotter]().draw(this);
+    // 绘制主视图指标
+    new Plotters[chartIndicatorPlotter]().draw(this);
     // 绘制range
     new Plotters.RangePlotter().draw(this);
   }
@@ -114,6 +119,10 @@ class ChartLayout extends Layout {
 
   getChartArea() {
     return this.chart.area;
+  }
+
+  getChartIndicator() {
+    return this.chart.chartIndicator;
   }
 
   getRangeArea() {

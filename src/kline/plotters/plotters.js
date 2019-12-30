@@ -305,28 +305,20 @@ export class LineChartInfoPlotter extends Plotter {
   }
 }
 
-export class CandlestickPlotter extends Plotter {
+// 主视图 指标
+export class ChartIndicatorPlotter extends Plotter {
   constructor(name) {
     super(name);
-    this.areaRight = 0;
-    const { theme } = this.manager;
-    this.NegativeColor = theme.Color.Negative;
-    this.PositiveColor = theme.Color.Positive;
-    this.GridColor = theme.Color.Grid;
-    this.MALineColor = theme.Line.MA;
-    this.Font = theme.Font.Default;
-    this.maxMin = {
-      min: { x: -1, y: Number.MIN_SAFE_INTEGER, value: 0 },
-      max: { x: -1, y: Number.MAX_SAFE_INTEGER, value: 0 },
-    };
+    this.rangeData = {};
+    this.theme = this.manager.theme;
+    const { dataSource } = this.manager;
+    this.currentData = dataSource.getCurrentData();
+    this.candleLeftOffest = dataSource.getCandleLeftOffest();
+    this.columnWidth = dataSource.getColumnWidth();
+    this.itemCenterOffset = dataSource.getColumnCenter();
   }
 
-  hideLinePoint() {
-    const point = $('#chart_canvasGroup .line-point');
-    point.hide();
-  }
-
-  drawMALines(context, places, option) {
+  drawIndicatorLines(context, places, option) {
     const { color, lineWidth } = option;
     context.beginPath();
     places.forEach((item, index) => {
@@ -342,14 +334,70 @@ export class CandlestickPlotter extends Plotter {
     context.stroke();
   }
 
-  drawMA(data) {
+  drawMA(MAIndicator) {
+    const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
+    const MAObj = {};
+    const MALineColor = theme.Line.MA;
+    MAIndicator.forEach(item => {
+      MAObj[item] = [];
+    });
+    let start = this.candleLeftOffest + itemCenterOffset;
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      // eslint-disable-next-line no-loop-func
+      Object.keys(MAObj).forEach(item => {
+        const MAdata = data[item];
+        MAObj[item].push({
+          x: start,
+          y: rangeData.toY(MAdata),
+        });
+      });
+      start += columnWidth;
+    }
+    // 绘制MA
     const context = this.mainContext;
-    Object.values(data).forEach((item, index) => {
-      this.drawMALines(context, item, {
-        color: this.MALineColor[index],
+    Object.values(MAObj).forEach((item, index) => {
+      this.drawIndicatorLines(context, item, {
+        color: MALineColor[index],
         lineWidth: 1,
       });
     });
+  }
+
+  draw(layout) {
+    this.rangeData = layout.getRangeData();
+    const chartIndicator = layout.getChartIndicator();
+    if (!chartIndicator || !Object.keys(chartIndicator).length) return;
+    Object.keys(chartIndicator).forEach(item => {
+      switch (item) {
+        case 'MA':
+          this.drawMA(chartIndicator[item]);
+          break;
+        default:
+          break;
+      }
+    });
+  }
+}
+
+export class CandlestickPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    this.areaRight = 0;
+    const { theme } = this.manager;
+    this.NegativeColor = theme.Color.Negative;
+    this.PositiveColor = theme.Color.Positive;
+    this.GridColor = theme.Color.Grid;
+    this.Font = theme.Font.Default;
+    this.maxMin = {
+      min: { x: -1, y: Number.MIN_SAFE_INTEGER, value: 0 },
+      max: { x: -1, y: Number.MAX_SAFE_INTEGER, value: 0 },
+    };
+  }
+
+  hideLinePoint() {
+    const point = $('#chart_canvasGroup .line-point');
+    point.hide();
   }
 
   draw(layout) {
@@ -358,7 +406,7 @@ export class CandlestickPlotter extends Plotter {
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
-    const { candleLeftOffest } = dataSource;
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     const { maxMin } = this;
@@ -370,10 +418,6 @@ export class CandlestickPlotter extends Plotter {
     const fillPosRects = [];
     const fillNegRects = [];
     const fillNegLines = [];
-    const MAObj = {};
-    [5, 10, 20].forEach(item => {
-      MAObj[`MA${item}`] = [];
-    });
     pointsPlaces = { x: [], y: [] };
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
@@ -387,16 +431,6 @@ export class CandlestickPlotter extends Plotter {
       pointsPlaces.x.push(leftLineX);
       const rectWidth = 2 * itemCenterOffset;
       const lineRectWidth = 1;
-      // MA线
-      const MAX = columnLeft + itemCenterOffset;
-      // eslint-disable-next-line no-loop-func
-      Object.keys(MAObj).forEach(item => {
-        const MAdata = data[item];
-        MAObj[item].push({
-          x: MAX,
-          y: rangeData.toY(MAdata),
-        });
-      });
       // 蜡烛图最大最小值
       if (highPlace < maxMin.max.y) {
         maxMin.max = {
@@ -440,7 +474,6 @@ export class CandlestickPlotter extends Plotter {
       context.fillStyle = this.NegativeColor;
       this.drawReacts(context, fillNegRects);
     }
-    this.drawMA(MAObj);
     this.hideLinePoint();
     this.drawMaxMin({
       mainContext: context,

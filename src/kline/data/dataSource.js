@@ -1,5 +1,5 @@
 import Manager from '../manage/manager';
-import calcMAIndicator from '../manage/indicators';
+import calcIndicator from '../manage/indicators';
 
 export default class DataSource {
   // 更新数据策略
@@ -48,6 +48,10 @@ export default class DataSource {
     return candleStickMode.itemWidth[this.scale] / 2;
   }
 
+  getCandleLeftOffest() {
+    return this.candleLeftOffest;
+  }
+
   getSpaceWidth() {
     const candleStickMode = DataSource.candleStick;
     return candleStickMode.spaceWidth[this.scale];
@@ -84,19 +88,16 @@ export default class DataSource {
 
   // loadmore更新数据
   updateData(data) {
-    const { decimalDigits } = Manager.instance.setting;
+    debugger;
     const appendLength = data.length;
     this.data = data.concat(this.data);
-    const MAArray = [5, 10, 20];
-    const first = 0;
-    const last = appendLength - 1 + Math.max(...MAArray);
-    calcMAIndicator(this.data, {
-      decimalDigits,
-      range: [first, last],
-      MAArray: [5, 10, 20],
+    const needReloadLastIndex = calcIndicator({
+      allData: this.data,
+      appendLength,
+      setting: Manager.instance.setting,
     });
     // 更新range width
-    this.updateRangeWidth(data.slice(first, last));
+    this.updateRangeWidth(data.slice(0, needReloadLastIndex + 1));
     this.updateCandleCurrentData(appendLength);
   }
 
@@ -151,13 +152,12 @@ export default class DataSource {
 
   // 区别处理蜡烛图和分时数据
   dataFilterHandle(chartType, data) {
-    const { decimalDigits } = Manager.instance.setting;
     if (chartType === 'candle') {
       this.data = data;
-      calcMAIndicator(this.data, {
-        decimalDigits,
-        range: [0, data.length - 1],
-        MAArray: [5, 10, 20],
+      calcIndicator({
+        allData: this.data,
+        appendLength: 0,
+        setting: Manager.instance.setting,
       });
     } else if (chartType === 'line') {
       let line = [];
