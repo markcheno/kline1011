@@ -79,8 +79,9 @@ export class Plotter {
     mainContext.fillStyle = NegativeColor;
     this.drawReact(mainContext, { x: minX + 40, y: minY + 10, width: textMinWidth, height: 20 });
     mainContext.fillStyle = '#ffffff';
-    mainContext.fillText(maxMin.max.value, maxX + 65, maxY - 18);
-    mainContext.fillText(maxMin.min.value, minX + 65, minY + 22);
+    mainContext.textAlign = 'left';
+    mainContext.fillText(maxMin.max.value, maxX + 55, maxY - 18);
+    mainContext.fillText(maxMin.min.value, minX + 55, minY + 22);
   }
 }
 

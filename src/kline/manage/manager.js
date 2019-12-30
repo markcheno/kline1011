@@ -70,6 +70,7 @@ export default class Manager {
 
   // 跳转大小
   onSize(w, h) {
+    const devicePixelRatio = 1;
     const width = w || window.innerWidth;
     const height = h || window.innerHeight;
     const { element } = this.getOption();
@@ -78,10 +79,10 @@ export default class Manager {
       width: `${width}px`,
       height: `${height}px`,
     });
-    this.canvas.mainCanvas.width = width;
-    this.canvas.mainCanvas.height = height;
-    this.canvas.overlayCanvas.width = width;
-    this.canvas.overlayCanvas.height = height;
+    this.canvas.mainCanvas.width = width * devicePixelRatio;
+    this.canvas.mainCanvas.height = height * devicePixelRatio;
+    this.canvas.overlayCanvas.width = width * devicePixelRatio;
+    this.canvas.overlayCanvas.height = height * devicePixelRatio;
     this.dataSource.updateMaxCountInLayout();
   }
 
