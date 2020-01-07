@@ -23,12 +23,27 @@ export class Plotter {
     context.stroke();
   }
 
+  // 绘制不连续的线
   drawLines(context, places) {
     context.beginPath();
     places.forEach(item => {
       const { from, to } = item;
       context.moveTo(from.x, from.y);
       context.lineTo(to.x, to.y);
+    });
+    context.stroke();
+  }
+
+  // 绘制连续的线
+  drawSerialLines(context, places) {
+    context.beginPath();
+    places.forEach((item, index) => {
+      const { x, y } = item;
+      if (index === 0) {
+        context.moveTo(x, y);
+      } else {
+        context.lineTo(x, y);
+      }
     });
     context.stroke();
   }
@@ -335,19 +350,18 @@ export class ChartIndicatorPlotter extends Plotter {
     context.stroke();
   }
 
-  drawMA(MAIndicator) {
+  drawMA(MAIndicator, type) {
     const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
     const MAObj = {};
     const MALineColor = theme.Line.MA;
-    MAIndicator.forEach(item => {
+    MAIndicator.data.forEach(item => {
       MAObj[item] = [];
     });
     let start = this.candleLeftOffest + itemCenterOffset;
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
-      // eslint-disable-next-line no-loop-func
       Object.keys(MAObj).forEach(item => {
-        const MAdata = data[item];
+        const MAdata = data[type][item];
         MAObj[item].push({
           x: start,
           y: rangeData.toY(MAdata),
@@ -368,11 +382,11 @@ export class ChartIndicatorPlotter extends Plotter {
   draw(layout) {
     this.rangeData = layout.getRangeData();
     const chartIndicator = layout.getChartIndicator();
-    if (!chartIndicator || !Object.keys(chartIndicator).length) return;
+    if (!chartIndicator) return;
     Object.keys(chartIndicator).forEach(item => {
       switch (item) {
         case 'MA':
-          this.drawMA(chartIndicator[item]);
+          this.drawMA(chartIndicator[item], layout.chartConfig.sign);
           break;
         default:
           break;
@@ -384,7 +398,6 @@ export class ChartIndicatorPlotter extends Plotter {
 export class CandlestickPlotter extends Plotter {
   constructor(name) {
     super(name);
-    this.areaRight = 0;
     const { theme } = this.manager;
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
@@ -402,7 +415,6 @@ export class CandlestickPlotter extends Plotter {
   }
 
   draw(layout) {
-    const chartArea = layout.getChartArea();
     const rangeData = layout.getRangeData();
     const { dataSource } = this.manager;
     const context = this.mainContext;
@@ -411,8 +423,6 @@ export class CandlestickPlotter extends Plotter {
     const columnWidth = dataSource.getColumnWidth();
     const itemCenterOffset = dataSource.getColumnCenter();
     const { maxMin } = this;
-    const { right } = chartArea.getPlace();
-    this.areaRight = right;
     let columnLeft = candleLeftOffest;
     // 从前往后绘制
     const fillPosLines = [];
@@ -507,8 +517,8 @@ export class CandlestickInfoPlotter extends Plotter {
     const y = top + 15;
     let x = left;
     const textArray = [`开盘价: ${data.open}`, `最低价: ${data.low}`, `最高价: ${data.high}`, `收盘价: ${data.close}`];
-    const chartIndicatorArray = Array.prototype.concat.apply([], Object.values(chartIndicator)).map(item => `${item}: ${data[item]}`);
-    chartIndicatorArray.concat(textArray).forEach(item => {
+    // const chartIndicatorArray = Array.prototype.concat.apply([], Object.values(chartIndicator)).map(item => `${item}: ${data[item]}`);
+    textArray.forEach(item => {
       context.fillText(item, x, y);
       x += context.measureText(item).width + 10;
     });
@@ -741,7 +751,6 @@ export class VolumePlotter extends Plotter {
     super(name);
     const { theme } = this.manager;
     this.paddingBottom = 3;
-    this.areaRight = 0;
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
     this.GridColor = theme.Color.Grid;
@@ -768,7 +777,6 @@ export class VolumePlotter extends Plotter {
       itemCenterOffset = columnWidth / 2;
       columnLeft = 0;
     }
-    this.areaRight = right;
     // 从前往后绘制
     const fillPosRects = [];
     const fillNegRects = [];
@@ -901,4 +909,76 @@ export class SelectionPlotter extends Plotter {
       y,
     };
   }
+}
+
+// 绘制MACD
+export class MACDPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.MACDtheme = theme.Line.MACD;
+  }
+
+  draw(layout) {
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
+    const { dataSource } = this.manager;
+    const { left, right, top } = chartArea.getPlace();
+    const context = this.mainContext;
+    const currentData = dataSource.getCurrentData();
+    const columnWidth = dataSource.getColumnWidth();
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let start = candleLeftOffest + itemCenterOffset;
+    const DIFarray = [];
+    const DEAarray = [];
+    const MACDpositiveArray = [];
+    const MACDnegativeArray = [];
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { DIF, DEA, MACD } = data;
+      const DIFplace = rangeData.toY(DIF);
+      const DEAplace = rangeData.toY(DEA);
+      const MACDplace = rangeData.toY(MACD);
+      const MACDZeroPlace = rangeData.toY(0);
+      // 绘制分割线
+      context.strokeStyle = this.GridColor;
+      this.drawLine(context, {
+        from: { x: left + 0.5, y: top + 0.5 },
+        to: { x: right + 0.5, y: top + 0.5 },
+      });
+      DIFarray.push({
+        x: start,
+        y: DIFplace,
+      });
+      DEAarray.push({
+        x: start,
+        y: DEAplace,
+      });
+      const MACDPlaceObj = {
+        from: { x: start, y: MACDZeroPlace },
+        to: { x: start, y: MACDplace },
+      };
+      MACD > 0 ? MACDpositiveArray.push(MACDPlaceObj) : MACDnegativeArray.push(MACDPlaceObj);
+      start += columnWidth;
+    }
+    context.lineWidth = this.MACDtheme.lineWidth;
+    context.strokeStyle = this.MACDtheme.MACDpositive;
+    this.drawLines(context, MACDpositiveArray);
+    context.strokeStyle = this.MACDtheme.MACDnegative;
+    this.drawLines(context, MACDnegativeArray);
+    context.strokeStyle = this.MACDtheme.DIF;
+    this.drawSerialLines(context, DIFarray);
+    context.strokeStyle = this.MACDtheme.DEA;
+    this.drawSerialLines(context, DEAarray);
+  }
+}
+
+export class MACDInfoPLotter extends Plotter {
+  constructor(name) {
+    super(name);
+  }
+
+  draw(layout) {}
 }

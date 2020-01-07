@@ -49,13 +49,21 @@ export default class Manager {
     this.canvas.overlayContext = overlayContext;
   }
 
-  // 初始化布局
-  initLayout() {
+  // 初始化副图指标
+  initIndicatorChart() {
     const symbol = this.setting.getSymbol().id;
+    const chartType = this.setting.getChartType();
     const isShowVolume = symbol === 6;
+    chartType === 'candle' && this.setting.addChart(layoutIndicator.MACD);
     if (isShowVolume) {
       this.setting.addChart(layoutIndicator.volume);
     }
+  }
+
+  // 初始化布局
+  initLayout() {
+    // 初始化副图指标
+    this.initIndicatorChart();
     this.layout = new MainLayout('mainLayout');
   }
 
@@ -149,7 +157,7 @@ export default class Manager {
     const { datafeed } = this.getOption();
     const { setting } = this;
     // 计算当前蜡烛图最大可显示的数量
-    const requestCount = this.dataSource.maxCountInLayout * 2;
+    const requestCount = 200;
     const { startTime, firstDataRequest } = requestParam;
     datafeed.getBars({
       chartType: setting.chartType,

@@ -48,6 +48,7 @@ class TimelineLayout extends Layout {
 class ChartLayout extends Layout {
   constructor(option) {
     super(option.name);
+    this.chartConfig = option.chartConfig;
     this.chart = {
       area: new ChartArea(`${this.name}Area`),
       mainPlotter: option.chartPlotters,
@@ -60,7 +61,7 @@ class ChartLayout extends Layout {
       data: new Range({
         name: `${option.name}Range`,
         boundaryGap: option.boundaryGap,
-        indicator: option.indicator,
+        chartConfig: option.chartConfig,
         chartIndicator: option.chartIndicator,
       }),
     };

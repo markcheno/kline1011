@@ -26,6 +26,7 @@ module.exports = {
     'no-param-reassign': 'off',
     'no-continue': 'off',
     'no-loop-func': 'off',
+    'for-direction': 'off',
   },
   parserOptions: {
     parser: 'babel-eslint',

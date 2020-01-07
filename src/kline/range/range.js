@@ -6,7 +6,7 @@ export default class Range {
     // 两边留白策略
     this.boundaryGap = ['0%', '0%'];
     // range的标识字段
-    this.indicator = {};
+    this.chartConfig = {};
     // 视图上指标
     this.chartIndicator = {};
     Object.assign(this, option);
@@ -22,30 +22,74 @@ export default class Range {
     this.gradations = [];
   }
 
-  // 计算range区间内的大小值 根据该range的配置 及 指标数据综合计算
+  // 计算range区间内的大小值 根据该主图的配置 及 对应指标数据综合计算
   calcMaxAndMinByIndicator(data) {
     const { decimalDigits } = Manager.instance.setting;
-    const { indicator, boundaryGap, chartIndicator } = this;
-    let min = Array.prototype.toString.call(indicator.min) === '[object String]' ? Number.MAX_SAFE_INTEGER : indicator.min;
-    let max = Array.prototype.toString.call(indicator.max) === '[object String]' ? Number.MIN_SAFE_INTEGER : indicator.max;
-    // 二维数组扁平化
-    const indicatorArray = chartIndicator ? Array.prototype.concat.apply([], Object.values(chartIndicator)) : [];
-    data.forEach(item => {
-      const indicatorValueArray = indicatorArray.map(elemet => item[elemet]);
-      const indicatorMax = [item[indicator.max], ...indicatorValueArray];
-      const indicatorMin = [item[indicator.min], ...indicatorValueArray];
-      const minNow = Math.min(...indicatorMin);
-      const maxNow = Math.max(...indicatorMax);
+    const { chartConfig, boundaryGap, chartIndicator } = this;
+    const chartType = chartConfig.sign;
+    const signArray = [];
+    switch (chartType) {
+      case 'Candle':
+        signArray.push({ value: 'high' });
+        signArray.push({ value: 'low' });
+        break;
+      case 'Line':
+        signArray.push({ value: 'close' });
+        break;
+      case 'Volume':
+        signArray.push({ value: 'volume' });
+        signArray.push({ value: 0 });
+        break;
+      case 'MACD':
+        signArray.push({ value: 'MACD' });
+        signArray.push({ value: 'DIF' });
+        signArray.push({ value: 'DEA' });
+        break;
+      default:
+        break;
+    }
+    chartIndicator && Object.keys(chartIndicator).forEach(item => {
+      switch (item) {
+        case 'MA':
+          chartIndicator.MA.data.forEach(MAitem => {
+            signArray.push({
+              parent: chartType,
+              value: MAitem,
+            });
+          });
+          break;
+        default:
+          break;
+      }
+    });
+    let min = Number.MAX_SAFE_INTEGER;
+    let max = Number.MIN_SAFE_INTEGER;
+    data.forEach(dataItem => {
+      const valueArray = signArray.map(signItem => {
+        let value;
+        const signItemValue = signItem.value;
+        const signItemParent = signItem.parent;
+        if (signItemParent) {
+          value = typeof signItemValue === 'string' ? dataItem[signItemParent][signItemValue] : signItemValue;
+        } else {
+          value = typeof signItemValue === 'string' ? dataItem[signItemValue] : signItemValue;
+        }
+        return value;
+      });
+      const minNow = Math.min(...valueArray);
+      const maxNow = Math.max(...valueArray);
       if (min > minNow) min = minNow;
       if (max < maxNow) max = maxNow;
     });
     const top = boundaryGap[0].split('%')[0] / 100;
     const bottom = boundaryGap[1].split('%')[0] / 100;
     const reduce = max - min;
-    return {
+    // 不同chart对最大最小值会有不同的处理, 比如MACD
+    const dealResult = this.dealMaxAndMinByType({
       min: (min - reduce * bottom).toFixed(decimalDigits),
       max: (max + reduce * top).toFixed(decimalDigits),
-    };
+    });
+    return dealResult;
   }
 
   updateRangeMinAndMAx() {
@@ -105,8 +149,11 @@ export default class Range {
     return interval;
   }
 
-  // 更新刻度
+  // 更新range刻度
   updateGradations() {
+    // 判断该range刻度是否需要单独处理
+    const result = this.isOtheGradations(this.chartConfig.sign);
+    if (result) return;
     const { decimalDigits } = Manager.instance.setting;
     const interval = this.calcInterval();
     this.gradations = [];
@@ -119,5 +166,64 @@ export default class Range {
       });
       start -= interval;
     } while (start > this.minValue);
+  }
+
+
+  // 判断该range刻度是否需要单独处理
+  isOtheGradations(type) {
+    let result = false;
+    switch (type) {
+      case 'MACD':
+        this.updateMACDgradations();
+        result = true;
+        break;
+      default:
+        break;
+    }
+    return result;
+  }
+
+  // 不同chart对最大最小值会有不同的处理, 比如MACD
+  dealMaxAndMinByType(data) {
+    if (this.chartConfig.sign === 'MACD') {
+      return this.updateMACDmaxAndMin(data);
+    }
+    return data;
+  }
+
+  // MACD固定式最大最小值
+  updateMACDmaxAndMin(data) {
+    let { min, max } = data;
+    const maxAbs = Math.max(Math.abs(min), Math.abs(max));
+    if (max <= 0) {
+      max = maxAbs;
+    } else if (min >= 0) {
+      min = -maxAbs;
+    } else if (Math.abs(min) < Math.abs(max)) {
+      min = -maxAbs;
+    } else {
+      max = maxAbs;
+    }
+    return { min, max };
+  }
+
+  // MACD固定式刻度
+  updateMACDgradations() {
+    const { minValue, maxValue } = this;
+    const topValue = 0.8 * maxValue;
+    const bottomValue = 0.8 * minValue;
+    this.gradations = [];
+    this.gradations.push({
+      text: Number(topValue).toFixed(2),
+      y: this.toY(topValue),
+    });
+    this.gradations.push({
+      text: Number(bottomValue).toFixed(2),
+      y: this.toY(bottomValue),
+    });
+    this.gradations.push({
+      text: '0.00',
+      y: this.toY(0),
+    });
   }
 }

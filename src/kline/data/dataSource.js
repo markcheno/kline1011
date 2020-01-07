@@ -153,11 +153,6 @@ export default class DataSource {
   dataFilterHandle(chartType, data) {
     if (chartType === 'candle') {
       this.data = data;
-      calcIndicator({
-        allData: this.data,
-        appendLength: 0,
-        setting: Manager.instance.setting,
-      });
     } else if (chartType === 'line') {
       let line = [];
       const lineTimeArray = [];
@@ -188,6 +183,11 @@ export default class DataSource {
       this.lastIndex = maxIndex - 1;
       this.data = line;
     }
+    calcIndicator({
+      allData: this.data,
+      appendLength: 0,
+      setting: Manager.instance.setting,
+    });
   }
 
   // 初始化当前蜡烛视图数据

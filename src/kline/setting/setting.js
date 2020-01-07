@@ -10,28 +10,29 @@ export default class Setting {
     };
     this.timelineAreaHeight = 30;
     // candle 蜡烛图 line 分时图
-    this.chartType = 'line';
+    this.chartType = 'candle';
     this.candlechart = [{
       name: 'mainChartLayout',
       chartPlotters: 'CandlestickPlotter',
       chartInfoPlotters: 'CandlestickInfoPlotter',
       boundaryGap: ['10%', '10%'],
       chartIndicator: {
-        MA: ['MA5', 'MA10', 'MA20'],
+        MA: {
+          sign: 'close',
+          data: ['MA5', 'MA10', 'MA20'],
+        },
       },
-      indicator: {
-        min: 'low',
-        max: 'high',
+      chartConfig: {
+        sign: 'Candle',
       },
     }];
     this.lineChart = [{
       name: 'lineChartLayout',
       chartPlotters: 'LineChartPlotter',
       chartInfoPlotters: 'LineChartInfoPlotter',
-      boundaryGap: ['10%', '50%'],
-      indicator: {
-        min: 'low',
-        max: 'high',
+      boundaryGap: ['20%', '50%'],
+      chartConfig: {
+        sign: 'Line',
       },
     }];
   }
@@ -68,6 +69,10 @@ export default class Setting {
 
   setDecimalDigits(decimalDigits) {
     this.decimalDigits = decimalDigits;
+  }
+
+  getChartType() {
+    return this.chartType;
   }
 
   setChartType(type) {
