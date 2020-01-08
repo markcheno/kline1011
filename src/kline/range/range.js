@@ -24,8 +24,7 @@ export default class Range {
 
   // 计算range区间内的大小值 根据该主图的配置 及 对应指标数据综合计算
   calcMaxAndMinByIndicator(data) {
-    const { decimalDigits } = Manager.instance.setting;
-    const { chartConfig, boundaryGap, chartIndicator } = this;
+    const { chartConfig, chartIndicator } = this;
     const chartType = chartConfig.sign;
     const signArray = [];
     switch (chartType) {
@@ -81,13 +80,10 @@ export default class Range {
       if (min > minNow) min = minNow;
       if (max < maxNow) max = maxNow;
     });
-    const top = boundaryGap[0].split('%')[0] / 100;
-    const bottom = boundaryGap[1].split('%')[0] / 100;
-    const reduce = max - min;
     // 不同chart对最大最小值会有不同的处理, 比如MACD
     const dealResult = this.dealMaxAndMinByType({
-      min: (min - reduce * bottom).toFixed(decimalDigits),
-      max: (max + reduce * top).toFixed(decimalDigits),
+      min,
+      max,
     });
     return dealResult;
   }
@@ -177,6 +173,10 @@ export default class Range {
         this.updateMACDgradations();
         result = true;
         break;
+      case 'Volume':
+        this.updateVolumeGradations();
+        result = true;
+        break;
       default:
         break;
     }
@@ -185,14 +185,27 @@ export default class Range {
 
   // 不同chart对最大最小值会有不同的处理, 比如MACD
   dealMaxAndMinByType(data) {
+    const { decimalDigits } = Manager.instance.setting;
+    const { boundaryGap } = this;
+    const { min, max } = data;
+    const topBoundaryGap = boundaryGap[0].split('%')[0] / 100;
+    const bottomBoundaryGap = boundaryGap[1].split('%')[0] / 100;
+    const reduce = max - min;
     if (this.chartConfig.sign === 'MACD') {
-      return this.updateMACDmaxAndMin(data);
+      return this.updateMACDmaxAndMin(data, {
+        topBoundaryGap,
+        bottomBoundaryGap,
+      });
     }
-    return data;
+    return {
+      min: (min - reduce * bottomBoundaryGap).toFixed(decimalDigits),
+      max: (max + reduce * topBoundaryGap).toFixed(decimalDigits),
+    };
   }
 
   // MACD固定式最大最小值
-  updateMACDmaxAndMin(data) {
+  updateMACDmaxAndMin(data, option) {
+    const { bottomBoundaryGap, topBoundaryGap } = option;
     let { min, max } = data;
     const maxAbs = Math.max(Math.abs(min), Math.abs(max));
     if (max <= 0) {
@@ -204,14 +217,20 @@ export default class Range {
     } else {
       max = maxAbs;
     }
-    return { min, max };
+    const reduce = max - min;
+    return {
+      min: (min - reduce * bottomBoundaryGap).toFixed(2),
+      max: (max + reduce * topBoundaryGap).toFixed(2),
+    };
   }
 
   // MACD固定式刻度
   updateMACDgradations() {
-    const { minValue, maxValue } = this;
-    const topValue = 0.7 * maxValue;
-    const bottomValue = 0.7 * minValue;
+    const { minValue, maxValue, boundaryGap } = this;
+    const boundaryGapTop = boundaryGap[0].split('%')[0] / 100;
+    const boundaryGapBottom = boundaryGap[1].split('%')[0] / 100;
+    const topValue = (1 - boundaryGapTop) * maxValue;
+    const bottomValue = (1 - boundaryGapBottom) * minValue;
     this.gradations = [];
     this.gradations.push({
       text: Number(topValue).toFixed(2),
@@ -224,6 +243,21 @@ export default class Range {
     this.gradations.push({
       text: '0.00',
       y: this.toY(0),
+    });
+  }
+
+  // 成交量
+  updateVolumeGradations() {
+    // minValue,
+    const { maxValue, boundaryGap } = this;
+    const boundaryGapTop = boundaryGap[0].split('%')[0] / 100;
+    // const boundaryGapBottom = boundaryGap[1].split('%')[0] / 100;
+    const topValue = (1 - boundaryGapTop) * maxValue;
+    // const bottomValue = (1 - boundaryGapBottom) * minValue;
+    this.gradations = [];
+    this.gradations.push({
+      text: Number(topValue).toFixed(0),
+      y: this.toY(topValue),
     });
   }
 }

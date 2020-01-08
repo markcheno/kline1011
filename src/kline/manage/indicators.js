@@ -13,7 +13,7 @@ const layoutIndicator = {
     name: 'MACDChartLayout',
     chartPlotters: 'MACDPlotter',
     chartInfoPlotters: 'MACDInfoPLotter',
-    boundaryGap: ['30%%', '30%'],
+    boundaryGap: ['30%', '30%'],
     chartConfig: {
       sign: 'MACD',
       data: {
