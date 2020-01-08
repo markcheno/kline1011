@@ -210,8 +210,8 @@ export default class Range {
   // MACD固定式刻度
   updateMACDgradations() {
     const { minValue, maxValue } = this;
-    const topValue = 0.8 * maxValue;
-    const bottomValue = 0.8 * minValue;
+    const topValue = 0.7 * maxValue;
+    const bottomValue = 0.7 * minValue;
     this.gradations = [];
     this.gradations.push({
       text: Number(topValue).toFixed(2),
