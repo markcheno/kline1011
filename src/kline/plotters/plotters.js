@@ -159,6 +159,7 @@ export class BackgroundGridPlotter extends Plotter {
   }
 }
 
+// 分时图
 export class LineChartPlotter extends Plotter {
   constructor(name) {
     super(name);
@@ -218,13 +219,10 @@ export class LineChartPlotter extends Plotter {
     const context = this.mainContext;
     const data = dataSource.getCurrentData();
     const places = [];
-    let priceToTal = 0;
     for (let i = 0; i < data.length; i++) {
       if (data[i]) {
-        const { close } = data[i];
-        priceToTal += close;
         const x = i * interval;
-        const y = rangeData.toY(priceToTal / (i + 1));
+        const y = rangeData.toY(data[i].average);
         places.push({
           x, y,
         });
@@ -321,7 +319,7 @@ export class LineChartInfoPlotter extends Plotter {
   }
 }
 
-// 主视图 指标
+// chart 视图指标
 export class ChartIndicatorPlotter extends Plotter {
   constructor(name) {
     super(name);
@@ -395,6 +393,122 @@ export class ChartIndicatorPlotter extends Plotter {
   }
 }
 
+// 主视图上显示的信息 (蜡烛图/分时图) 高开低收/均线
+export class MainInfoPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.Font = theme.Font.Default;
+    this.NegativeColor = theme.Color.Negative;
+    this.PositiveColor = theme.Color.Positive;
+    this.FontColor = theme.Color.Normal;
+  }
+
+  // param: open/close/hign/low
+  getFontColor(type, data, preData) {
+    // 开盘价
+    const { open } = data;
+    const nowValue = data[type];
+    const preValue = preData ? preData[type] : open;
+    if (type === 'time') return this.FontColor;
+    if (nowValue === preValue) return this.FontColor;
+    return nowValue > preValue ? this.PositiveColor : this.NegativeColor;
+  }
+
+  draw(layout, index) {
+    // 判断当前视图中是否有蜡烛图, 分时图
+    const MainLayout = layout.getLayouts().find(item => item.chartConfig && (item.chartConfig.sign === 'Candle' || item.chartConfig.sign === 'Line'));
+    if (!MainLayout) return;
+    const context = this.overlayContext;
+    const { dataSource } = this.manager;
+    const { maxCountInArea } = dataSource;
+    const currentData = dataSource.getCurrentData();
+    const chartConfig = MainLayout.getChartConfig();
+    const chartSign = chartConfig.sign;
+    const data = currentData[index];
+    const preData = currentData[index - 1];
+    const { left, right, top } = MainLayout.getPlace();
+    const direction = index < (maxCountInArea / 2) ? 'right' : 'left';
+    context.font = this.Font;
+    if (chartSign === 'Candle') {
+      // 绘制蜡烛图的高开低收
+      const textArray = [{
+        label: '时间',
+        // eslint-disable-next-line no-undef
+        value: moment(data.time).format('YYYY-MM-DD'),
+        color: this.getFontColor('time', data, preData),
+      }, {
+        label: '开盘价',
+        value: data.open,
+        color: this.getFontColor('open', data, preData),
+      }, {
+        label: '最低价',
+        value: data.low,
+        color: this.getFontColor('low', data, preData),
+      }, {
+        label: '最高价',
+        value: data.high,
+        color: this.getFontColor('high', data, preData),
+      }, {
+        label: '收盘价',
+        value: data.close,
+        color: this.getFontColor('close', data, preData),
+      }];
+      const widthArray = textArray.map(item => context.measureText(`${item.label}${item.value}`).width);
+      const rectWidth = Math.max(...widthArray) + 50;
+      const distance = ((right - left) / 2 - rectWidth) / 4;
+      const x = direction === 'left' ? left + distance : right - distance - 2 * rectWidth;
+      context.fillStyle = 'rgba(247,247,247, .93)';
+      this.drawReact(context, {
+        x,
+        y: top + 20,
+        width: rectWidth,
+        height: textArray.length * 20 + 30,
+      });
+      let textY = top + 50;
+      textArray.forEach(item => {
+        const { label, value } = item;
+        context.fillStyle = this.FontColor;
+        context.textAlign = 'left';
+        context.fillText(label, x + 10, textY);
+        context.fillStyle = item.color;
+        context.textAlign = 'right';
+        context.fillText(value, x + rectWidth - 10, textY);
+        textY += 20;
+      });
+    } else if (chartSign === 'Line') {
+      // 绘制分时的均线, 当前价, 时间
+    }
+  }
+}
+
+// chart 视图 上显示的信息
+export class ChartInfoPlotters extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.Font = theme.Font.Default;
+  }
+
+  draw(layout, index) {
+    const { dataSource } = this.manager;
+    // const context = this.overlayContext;
+    const currentData = dataSource.getCurrentData();
+    const chartConfig = layout.getChartConfig();
+    const chartSign = chartConfig.sign;
+    const data = currentData[index];
+    switch (chartSign) {
+      case 'Volume':
+        break;
+      case 'MACD':
+        break;
+      default:
+        break;
+    }
+  }
+}
+
+// 蜡烛图
 export class CandlestickPlotter extends Plotter {
   constructor(name) {
     super(name);
@@ -496,35 +610,7 @@ export class CandlestickPlotter extends Plotter {
   }
 }
 
-export class CandlestickInfoPlotter extends Plotter {
-  constructor(name) {
-    super(name);
-    const { theme } = this.manager;
-    this.GridColor = theme.Color.Grid;
-    this.Font = theme.Font.Default;
-  }
-
-  draw(layout, index) {
-    const chartArea = layout.getChartArea();
-    const chartIndicator = layout.getChartIndicator();
-    const { dataSource } = this.manager;
-    const context = this.overlayContext;
-    const currentData = dataSource.getCurrentData();
-    const { left, top } = chartArea.getPlace();
-    const data = currentData[index];
-    context.font = this.Font;
-    context.fillStyle = this.GridColor;
-    const y = top + 15;
-    let x = left;
-    const textArray = [`开盘价: ${data.open}`, `最低价: ${data.low}`, `最高价: ${data.high}`, `收盘价: ${data.close}`];
-    // const chartIndicatorArray = Array.prototype.concat.apply([], Object.values(chartIndicator)).map(item => `${item}: ${data[item]}`);
-    textArray.forEach(item => {
-      context.fillText(item, x, y);
-      x += context.measureText(item).width + 10;
-    });
-  }
-}
-
+// 时间轴
 export class TimelinePlotter extends Plotter {
   constructor(name) {
     super(name);
@@ -647,10 +733,12 @@ export class TimelineInfoPlotter extends Plotter {
       height: 20,
     });
     context.fillStyle = '#ffffff';
+    context.textAlign = 'left';
     context.fillText(time, leftX, top + 15);
   }
 }
 
+// range轴
 export class RangePlotter extends Plotter {
   constructor(name) {
     super(name);
@@ -735,6 +823,7 @@ export class RangeInfoPlotter extends Plotter {
     const textWidth = context.measureText(value).width;
     context.font = this.Font;
     context.fillStyle = this.GridColor;
+    context.textAlign = 'left';
     this.drawReact(context, {
       x: left,
       y: y - 10,

@@ -5,6 +5,7 @@ export default class Theme {
       Negative: '#2fa69a',
       Background: '#fff',
       BackgroundGrid: '#333',
+      Normal: '#333',
       Grid: '#333',
       BackgroundGridColor: '#eee',
     };

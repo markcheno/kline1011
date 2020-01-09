@@ -25,6 +25,19 @@ const layoutIndicator = {
   },
 };
 
+// 计算分时图上的均线
+function calcAverageLine(option) {
+  const { allData, decimalDigits } = option;
+  let priceToTal = 0;
+  allData.forEach((item, index) => {
+    if (item) {
+      const { close } = item;
+      priceToTal += close;
+      item.average = (priceToTal / (index + 1)).toFixed(decimalDigits);
+    }
+  });
+}
+
 // 计算 MA 指标
 function calcMAIndicator(option) {
   const { type, allData, appendLength, decimalDigits, MAConfig } = option;
@@ -129,6 +142,12 @@ function calcIndicator(option) {
           allData,
           appendLength,
           MACDConfig: item.chartConfig,
+          decimalDigits,
+        });
+        break;
+      case 'Line':
+        needReloadLastIndex = calcAverageLine({
+          allData,
           decimalDigits,
         });
         break;

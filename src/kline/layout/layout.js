@@ -52,8 +52,6 @@ class ChartLayout extends Layout {
     this.chart = {
       area: new ChartArea(`${this.name}Area`),
       mainPlotter: option.chartPlotters,
-      infoPlotter: option.chartInfoPlotters,
-      chartIndicatorPlotter: 'ChartIndicatorPlotter',
       chartIndicator: option.chartIndicator,
     };
     this.range = {
@@ -68,20 +66,20 @@ class ChartLayout extends Layout {
   }
 
   drawChartLayout() {
-    const { mainPlotter, chartIndicatorPlotter } = this.chart;
+    const { mainPlotter } = this.chart;
     // 更新chart的range
     this.getRangeData().updateRange(this);
     new Plotters.BackgroundGridPlotter().draw(this);
     // 绘制主视图
     new Plotters[mainPlotter]().draw(this);
     // 绘制主视图指标
-    new Plotters[chartIndicatorPlotter]().draw(this);
+    new Plotters.ChartIndicatorPlotter().draw(this);
     // 绘制range
     new Plotters.RangePlotter().draw(this);
   }
 
   drawChartLayoutOverInfo(selectedInfo) {
-    new Plotters[this.chart.infoPlotter]().draw(this, selectedInfo.index);
+    new Plotters.ChartInfoPlotters().draw(this, selectedInfo.index);
     this.drawChartLayoutRangeInfo(selectedInfo);
   }
 
@@ -120,6 +118,10 @@ class ChartLayout extends Layout {
 
   getChartArea() {
     return this.chart.area;
+  }
+
+  getChartConfig() {
+    return this.chartConfig;
   }
 
   getChartIndicator() {
@@ -184,6 +186,7 @@ export default class MainLayout extends Layout {
 
   // 绘制over图上的info信息
   drawSelectionInfo(selectedInfo) {
+    new Plotters.MainInfoPlotter().draw(this, selectedInfo.index);
     this.layouts.forEach(item => {
       item.drawChartLayoutOverInfo(selectedInfo);
     });
