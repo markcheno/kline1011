@@ -157,7 +157,7 @@ export default class Manager {
     const { datafeed } = this.getOption();
     const { setting } = this;
     // 计算当前蜡烛图最大可显示的数量
-    const requestCount = 200;
+    const requestCount = 199;
     const { startTime, firstDataRequest } = requestParam;
     datafeed.getBars({
       chartType: setting.chartType,

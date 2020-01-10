@@ -17,9 +17,13 @@ export default class Setting {
       chartInfoPlotters: 'CandlestickInfoPlotter',
       boundaryGap: ['10%', '10%'],
       chartIndicator: {
-        MA: {
+        // MA: {
+        //   sign: 'close',
+        //   data: ['MA5', 'MA10', 'MA20'],
+        // },
+        BOLL: {
           sign: 'close',
-          data: ['MA5', 'MA10', 'MA20'],
+          N: 20,
         },
       },
       chartConfig: {

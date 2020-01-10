@@ -23,6 +23,12 @@ export default class Theme {
         MACDpositive: '#ed5555',
         MACDnegative: '#2fa69a',
       },
+      BOLL: {
+        lineWidth: 1.5,
+        MID: '#406fa9',
+        UP: '#d84028',
+        LOW: '#468d33',
+      },
     };
     this.Font = {
       Default: '12px Tahoma',

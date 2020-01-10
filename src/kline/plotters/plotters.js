@@ -348,6 +348,7 @@ export class ChartIndicatorPlotter extends Plotter {
     context.stroke();
   }
 
+  // Ma
   drawMA(MAIndicator, type) {
     const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
     const MAObj = {};
@@ -377,6 +378,35 @@ export class ChartIndicatorPlotter extends Plotter {
     });
   }
 
+  // BOLL
+  drawBOLL(BOLLIndicator, type) {
+    const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
+    const context = this.mainContext;
+    const BOLLColor = theme.Line.BOLL;
+    const BOLLPlaces = {
+      MID: [],
+      UP: [],
+      LOW: [],
+    };
+    let start = this.candleLeftOffest + itemCenterOffset;
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      ['MID', 'UP', 'LOW'].forEach(item => {
+        BOLLPlaces[item].push({
+          x: start,
+          y: rangeData.toY(data[type][item]),
+        });
+      });
+      start += columnWidth;
+    }
+    context.lineWidth = BOLLColor.lineWidth;
+    Object.keys(BOLLPlaces).forEach(item => {
+      context.strokeStyle = BOLLColor[item];
+      this.drawSerialLines(context, BOLLPlaces[item]);
+    });
+  }
+
+
   draw(layout) {
     this.rangeData = layout.getRangeData();
     const chartIndicator = layout.getChartIndicator();
@@ -385,6 +415,9 @@ export class ChartIndicatorPlotter extends Plotter {
       switch (item) {
         case 'MA':
           this.drawMA(chartIndicator[item], layout.chartConfig.sign);
+          break;
+        case 'BOLL':
+          this.drawBOLL(chartIndicator[item], layout.chartConfig.sign);
           break;
         default:
           break;

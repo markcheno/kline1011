@@ -67,12 +67,47 @@ function calcMAIndicator(option) {
     }
   };
   for (let i = start; i <= end; i++) {
-    allData[i][type] = {};
+    if (!allData[i][type]) allData[i][type] = {};
     Object.keys(total).forEach(item => {
       calc(item, i, allData[i]);
     });
   }
   return maxMASize;
+}
+
+function calcBOLLIndicator(option) {
+  const { type, allData, appendLength, decimalDigits, BOLLConfig } = option;
+  // 计算中轨线 MID
+  const middleReloadIndex = calcMAIndicator(Object.assign(option, {
+    MAConfig: {
+      sign: BOLLConfig.sign,
+      data: [`MA${BOLLConfig.N}`],
+    },
+  }));
+  // 获得对应index 的中轨线
+  const getMidByIndex = (index) => Number(allData[index][type][`MA${BOLLConfig.N}`]);
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = appendLength - 1 + middleReloadIndex;
+  }
+  for (let i = start; i <= end; i++) {
+    const dataItem = allData[i];
+    const MID = getMidByIndex(i);
+    let distanceTotal = 0;
+    let count = 0;
+    for (let NIndex = i - BOLLConfig.N + 1; NIndex <= i; NIndex++) {
+      if (allData[NIndex]) {
+        distanceTotal += Math.pow((allData[NIndex][BOLLConfig.sign] - MID), 2);
+        count++;
+      }
+    }
+    const BOLL = Math.sqrt(distanceTotal / count).toFixed(decimalDigits);
+    dataItem[type].MID = MID;
+    dataItem[type].UP = (MID + 2 * BOLL).toFixed(decimalDigits);
+    dataItem[type].LOW = (MID - 2 * BOLL).toFixed(decimalDigits);
+  }
+  return middleReloadIndex;
 }
 
 // 计算基础数 EMA 指数移动平均线 indicator: 指标名称 N: 周期
@@ -163,6 +198,15 @@ function calcIndicator(option) {
             allData,
             appendLength,
             MAConfig: chartIndicator.MA,
+            decimalDigits,
+          });
+          break;
+        case 'BOLL':
+          maxReloadIndex = calcBOLLIndicator({
+            type,
+            allData,
+            appendLength,
+            BOLLConfig: chartIndicator.BOLL,
             decimalDigits,
           });
           break;

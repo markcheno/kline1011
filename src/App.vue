@@ -47,6 +47,8 @@ class Datafeed {
             close: Number(item.c),
             time: item.ts,
             volume: Number(item.v),
+            // eslint-disable-next-line no-undef
+            day: moment(item.ts).format('YYYY-MM-DD'),
           }));
           onHistoryCallback(candle, {
             firstDataRequest,

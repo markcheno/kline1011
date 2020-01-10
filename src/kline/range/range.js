@@ -57,6 +57,14 @@ export default class Range {
             });
           });
           break;
+        case 'BOLL':
+          ['MID', 'UP', 'LOW'].forEach(BOLLitem => {
+            signArray.push({
+              parent: chartType,
+              value: BOLLitem,
+            });
+          });
+          break;
         default:
           break;
       }
@@ -69,14 +77,19 @@ export default class Range {
         const signItemValue = signItem.value;
         const signItemParent = signItem.parent;
         if (signItemParent) {
-          value = typeof signItemValue === 'string' ? dataItem[signItemParent][signItemValue] : signItemValue;
+          value = typeof signItemValue === 'string' ? (dataItem[signItemParent][signItemValue] || 0) : signItemValue;
         } else {
-          value = typeof signItemValue === 'string' ? dataItem[signItemValue] : signItemValue;
+          value = typeof signItemValue === 'string' ? (dataItem[signItemValue] || 0) : signItemValue;
         }
         return value;
       });
-      const minNow = Math.min(...valueArray);
-      const maxNow = Math.max(...valueArray);
+      let minNow = Math.min(...valueArray);
+      let maxNow = Math.max(...valueArray);
+      if (window.isNaN(minNow) || window.isNaN(maxNow)) {
+        console.error('range 极限值计算错误');
+        minNow = 0;
+        maxNow = 0;
+      }
       if (min > minNow) min = minNow;
       if (max < maxNow) max = maxNow;
     });
