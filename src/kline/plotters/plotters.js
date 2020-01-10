@@ -402,10 +402,11 @@ export class MainInfoPlotter extends Plotter {
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
     this.FontColor = theme.Color.Normal;
+    this.AverageLineColor = theme.Line.averageLineColor;
   }
 
   // param: open/close/hign/low
-  getFontColor(type, data, preData) {
+  getCandleFontColor(type, data, preData) {
     // 开盘价
     const { open } = data;
     const nowValue = data[type];
@@ -413,6 +414,12 @@ export class MainInfoPlotter extends Plotter {
     if (type === 'time') return this.FontColor;
     if (nowValue === preValue) return this.FontColor;
     return nowValue > preValue ? this.PositiveColor : this.NegativeColor;
+  }
+
+  getLineFontColor(close, open) {
+    if (close === open) return this.FontColor;
+    if (close > open) return this.PositiveColor;
+    return this.NegativeColor;
   }
 
   draw(layout, index) {
@@ -436,23 +443,23 @@ export class MainInfoPlotter extends Plotter {
         label: '时间',
         // eslint-disable-next-line no-undef
         value: moment(data.time).format('YYYY-MM-DD'),
-        color: this.getFontColor('time', data, preData),
+        color: this.getCandleFontColor('time', data, preData),
       }, {
         label: '开盘价',
         value: data.open,
-        color: this.getFontColor('open', data, preData),
+        color: this.getCandleFontColor('open', data, preData),
       }, {
         label: '最低价',
         value: data.low,
-        color: this.getFontColor('low', data, preData),
+        color: this.getCandleFontColor('low', data, preData),
       }, {
         label: '最高价',
         value: data.high,
-        color: this.getFontColor('high', data, preData),
+        color: this.getCandleFontColor('high', data, preData),
       }, {
         label: '收盘价',
         value: data.close,
-        color: this.getFontColor('close', data, preData),
+        color: this.getCandleFontColor('close', data, preData),
       }];
       const widthArray = textArray.map(item => context.measureText(`${item.label}${item.value}`).width);
       const rectWidth = Math.max(...widthArray) + 50;
@@ -478,6 +485,33 @@ export class MainInfoPlotter extends Plotter {
       });
     } else if (chartSign === 'Line') {
       // 绘制分时的均线, 当前价, 时间
+      const lineTextInfoArray = [{
+        label: '时间:',
+        // eslint-disable-next-line no-undef
+        value: moment(data.time).format('mm:ss'),
+        color: this.FontColor,
+      }, {
+        label: '均价:',
+        value: data.average,
+        color: this.AverageLineColor,
+      }, {
+        label: '数值:',
+        value: data.close,
+        color: this.getLineFontColor(data.close, data.open),
+      }];
+      let lineInfoX = left + 10;
+      const lineInfoY = 20;
+      const labelBetween = 20;
+      const valueBetween = 5;
+      lineTextInfoArray.forEach(item => {
+        context.textAlign = 'left';
+        context.fillStyle = this.FontColor;
+        context.fillText(item.label, lineInfoX, lineInfoY);
+        lineInfoX += context.measureText(item.label).width + valueBetween;
+        context.fillStyle = item.color;
+        context.fillText(item.value, lineInfoX, lineInfoY);
+        lineInfoX += context.measureText(item.value).width + labelBetween;
+      });
     }
   }
 }
