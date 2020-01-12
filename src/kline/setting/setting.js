@@ -10,7 +10,7 @@ export default class Setting {
     };
     this.timelineAreaHeight = 30;
     // candle 蜡烛图 line 分时图
-    this.chartType = 'line';
+    this.chartType = 'candle';
     this.candlechart = [{
       name: 'mainChartLayout',
       chartPlotters: 'CandlestickPlotter',
@@ -21,10 +21,16 @@ export default class Setting {
         //   sign: 'close',
         //   data: ['MA5', 'MA10', 'MA20'],
         // },
-        BOLL: {
-          sign: 'close',
-          N: 20,
-        },
+        // BOLL: {
+        //   sign: 'close',
+        //   N: 20,
+        // },
+        CG: {},
+        // ENV: {
+        //   sign: 'close',
+        //   N: 14,
+        //   n2: 1,
+        // },
       },
       chartConfig: {
         sign: 'Candle',

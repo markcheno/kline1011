@@ -29,6 +29,20 @@ export default class Theme {
         UP: '#d84028',
         LOW: '#468d33',
       },
+      ENV: {
+        lineWidth: 1.5,
+        EnvUp: '#ffbb22',
+        EnvLow: '#a920ae',
+      },
+      CG: {
+        lineWidth: 1.5,
+        CGLine: '#1E90FF',
+        CGTrendPositive: '#ed5555',
+        CGTrendNegative: '#2fa69a',
+        BuySellFont: 'normal bold 12px sans-serif',
+        BuySellFillPositive: 'rgba(237,85,85, .3)',
+        BuySellFillNegative: 'rgba(47,166,154, .3)',
+      },
     };
     this.Font = {
       Default: '12px Tahoma',

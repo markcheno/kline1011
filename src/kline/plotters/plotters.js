@@ -1,3 +1,4 @@
+/* eslint-disable semi */
 import Manager from '../manage/manager';
 
 // 记录的绘制坐标点
@@ -46,6 +47,32 @@ export class Plotter {
       }
     });
     context.stroke();
+  }
+
+  drawArrow(ctx, fromX, fromY, toX, toY, theta, headlen, width, color) {
+    const angle = Math.atan2(fromY - toY, fromX - toX) * 180 / Math.PI
+    const angle1 = (angle + theta) * Math.PI / 180
+    const angle2 = (angle - theta) * Math.PI / 180
+    const topX = headlen * Math.cos(angle1)
+    const topY = headlen * Math.sin(angle1)
+    const botX = headlen * Math.cos(angle2)
+    const botY = headlen * Math.sin(angle2)
+    ctx.beginPath();
+    let arrowX = fromX - topX;
+    let arrowY = fromY - topY;
+    ctx.moveTo(arrowX, arrowY);
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    arrowX = toX + topX;
+    arrowY = toY + topY;
+    ctx.moveTo(arrowX, arrowY);
+    ctx.lineTo(toX, toY);
+    arrowX = toX + botX;
+    arrowY = toY + botY;
+    ctx.lineTo(arrowX, arrowY);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.stroke();
   }
 
   drawReact(context, place) {
@@ -332,23 +359,7 @@ export class ChartIndicatorPlotter extends Plotter {
     this.itemCenterOffset = dataSource.getColumnCenter();
   }
 
-  drawIndicatorLines(context, places, option) {
-    const { color, lineWidth } = option;
-    context.beginPath();
-    places.forEach((item, index) => {
-      const { x, y } = item;
-      if (index === 0) {
-        context.moveTo(x, y);
-      } else {
-        context.lineTo(x, y);
-      }
-    });
-    context.strokeStyle = color;
-    context.lineWidth = lineWidth;
-    context.stroke();
-  }
-
-  // Ma
+  // MA
   drawMA(MAIndicator, type) {
     const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
     const MAObj = {};
@@ -371,7 +382,7 @@ export class ChartIndicatorPlotter extends Plotter {
     // 绘制MA
     const context = this.mainContext;
     Object.values(MAObj).forEach((item, index) => {
-      this.drawIndicatorLines(context, item, {
+      this.drawSerialLines(context, item, {
         color: MALineColor[index],
         lineWidth: 1,
       });
@@ -379,7 +390,7 @@ export class ChartIndicatorPlotter extends Plotter {
   }
 
   // BOLL
-  drawBOLL(BOLLIndicator, type) {
+  drawBOLL(type) {
     const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
     const context = this.mainContext;
     const BOLLColor = theme.Line.BOLL;
@@ -406,6 +417,132 @@ export class ChartIndicatorPlotter extends Plotter {
     });
   }
 
+  // 绘制 ENV
+  drawENV(type) {
+    const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
+    const context = this.mainContext;
+    const ENVColor = theme.Line.ENV;
+    const ENVPlaces = {
+      EnvUp: [],
+      EnvLow: [],
+    };
+    let start = this.candleLeftOffest + itemCenterOffset;
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      ['EnvUp', 'EnvLow'].forEach(item => {
+        ENVPlaces[item].push({
+          x: start,
+          y: rangeData.toY(data[type][item]),
+        });
+      });
+      start += columnWidth;
+    }
+    context.lineWidth = ENVColor.lineWidth;
+    Object.keys(ENVPlaces).forEach(item => {
+      context.strokeStyle = ENVColor[item];
+      this.drawSerialLines(context, ENVPlaces[item]);
+    });
+  }
+
+  // 绘制CG指标
+  drawCG(type) {
+    const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
+    const context = this.mainContext;
+    const CGColor = theme.Line.CG;
+    // 绘制圆弧
+    const drawArc = (arcX, y, isFill) => {
+      // 长度
+      const width = 30;
+      // 半径
+      const arcR = 10;
+      const x = arcX - width / 2;
+      context.beginPath();
+      context.moveTo(x, y - arcR);
+      context.quadraticCurveTo(x - arcR, y, x, y + arcR);
+      context.lineTo(x + width, y + arcR);
+      context.quadraticCurveTo(x + width + arcR, y, x + width, y - arcR);
+      context.lineTo(x, y - arcR);
+      isFill ? context.fill() : context.stroke();
+    };
+    let start = this.candleLeftOffest + itemCenterOffset;
+    // CG指标线
+    const CGLinePlaces = [];
+    // 主趋势线
+    const CGTrendPlaces = [];
+    // 看多看空
+    const buySellPlaces = { CGBuy: [], CGSell: [] };
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      // CG指标线
+      CGLinePlaces.push({
+        x: start,
+        y: rangeData.toY(data[type].MA55),
+      });
+      // 主趋势线
+      const preData = currentData[i - 1];
+      const lastTrendColor = preData && preData[type].CGtrendColor;
+      const nowTrendColor = data[type].CGtrendColor;
+      const trendCGobj = {
+        x: start,
+        y: rangeData.toY(data[type].EMAEMAclose1010),
+        color: data[type].CGtrendColor,
+      };
+      // 根据不同颜色保存不同的主趋势线
+      if (nowTrendColor !== lastTrendColor) {
+        CGTrendPlaces.push([]);
+        const preTrendPlaces = CGTrendPlaces[CGTrendPlaces.length - 2];
+        preTrendPlaces && preTrendPlaces.push(trendCGobj);
+      }
+      const nowTrendPlaces = CGTrendPlaces[CGTrendPlaces.length - 1];
+      nowTrendPlaces.push(trendCGobj);
+      // 看多看空
+      const { CGBuySell } = data[type]
+      if (CGBuySell) {
+        buySellPlaces[CGBuySell].push({
+          x: start,
+          y: rangeData.toY(CGBuySell === 'CGSell' ? data.high : data.low),
+        });
+      }
+      start += columnWidth;
+    }
+    context.lineWidth = CGColor.lineWidth;
+    context.strokeStyle = CGColor.CGLine;
+    this.drawSerialLines(context, CGLinePlaces);
+    CGTrendPlaces.forEach(item => {
+      const trendItemColor = item[0].color;
+      context.strokeStyle = CGColor[trendItemColor];
+      console.log('strokeStyle', context.strokeStyle);
+      this.drawSerialLines(context, item);
+    });
+    // 绘制看多看空
+    context.font = CGColor.BuySellFont;
+    context.textAlign = 'center';
+    Object.keys(buySellPlaces).forEach(item => {
+      const buySellValues = buySellPlaces[item];
+      const text = item === 'CGSell' ? '看空' : '看多';
+      const textColor = item === 'CGSell' ? CGColor.CGTrendNegative : CGColor.CGTrendPositive;
+      const fillColor = item === 'CGSell' ? CGColor.BuySellFillNegative : CGColor.BuySellFillPositive;
+      context.strokeStyle = textColor;
+      buySellValues.forEach(buySellItem => {
+        const textY = item === 'CGSell' ? buySellItem.y - 40 : buySellItem.y + 40;
+        context.lineWidth = 0.5;
+        context.fillStyle = fillColor;
+        drawArc(buySellItem.x, textY, true);
+        drawArc(buySellItem.x, textY, false);
+        context.fillStyle = textColor;
+        context.fillText(text, buySellItem.x, textY);
+        const arrowPlace = {};
+        if (item === 'CGSell') {
+          arrowPlace.from = { x: buySellItem.x, y: buySellItem.y - 20 }
+          arrowPlace.to = { x: buySellItem.x, y: buySellItem.y - 10 }
+        } else {
+          arrowPlace.from = { x: buySellItem.x, y: buySellItem.y + 20 }
+          arrowPlace.to = { x: buySellItem.x, y: buySellItem.y + 10 }
+        }
+        this.drawArrow(context, arrowPlace.from.x, arrowPlace.from.y, arrowPlace.to.x, arrowPlace.to.y, 30, 5, 2, textColor);
+      })
+    });
+  }
 
   draw(layout) {
     this.rangeData = layout.getRangeData();
@@ -418,6 +555,12 @@ export class ChartIndicatorPlotter extends Plotter {
           break;
         case 'BOLL':
           this.drawBOLL(chartIndicator[item], layout.chartConfig.sign);
+          break;
+        case 'ENV':
+          this.drawENV(layout.chartConfig.sign);
+          break;
+        case 'CG':
+          this.drawCG(layout.chartConfig.sign);
           break;
         default:
           break;
@@ -521,7 +664,7 @@ export class MainInfoPlotter extends Plotter {
       const lineTextInfoArray = [{
         label: '时间:',
         // eslint-disable-next-line no-undef
-        value: moment(data.time).format('mm:ss'),
+        value: moment(data.time).format('HH:mm'),
         color: this.FontColor,
       }, {
         label: '均价:',

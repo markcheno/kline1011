@@ -65,6 +65,22 @@ export default class Range {
             });
           });
           break;
+        case 'ENV':
+          ['EnvUp', 'EnvLow'].forEach(ENVitem => {
+            signArray.push({
+              parent: chartType,
+              value: ENVitem,
+            });
+          });
+          break;
+        case 'CG':
+          ['MA55', 'EMAEMAclose1010'].forEach(CGitem => {
+            signArray.push({
+              parent: chartType,
+              value: CGitem,
+            });
+          });
+          break;
         default:
           break;
       }

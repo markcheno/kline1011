@@ -38,6 +38,31 @@ function calcAverageLine(option) {
   });
 }
 
+// 计算基础数 EMA 指数移动平均线 indicator: 指标名称 N: 周期
+function calcEMAIndicator(option, indicatorOption, N) {
+  const { start, end, data, key, parentType } = option;
+  const indicator = typeof indicatorOption === 'string' ? indicatorOption : indicatorOption.value;
+  const type = key || `EMA${indicator}${N}`;
+  for (let i = start; i <= end; i++) {
+    const dataItem = data[i];
+    const preDataItem = data[i - 1];
+    if (!dataItem) continue;
+    const priceToday = indicatorOption.parent ? dataItem[indicatorOption.parent][indicator] : dataItem[indicator];
+    let lastEMA;
+    if (preDataItem) {
+      lastEMA = parentType ? preDataItem[parentType][type] : preDataItem[type];
+    }
+    const EMA = lastEMA ? (2 / (N + 1)) * priceToday + ((N - 1) / (N + 1)) * lastEMA : priceToday;
+    if (parentType) {
+      (dataItem[parentType]) || (dataItem[parentType] = {});
+      dataItem[parentType][type] = EMA;
+    } else {
+      dataItem[type] = EMA;
+    }
+  }
+  return type;
+}
+
 // 计算 MA 指标
 function calcMAIndicator(option) {
   const { type, allData, appendLength, decimalDigits, MAConfig } = option;
@@ -75,6 +100,7 @@ function calcMAIndicator(option) {
   return maxMASize;
 }
 
+// 计算 BOLL 指标
 function calcBOLLIndicator(option) {
   const { type, allData, appendLength, decimalDigits, BOLLConfig } = option;
   // 计算中轨线 MID
@@ -110,23 +136,82 @@ function calcBOLLIndicator(option) {
   return middleReloadIndex;
 }
 
-// 计算基础数 EMA 指数移动平均线 indicator: 指标名称 N: 周期
-function calcEMAIndicator(option, indicator, N) {
-  const { start, end, data, key } = option;
-  const type = key || `${indicator}${N}`;
+// 计算 ENV 指标
+function calcENVIndicator(option) {
+  const { type, allData, appendLength, decimalDigits, ENVConfig } = option;
+  // 计算对应N的 MA
+  const middleReloadIndex = calcMAIndicator(Object.assign(option, {
+    MAConfig: {
+      sign: ENVConfig.sign,
+      data: [`MA${ENVConfig.N}`],
+    },
+  }));
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = appendLength - 1 + middleReloadIndex;
+  }
   for (let i = start; i <= end; i++) {
-    const dataItem = data[i];
-    const preDataItem = data[i - 1];
-    if (!dataItem) continue;
-    const priceToday = dataItem[indicator];
-    const lastEMA = preDataItem && preDataItem[type];
-    if (!lastEMA) {
-      dataItem[type] = priceToday;
-    } else {
-      dataItem[type] = (2 / (N + 1)) * priceToday + ((N - 1) / (N + 1)) * lastEMA;
+    const dataItem = allData[i];
+    const MA = dataItem[type][`MA${ENVConfig.N}`];
+    const EnvUp = MA * (1 + ENVConfig.n2 / 100);
+    const EnvLow = MA * (1 - ENVConfig.n2 / 100);
+    dataItem[type].EnvUp = EnvUp.toFixed(decimalDigits);
+    dataItem[type].EnvLow = EnvLow.toFixed(decimalDigits);
+  }
+  return middleReloadIndex;
+}
+
+// 计算 CG 指标
+function calcCGIndicator(option) {
+  const { type, allData, appendLength } = option;
+  const start = 0;
+  // 计算得出append时需要重新计算的EMA个数
+  const getReloadSise = (N) => {
+    if (!appendLength) return allData.length - 1;
+    return appendLength - 1 + Math.ceil(3.45 * (N + 1));
+  };
+  // 计算主趋势线的颜色
+  const getCGLineColor = (preData, nowData) => {
+    if (!preData) return 'CGTrendPositive';
+    const preCGEMA = preData[type].EMAEMAclose1010;
+    const nowCGEMA = nowData[type].EMAEMAclose1010;
+    const result = nowCGEMA - preCGEMA < 0 ? 1 : 0;
+    return 1 - result === 0 ? 'CGTrendNegative' : 'CGTrendPositive';
+  };
+  // 计算MA55
+  const middleReloadIndex = calcMAIndicator(Object.assign(option, {
+    MAConfig: {
+      sign: 'close',
+      data: ['MA55'],
+    },
+  }));
+  const maxShortSize = getReloadSise(5);
+  const maxLongSize = getReloadSise(10);
+  // 分别计算EMA(C, 5) EMA(C, 10)
+  calcEMAIndicator({ start, end: maxShortSize, data: allData, parentType: type }, 'close', 5);
+  calcEMAIndicator({ start, end: maxLongSize, data: allData, parentType: type }, 'close', 10);
+  // 计算 EMA(EMA(C,10),10)
+  calcEMAIndicator({ start, end: maxLongSize, data: allData, parentType: type }, { parent: type, value: 'EMAclose10' }, 10);
+  // 计算看多, 看空
+  const end = Math.max(maxShortSize, maxLongSize, middleReloadIndex);
+  for (let i = start; i <= end; i++) {
+    const preData = allData[i - 1];
+    const nowData = allData[i];
+    // 计算CG指标主趋势线
+    allData[i][type].CGtrendColor = getCGLineColor(preData, nowData);
+    if (!preData) continue;
+    const preEMAclose5 = preData[type].EMAclose5;
+    const preEMAclose10 = preData[type].EMAclose10;
+    const nowEMAclose5 = nowData[type].EMAclose5;
+    const nowEMAclose10 = nowData[type].EMAclose10;
+    if (preEMAclose5 > preEMAclose10 && nowEMAclose5 < nowEMAclose10) {
+      allData[i][type].CGBuySell = 'CGSell';
+    } else if (preEMAclose5 < preEMAclose10 && nowEMAclose5 > nowEMAclose10) {
+      allData[i][type].CGBuySell = 'CGBuy';
     }
   }
-  return type;
+  return end;
 }
 
 // 计算MACD 指标 short：短周期 long：长周期 middle：中周期
@@ -207,6 +292,23 @@ function calcIndicator(option) {
             allData,
             appendLength,
             BOLLConfig: chartIndicator.BOLL,
+            decimalDigits,
+          });
+          break;
+        case 'ENV':
+          maxReloadIndex = calcENVIndicator({
+            type,
+            allData,
+            appendLength,
+            ENVConfig: chartIndicator.ENV,
+            decimalDigits,
+          });
+          break;
+        case 'CG':
+          maxReloadIndex = calcCGIndicator({
+            type,
+            allData,
+            appendLength,
             decimalDigits,
           });
           break;
