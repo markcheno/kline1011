@@ -4,7 +4,7 @@ const layoutIndicator = {
     name: 'volumeChartLayout',
     chartPlotters: 'VolumePlotter',
     chartInfoPlotters: 'VolumeInfoPlotter',
-    boundaryGap: ['15%', '0%'],
+    boundaryGap: ['25%', '0%'],
     chartConfig: {
       sign: 'Volume',
     },

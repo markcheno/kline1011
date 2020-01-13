@@ -50,13 +50,13 @@ export class Plotter {
   }
 
   drawArrow(ctx, fromX, fromY, toX, toY, theta, headlen, width, color) {
-    const angle = Math.atan2(fromY - toY, fromX - toX) * 180 / Math.PI
-    const angle1 = (angle + theta) * Math.PI / 180
-    const angle2 = (angle - theta) * Math.PI / 180
-    const topX = headlen * Math.cos(angle1)
-    const topY = headlen * Math.sin(angle1)
-    const botX = headlen * Math.cos(angle2)
-    const botY = headlen * Math.sin(angle2)
+    const angle = (Math.atan2(fromY - toY, fromX - toX) * 180) / Math.PI;
+    const angle1 = ((angle + theta) * Math.PI) / 180;
+    const angle2 = ((angle - theta) * Math.PI) / 180;
+    const topX = headlen * Math.cos(angle1);
+    const topY = headlen * Math.sin(angle1);
+    const botX = headlen * Math.cos(angle2);
+    const botY = headlen * Math.sin(angle2);
     ctx.beginPath();
     let arrowX = fromX - topX;
     let arrowY = fromY - topY;
@@ -251,7 +251,8 @@ export class LineChartPlotter extends Plotter {
         const x = i * interval;
         const y = rangeData.toY(data[i].average);
         places.push({
-          x, y,
+          x,
+          y,
         });
       }
     }
@@ -319,33 +320,6 @@ export class LineChartPlotter extends Plotter {
   }
 }
 
-export class LineChartInfoPlotter extends Plotter {
-  constructor(name) {
-    super(name);
-    const { theme } = this.manager;
-    this.GridColor = theme.Color.Grid;
-    this.Font = theme.Font.Default;
-  }
-
-  draw(layout, index) {
-    const chartArea = layout.getChartArea();
-    const { dataSource } = this.manager;
-    const context = this.overlayContext;
-    const currentData = dataSource.getCurrentData();
-    const { left, top } = chartArea.getPlace();
-    const data = currentData[index];
-    context.font = this.Font;
-    context.fillStyle = this.GridColor;
-    const y = top + 15;
-    let x = left;
-    const textArray = [`开盘价: ${data.open}`, `最低价: ${data.low}`, `最高价: ${data.high}`, `收盘价: ${data.close}`];
-    textArray.forEach(item => {
-      context.fillText(item, x, y);
-      x += context.measureText(item).width + 10;
-    });
-  }
-}
-
 // chart 视图指标
 export class ChartIndicatorPlotter extends Plotter {
   constructor(name) {
@@ -363,7 +337,7 @@ export class ChartIndicatorPlotter extends Plotter {
   drawMA(MAIndicator, type) {
     const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
     const MAObj = {};
-    const MALineColor = theme.Line.MA;
+    const { MALineColor } = theme.Line.MA;
     MAIndicator.data.forEach(item => {
       MAObj[item] = [];
     });
@@ -382,10 +356,8 @@ export class ChartIndicatorPlotter extends Plotter {
     // 绘制MA
     const context = this.mainContext;
     Object.values(MAObj).forEach((item, index) => {
-      this.drawSerialLines(context, item, {
-        color: MALineColor[index],
-        lineWidth: 1,
-      });
+      context.strokeStyle = MALineColor[index]
+      this.drawSerialLines(context, item);
     });
   }
 
@@ -496,7 +468,7 @@ export class ChartIndicatorPlotter extends Plotter {
       const nowTrendPlaces = CGTrendPlaces[CGTrendPlaces.length - 1];
       nowTrendPlaces.push(trendCGobj);
       // 看多看空
-      const { CGBuySell } = data[type]
+      const { CGBuySell } = data[type];
       if (CGBuySell) {
         buySellPlaces[CGBuySell].push({
           x: start,
@@ -511,7 +483,6 @@ export class ChartIndicatorPlotter extends Plotter {
     CGTrendPlaces.forEach(item => {
       const trendItemColor = item[0].color;
       context.strokeStyle = CGColor[trendItemColor];
-      console.log('strokeStyle', context.strokeStyle);
       this.drawSerialLines(context, item);
     });
     // 绘制看多看空
@@ -533,14 +504,24 @@ export class ChartIndicatorPlotter extends Plotter {
         context.fillText(text, buySellItem.x, textY);
         const arrowPlace = {};
         if (item === 'CGSell') {
-          arrowPlace.from = { x: buySellItem.x, y: buySellItem.y - 20 }
-          arrowPlace.to = { x: buySellItem.x, y: buySellItem.y - 10 }
+          arrowPlace.from = { x: buySellItem.x, y: buySellItem.y - 20 };
+          arrowPlace.to = { x: buySellItem.x, y: buySellItem.y - 10 };
         } else {
-          arrowPlace.from = { x: buySellItem.x, y: buySellItem.y + 20 }
-          arrowPlace.to = { x: buySellItem.x, y: buySellItem.y + 10 }
+          arrowPlace.from = { x: buySellItem.x, y: buySellItem.y + 20 };
+          arrowPlace.to = { x: buySellItem.x, y: buySellItem.y + 10 };
         }
-        this.drawArrow(context, arrowPlace.from.x, arrowPlace.from.y, arrowPlace.to.x, arrowPlace.to.y, 30, 5, 2, textColor);
-      })
+        this.drawArrow(
+          context,
+          arrowPlace.from.x,
+          arrowPlace.from.y,
+          arrowPlace.to.x,
+          arrowPlace.to.y,
+          30,
+          5,
+          2,
+          textColor,
+        );
+      });
     });
   }
 
@@ -554,7 +535,7 @@ export class ChartIndicatorPlotter extends Plotter {
           this.drawMA(chartIndicator[item], layout.chartConfig.sign);
           break;
         case 'BOLL':
-          this.drawBOLL(chartIndicator[item], layout.chartConfig.sign);
+          this.drawBOLL(layout.chartConfig.sign);
           break;
         case 'ENV':
           this.drawENV(layout.chartConfig.sign);
@@ -600,7 +581,12 @@ export class MainInfoPlotter extends Plotter {
 
   draw(layout, index) {
     // 判断当前视图中是否有蜡烛图, 分时图
-    const MainLayout = layout.getLayouts().find(item => item.chartConfig && (item.chartConfig.sign === 'Candle' || item.chartConfig.sign === 'Line'));
+    const MainLayout = layout
+      .getLayouts()
+      .find(
+        item => item.chartConfig
+          && (item.chartConfig.sign === 'Candle' || item.chartConfig.sign === 'Line'),
+      );
     if (!MainLayout) return;
     const context = this.overlayContext;
     const { dataSource } = this.manager;
@@ -611,33 +597,41 @@ export class MainInfoPlotter extends Plotter {
     const data = currentData[index];
     const preData = currentData[index - 1];
     const { left, right, top } = MainLayout.getPlace();
-    const direction = index < (maxCountInArea / 2) ? 'right' : 'left';
+    const direction = index < maxCountInArea / 2 ? 'right' : 'left';
     context.font = this.Font;
     if (chartSign === 'Candle') {
       // 绘制蜡烛图的高开低收
-      const textArray = [{
-        label: '时间',
-        // eslint-disable-next-line no-undef
-        value: moment(data.time).format('YYYY-MM-DD'),
-        color: this.getCandleFontColor('time', data, preData),
-      }, {
-        label: '开盘价',
-        value: data.open,
-        color: this.getCandleFontColor('open', data, preData),
-      }, {
-        label: '最低价',
-        value: data.low,
-        color: this.getCandleFontColor('low', data, preData),
-      }, {
-        label: '最高价',
-        value: data.high,
-        color: this.getCandleFontColor('high', data, preData),
-      }, {
-        label: '收盘价',
-        value: data.close,
-        color: this.getCandleFontColor('close', data, preData),
-      }];
-      const widthArray = textArray.map(item => context.measureText(`${item.label}${item.value}`).width);
+      const textArray = [
+        {
+          label: '时间',
+          // eslint-disable-next-line no-undef
+          value: moment(data.time).format('YYYY-MM-DD'),
+          color: this.getCandleFontColor('time', data, preData),
+        },
+        {
+          label: '开盘价',
+          value: data.open,
+          color: this.getCandleFontColor('open', data, preData),
+        },
+        {
+          label: '最低价',
+          value: data.low,
+          color: this.getCandleFontColor('low', data, preData),
+        },
+        {
+          label: '最高价',
+          value: data.high,
+          color: this.getCandleFontColor('high', data, preData),
+        },
+        {
+          label: '收盘价',
+          value: data.close,
+          color: this.getCandleFontColor('close', data, preData),
+        },
+      ];
+      const widthArray = textArray.map(
+        item => context.measureText(`${item.label}${item.value}`).width,
+      );
       const rectWidth = Math.max(...widthArray) + 50;
       const distance = ((right - left) / 2 - rectWidth) / 4;
       const x = direction === 'left' ? left + distance : right - distance - 2 * rectWidth;
@@ -661,20 +655,24 @@ export class MainInfoPlotter extends Plotter {
       });
     } else if (chartSign === 'Line') {
       // 绘制分时的均线, 当前价, 时间
-      const lineTextInfoArray = [{
-        label: '时间:',
-        // eslint-disable-next-line no-undef
-        value: moment(data.time).format('HH:mm'),
-        color: this.FontColor,
-      }, {
-        label: '均价:',
-        value: data.average,
-        color: this.AverageLineColor,
-      }, {
-        label: '数值:',
-        value: data.close,
-        color: this.getLineFontColor(data.close, data.open),
-      }];
+      const lineTextInfoArray = [
+        {
+          label: '时间:',
+          // eslint-disable-next-line no-undef
+          value: moment(data.time).format('HH:mm'),
+          color: this.FontColor,
+        },
+        {
+          label: '均价:',
+          value: data.average,
+          color: this.AverageLineColor,
+        },
+        {
+          label: '数值:',
+          value: data.close,
+          color: this.getLineFontColor(data.close, data.open),
+        },
+      ];
       let lineInfoX = left + 10;
       const lineInfoY = 20;
       const labelBetween = 20;
@@ -697,24 +695,190 @@ export class ChartInfoPlotters extends Plotter {
   constructor(name) {
     super(name);
     const { theme } = this.manager;
-    this.Font = theme.Font.Default;
+    this.theme = theme;
+    this.decimalDigits = this.manager.setting.decimalDigits;
+  }
+
+  // 成交量 信息
+  drawVolumeInfo(data) {
+    const formatVolume = volume => {
+      if (volume.split('.')[0].length >= 4 && volume.split('.')[0].length < 9) return `${(volume / 10000).toFixed(2)}万`;
+      if (volume.split('.')[0].length >= 9 && volume.split('.')[0].length < 13) return `${(volume / 100000000).toFixed(2)}亿`;
+      if (volume.split('.')[0].length >= 13) return `${(volume / 1000000000000).toFixed(2)}兆`;
+      return volume;
+    };
+    const context = this.overlayContext;
+    const { volume } = data;
+    const { top, left } = this.chartArea.getPlace();
+    const volumeColor = this.theme.Line.Volume;
+    const text = `成交量: ${formatVolume(volume.toString())}手`;
+    const textY = top + 15;
+    const textX = left + 5;
+    context.fillStyle = volumeColor.infoColor;
+    context.font = volumeColor.infoFont;
+    context.textAlign = 'left';
+    context.fillText(text, textX, textY);
+  }
+
+  // MACD 信息
+  drawMACDInfo(chartConfig, data) {
+    const context = this.overlayContext;
+    const { MACD, DIF, DEA } = data;
+    const { short, long, middle } = chartConfig.data;
+    const label = `MACD(${short}, ${long}, ${middle})`
+    const MACDtext = `MACD:${Number(MACD).toFixed(2)}`;
+    const DIFtext = `DIF:${Number(DIF).toFixed(2)}`;
+    const DEAtext = `DEA:${Number(DEA).toFixed(2)}`;
+    const { top, left } = this.chartArea.getPlace();
+    const MACDTheme = this.theme.Line.MACD;
+    // 副视图中绘制MACD信息
+    let textX = left + 5;
+    const textY = top + 15;
+    context.font = MACDTheme.infoFont;
+    context.fillStyle = MACDTheme.infoColor;
+    context.textAlign = 'left';
+    context.fillText(label, textX, textY);
+    textX += context.measureText(label).width + 10;
+    context.fillStyle = MACDTheme.MACDInfo;
+    context.fillText(MACDtext, textX, textY);
+    textX += context.measureText(MACDtext).width + 10;
+    context.fillStyle = MACDTheme.DIF;
+    context.fillText(DIFtext, textX, textY);
+    textX += context.measureText(DIFtext).width + 10;
+    context.fillStyle = MACDTheme.DEA;
+    context.fillText(DEAtext, textX, textY);
+  }
+
+  // MA 信息
+  drawMAInfo(MAData, data) {
+    const context = this.overlayContext;
+    const MAArray = MAData.data;
+    const MATheme = this.theme.Line.MA;
+    const MAValue = MAArray.map((item, index) => ({
+      color: MATheme.MALineColor[index], value: `${item}: ${data[item]}`,
+    }))
+    console.log(MAValue);
+    const { top, left } = this.chartArea.getPlace();
+    const label = 'MA';
+    let textX = left + 5;
+    const textY = top + 15;
+    context.font = MATheme.infoFont;
+    context.fillStyle = MATheme.infoColor;
+    context.textAlign = 'left';
+    context.fillText(label, textX, textY);
+    textX += context.measureText(label).width + 10;
+    MAValue.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    })
+  }
+
+  // BOLL 信息
+  drawBOLLInfo(BOLLData, data) {
+    const context = this.overlayContext;
+    const BOLLTheme = this.theme.Line.BOLL;
+    const BOLLValues = ['UP', 'MID', 'LOW'].map(item => ({
+      value: `${item}:${data[item]}`,
+      color: BOLLTheme[item],
+    }));
+    BOLLValues.unshift({ value: `BOLL(${BOLLData.N})`, color: BOLLTheme.infoColor });
+    const { top, left } = this.chartArea.getPlace();
+    let textX = left + 5;
+    const textY = top + 15;
+    context.font = BOLLTheme.infoFont;
+    context.textAlign = 'left';
+    BOLLValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+  }
+
+  // ENV 信息
+  drawENVInfo(ENVData, data) {
+    const context = this.overlayContext;
+    const ENVTheme = this.theme.Line.ENV;
+    const { N, n2 } = ENVData;
+    const ENVValues = ['EnvUp', 'EnvLow'].map(item => ({
+      value: `${item}:${data[item]}`,
+      color: ENVTheme[item],
+    }))
+    ENVValues.unshift({ value: `ENV(${N}, ${n2})`, color: ENVTheme.infoColor });
+    const { top, left } = this.chartArea.getPlace();
+    let textX = left + 5;
+    const textY = top + 15;
+    context.font = ENVTheme.infoFont;
+    context.textAlign = 'left';
+    ENVValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+  }
+
+  // CG 指标信息
+  drawCGInfo(data) {
+    const context = this.overlayContext;
+    const CGTheme = this.theme.Line.CG;
+    const CGValues = [{
+      value: `CG指标:${data.MA55}`,
+      color: CGTheme.CGLine,
+    }, {
+      value: `主趋势线:${Number(data.EMAEMAclose1010).toFixed(this.decimalDigits)}`,
+      color: CGTheme[data.CGtrendColor],
+    }];
+    const { top, left } = this.chartArea.getPlace();
+    let textX = left + 5;
+    const textY = top + 15;
+    context.font = CGTheme.infoFont;
+    context.textAlign = 'left';
+    CGValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
   }
 
   draw(layout, index) {
     const { dataSource } = this.manager;
+    this.chartArea = layout.getChartArea();
     // const context = this.overlayContext;
     const currentData = dataSource.getCurrentData();
     const chartConfig = layout.getChartConfig();
     const chartSign = chartConfig.sign;
     const data = currentData[index];
+    // chart信息
     switch (chartSign) {
       case 'Volume':
+        this.drawVolumeInfo(data);
         break;
       case 'MACD':
+        this.drawMACDInfo(chartConfig, data);
         break;
       default:
         break;
     }
+    // chart 上的指标信息
+    const chartIndicator = layout.getChartIndicator();
+    chartIndicator && Object.keys(chartIndicator).forEach(indicatorItem => {
+      switch (indicatorItem) {
+        case 'MA':
+          this.drawMAInfo(chartIndicator.MA, data[chartSign]);
+          break;
+        case 'BOLL':
+          this.drawBOLLInfo(chartIndicator.BOLL, data[chartSign]);
+          break;
+        case 'ENV':
+          this.drawENVInfo(chartIndicator.ENV, data[chartSign]);
+          break;
+        case 'CG':
+          this.drawCGInfo(data[chartSign]);
+          break;
+        default:
+          break;
+      }
+    });
   }
 }
 
@@ -783,13 +947,43 @@ export class CandlestickPlotter extends Plotter {
       }
       // 涨
       if (close >= open) {
-        fillPosRects.push({ x: leftX, y: closePlace, width: rectWidth, height: Math.max(openPlace - closePlace, 1) });
-        fillPosLines.push({ x: leftLineX, y: highPlace, width: lineRectWidth, height: closePlace - highPlace });
-        fillPosLines.push({ x: leftLineX, y: openPlace, width: lineRectWidth, height: lowPlace - openPlace });
+        fillPosRects.push({
+          x: leftX,
+          y: closePlace,
+          width: rectWidth,
+          height: Math.max(openPlace - closePlace, 1),
+        });
+        fillPosLines.push({
+          x: leftLineX,
+          y: highPlace,
+          width: lineRectWidth,
+          height: closePlace - highPlace,
+        });
+        fillPosLines.push({
+          x: leftLineX,
+          y: openPlace,
+          width: lineRectWidth,
+          height: lowPlace - openPlace,
+        });
       } else if (close < open) {
-        fillNegRects.push({ x: leftX, y: openPlace, width: rectWidth, height: Math.max(closePlace - openPlace, 1) });
-        fillNegLines.push({ x: leftLineX, y: highPlace, width: lineRectWidth, height: openPlace - highPlace });
-        fillNegLines.push({ x: leftLineX, y: closePlace, width: lineRectWidth, height: lowPlace - closePlace });
+        fillNegRects.push({
+          x: leftX,
+          y: openPlace,
+          width: rectWidth,
+          height: Math.max(closePlace - openPlace, 1),
+        });
+        fillNegLines.push({
+          x: leftLineX,
+          y: highPlace,
+          width: lineRectWidth,
+          height: openPlace - highPlace,
+        });
+        fillNegLines.push({
+          x: leftLineX,
+          y: closePlace,
+          width: lineRectWidth,
+          height: lowPlace - closePlace,
+        });
       }
       columnLeft += columnWidth;
     }
@@ -1089,9 +1283,19 @@ export class VolumePlotter extends Plotter {
       const rectWidth = 2 * itemCenterOffset;
       // 涨
       if (close >= open) {
-        fillPosRects.push({ x: leftX, y: volumePlace - this.paddingBottom, width: rectWidth, height: lowPlace - volumePlace });
+        fillPosRects.push({
+          x: leftX,
+          y: volumePlace - this.paddingBottom,
+          width: rectWidth,
+          height: lowPlace - volumePlace,
+        });
       } else if (close < open) {
-        fillNegRects.push({ x: leftX, y: volumePlace - this.paddingBottom, width: rectWidth, height: lowPlace - volumePlace });
+        fillNegRects.push({
+          x: leftX,
+          y: volumePlace - this.paddingBottom,
+          width: rectWidth,
+          height: lowPlace - volumePlace,
+        });
       }
       columnLeft += columnWidth;
     }
@@ -1109,27 +1313,6 @@ export class VolumePlotter extends Plotter {
       from: { x: left + 0.5, y: top + 0.5 },
       to: { x: right + 0.5, y: top + 0.5 },
     });
-  }
-}
-
-export class VolumeInfoPlotter extends Plotter {
-  constructor(name) {
-    super(name);
-    const { theme } = this.manager;
-    this.GridColor = theme.Color.Grid;
-    this.Font = theme.Font.Default;
-  }
-
-  draw(layout, index) {
-    const chartArea = layout.getChartArea();
-    const { dataSource } = this.manager;
-    const context = this.overlayContext;
-    const currentData = dataSource.getCurrentData();
-    const { left, top } = chartArea.getPlace();
-    const data = currentData[index];
-    context.font = this.Font;
-    context.fillStyle = this.GridColor;
-    context.fillText(`成交量: ${data.volume}`, left, top + 15);
   }
 }
 
@@ -1156,7 +1339,8 @@ export class SelectionPlotter extends Plotter {
           index: mid,
           value: midItem,
         };
-      } if (target > midItem) {
+      }
+      if (target > midItem) {
         left = mid + 1;
       } else {
         right = mid - 1;
@@ -1272,12 +1456,4 @@ export class MACDPlotter extends Plotter {
     context.strokeStyle = this.MACDtheme.DEA;
     this.drawSerialLines(context, DEAarray);
   }
-}
-
-export class MACDInfoPLotter extends Plotter {
-  constructor(name) {
-    super(name);
-  }
-
-  draw(layout) {}
 }

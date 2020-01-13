@@ -15,7 +15,7 @@ export default class Setting {
       name: 'mainChartLayout',
       chartPlotters: 'CandlestickPlotter',
       chartInfoPlotters: 'CandlestickInfoPlotter',
-      boundaryGap: ['10%', '10%'],
+      boundaryGap: ['20%', '20%'],
       chartIndicator: {
         // MA: {
         //   sign: 'close',

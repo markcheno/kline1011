@@ -15,24 +15,36 @@ export default class Theme {
       strokeLineWidth: 2,
       averageLineColor: '#e7b269',
       averageLineWidth: 1.5,
-      MA: ['#a920ae', '#ffbb22', '#a8a8a8'],
+      MA: {
+        lineWidth: 1.5,
+        MALineColor: ['#a920ae', '#ffbb22', '#a8a8a8'],
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+      },
       MACD: {
         lineWidth: 1.5,
         DIF: '#ffbb22',
         DEA: '#a920ae',
+        MACDInfo: '#CD853F',
         MACDpositive: '#ed5555',
         MACDnegative: '#2fa69a',
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
       },
       BOLL: {
         lineWidth: 1.5,
         MID: '#406fa9',
         UP: '#d84028',
         LOW: '#468d33',
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
       },
       ENV: {
         lineWidth: 1.5,
         EnvUp: '#ffbb22',
         EnvLow: '#a920ae',
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
       },
       CG: {
         lineWidth: 1.5,
@@ -42,6 +54,11 @@ export default class Theme {
         BuySellFont: 'normal bold 12px sans-serif',
         BuySellFillPositive: 'rgba(237,85,85, .3)',
         BuySellFillNegative: 'rgba(47,166,154, .3)',
+        infoFont: '12px sans-serif',
+      },
+      Volume: {
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
       },
     };
     this.Font = {
