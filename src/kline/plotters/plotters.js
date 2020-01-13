@@ -92,23 +92,28 @@ export class Plotter {
     const { mainContext, maxMin, PositiveColor, NegativeColor, Font } = option;
     const maxX = maxMin.max.x;
     const maxY = maxMin.max.y;
+    const maxDirction = maxMin.max.direction;
     const minX = maxMin.min.x;
     const minY = maxMin.min.y;
+    const minDirction = maxMin.min.direction;
     mainContext.font = Font;
     const textMaxWidth = mainContext.measureText(maxMin.max.value).width + 20;
     const textMinWidth = mainContext.measureText(maxMin.min.value).width + 20;
     mainContext.strokeStyle = PositiveColor;
     mainContext.lineWidth = 2;
+    // 矩形初始点
+    const rectMaxLeft = maxDirction === 'left' ? maxX + 40 : maxX - textMaxWidth - 40;
+    const rectMinLeft = minDirction === 'left' ? minX + 40 : minX - textMinWidth - 40;
     this.drawLine(mainContext, {
       from: { x: maxX, y: maxY },
       to: { x: maxX, y: maxY - 20 },
     });
     this.drawLine(mainContext, {
       from: { x: maxX, y: maxY - 20 },
-      to: { x: maxX + 40, y: maxY - 20 },
+      to: { x: rectMaxLeft, y: maxY - 20 },
     });
     mainContext.fillStyle = PositiveColor;
-    this.drawReact(mainContext, { x: maxX + 40, y: maxY - 30, width: textMaxWidth, height: 20 });
+    this.drawReact(mainContext, { x: rectMaxLeft, y: maxY - 30, width: textMaxWidth, height: 20 });
     mainContext.strokeStyle = NegativeColor;
     this.drawLine(mainContext, {
       from: { x: minX, y: minY },
@@ -116,14 +121,14 @@ export class Plotter {
     });
     this.drawLine(mainContext, {
       from: { x: minX, y: minY + 20 },
-      to: { x: minX + 40, y: minY + 20 },
+      to: { x: rectMinLeft, y: minY + 20 },
     });
     mainContext.fillStyle = NegativeColor;
-    this.drawReact(mainContext, { x: minX + 40, y: minY + 10, width: textMinWidth, height: 20 });
+    this.drawReact(mainContext, { x: rectMinLeft, y: minY + 10, width: textMinWidth, height: 20 });
     mainContext.fillStyle = '#ffffff';
     mainContext.textAlign = 'left';
-    mainContext.fillText(maxMin.max.value, maxX + 55, maxY - 18);
-    mainContext.fillText(maxMin.min.value, minX + 55, minY + 22);
+    mainContext.fillText(maxMin.max.value, rectMaxLeft + 10, maxY - 18);
+    mainContext.fillText(maxMin.min.value, rectMinLeft + 10, minY + 22);
   }
 }
 
@@ -292,6 +297,7 @@ export class LineChartPlotter extends Plotter {
             x,
             y,
             value: close,
+            direction: x > ((right - left) / 2 + left) ? 'right' : 'left',
           };
         }
         if (y > maxMin.min.y) {
@@ -299,6 +305,7 @@ export class LineChartPlotter extends Plotter {
             x,
             y,
             value: close,
+            direction: x > ((right - left) / 2 + left) ? 'right' : 'left',
           };
         }
       }
@@ -700,7 +707,7 @@ export class ChartInfoPlotters extends Plotter {
   }
 
   // 成交量 信息
-  drawVolumeInfo(data) {
+  drawVolumeInfo(data, startPlace) {
     const formatVolume = volume => {
       if (volume.split('.')[0].length >= 4 && volume.split('.')[0].length < 9) return `${(volume / 10000).toFixed(2)}万`;
       if (volume.split('.')[0].length >= 9 && volume.split('.')[0].length < 13) return `${(volume / 100000000).toFixed(2)}亿`;
@@ -709,19 +716,19 @@ export class ChartInfoPlotters extends Plotter {
     };
     const context = this.overlayContext;
     const { volume } = data;
-    const { top, left } = this.chartArea.getPlace();
     const volumeColor = this.theme.Line.Volume;
     const text = `成交量: ${formatVolume(volume.toString())}手`;
-    const textY = top + 15;
-    const textX = left + 5;
+    const { startX, textY } = startPlace
+    let textX = startX;
     context.fillStyle = volumeColor.infoColor;
     context.font = volumeColor.infoFont;
     context.textAlign = 'left';
     context.fillText(text, textX, textY);
+    textX += context.measureText(text).width + 10;
   }
 
   // MACD 信息
-  drawMACDInfo(chartConfig, data) {
+  drawMACDInfo(chartConfig, data, startPlace) {
     const context = this.overlayContext;
     const { MACD, DIF, DEA } = data;
     const { short, long, middle } = chartConfig.data;
@@ -729,11 +736,10 @@ export class ChartInfoPlotters extends Plotter {
     const MACDtext = `MACD:${Number(MACD).toFixed(2)}`;
     const DIFtext = `DIF:${Number(DIF).toFixed(2)}`;
     const DEAtext = `DEA:${Number(DEA).toFixed(2)}`;
-    const { top, left } = this.chartArea.getPlace();
+    const { startX, textY } = startPlace
     const MACDTheme = this.theme.Line.MACD;
     // 副视图中绘制MACD信息
-    let textX = left + 5;
-    const textY = top + 15;
+    let textX = startX;
     context.font = MACDTheme.infoFont;
     context.fillStyle = MACDTheme.infoColor;
     context.textAlign = 'left';
@@ -747,21 +753,21 @@ export class ChartInfoPlotters extends Plotter {
     textX += context.measureText(DIFtext).width + 10;
     context.fillStyle = MACDTheme.DEA;
     context.fillText(DEAtext, textX, textY);
+    textX += context.measureText(DEAtext).width + 10;
+    startPlace.startX = textX;
   }
 
   // MA 信息
-  drawMAInfo(MAData, data) {
+  drawMAInfo(MAData, data, startPlace) {
     const context = this.overlayContext;
     const MAArray = MAData.data;
     const MATheme = this.theme.Line.MA;
     const MAValue = MAArray.map((item, index) => ({
       color: MATheme.MALineColor[index], value: `${item}: ${data[item]}`,
     }))
-    console.log(MAValue);
-    const { top, left } = this.chartArea.getPlace();
+    const { startX, textY } = startPlace
     const label = 'MA';
-    let textX = left + 5;
-    const textY = top + 15;
+    let textX = startX;
     context.font = MATheme.infoFont;
     context.fillStyle = MATheme.infoColor;
     context.textAlign = 'left';
@@ -772,10 +778,11 @@ export class ChartInfoPlotters extends Plotter {
       context.fillText(item.value, textX, textY);
       textX += context.measureText(item.value).width + 10;
     })
+    startPlace.startX = textX;
   }
 
   // BOLL 信息
-  drawBOLLInfo(BOLLData, data) {
+  drawBOLLInfo(BOLLData, data, startPlace) {
     const context = this.overlayContext;
     const BOLLTheme = this.theme.Line.BOLL;
     const BOLLValues = ['UP', 'MID', 'LOW'].map(item => ({
@@ -783,9 +790,8 @@ export class ChartInfoPlotters extends Plotter {
       color: BOLLTheme[item],
     }));
     BOLLValues.unshift({ value: `BOLL(${BOLLData.N})`, color: BOLLTheme.infoColor });
-    const { top, left } = this.chartArea.getPlace();
-    let textX = left + 5;
-    const textY = top + 15;
+    const { startX, textY } = startPlace
+    let textX = startX;
     context.font = BOLLTheme.infoFont;
     context.textAlign = 'left';
     BOLLValues.forEach(item => {
@@ -793,10 +799,11 @@ export class ChartInfoPlotters extends Plotter {
       context.fillText(item.value, textX, textY);
       textX += context.measureText(item.value).width + 10;
     });
+    startPlace.startX = textX;
   }
 
   // ENV 信息
-  drawENVInfo(ENVData, data) {
+  drawENVInfo(ENVData, data, startPlace) {
     const context = this.overlayContext;
     const ENVTheme = this.theme.Line.ENV;
     const { N, n2 } = ENVData;
@@ -805,9 +812,8 @@ export class ChartInfoPlotters extends Plotter {
       color: ENVTheme[item],
     }))
     ENVValues.unshift({ value: `ENV(${N}, ${n2})`, color: ENVTheme.infoColor });
-    const { top, left } = this.chartArea.getPlace();
-    let textX = left + 5;
-    const textY = top + 15;
+    const { startX, textY } = startPlace
+    let textX = startX;
     context.font = ENVTheme.infoFont;
     context.textAlign = 'left';
     ENVValues.forEach(item => {
@@ -815,10 +821,11 @@ export class ChartInfoPlotters extends Plotter {
       context.fillText(item.value, textX, textY);
       textX += context.measureText(item.value).width + 10;
     });
+    startPlace.startX = textX;
   }
 
   // CG 指标信息
-  drawCGInfo(data) {
+  drawCGInfo(data, startPlace) {
     const context = this.overlayContext;
     const CGTheme = this.theme.Line.CG;
     const CGValues = [{
@@ -828,9 +835,8 @@ export class ChartInfoPlotters extends Plotter {
       value: `主趋势线:${Number(data.EMAEMAclose1010).toFixed(this.decimalDigits)}`,
       color: CGTheme[data.CGtrendColor],
     }];
-    const { top, left } = this.chartArea.getPlace();
-    let textX = left + 5;
-    const textY = top + 15;
+    const { startX, textY } = startPlace
+    let textX = startX;
     context.font = CGTheme.infoFont;
     context.textAlign = 'left';
     CGValues.forEach(item => {
@@ -838,6 +844,7 @@ export class ChartInfoPlotters extends Plotter {
       context.fillText(item.value, textX, textY);
       textX += context.measureText(item.value).width + 10;
     });
+    startPlace.startX = textX;
   }
 
   draw(layout, index) {
@@ -845,16 +852,21 @@ export class ChartInfoPlotters extends Plotter {
     this.chartArea = layout.getChartArea();
     // const context = this.overlayContext;
     const currentData = dataSource.getCurrentData();
+    const { left, top } = this.chartArea.getPlace();
     const chartConfig = layout.getChartConfig();
     const chartSign = chartConfig.sign;
     const data = currentData[index];
     // chart信息
+    const startPlace = {
+      startX: left + 5,
+      textY: top + 15,
+    }
     switch (chartSign) {
       case 'Volume':
-        this.drawVolumeInfo(data);
+        this.drawVolumeInfo(data, startPlace);
         break;
       case 'MACD':
-        this.drawMACDInfo(chartConfig, data);
+        this.drawMACDInfo(chartConfig, data, startPlace);
         break;
       default:
         break;
@@ -864,16 +876,16 @@ export class ChartInfoPlotters extends Plotter {
     chartIndicator && Object.keys(chartIndicator).forEach(indicatorItem => {
       switch (indicatorItem) {
         case 'MA':
-          this.drawMAInfo(chartIndicator.MA, data[chartSign]);
+          this.drawMAInfo(chartIndicator.MA, data[chartSign], startPlace);
           break;
         case 'BOLL':
-          this.drawBOLLInfo(chartIndicator.BOLL, data[chartSign]);
+          this.drawBOLLInfo(chartIndicator.BOLL, data[chartSign], startPlace);
           break;
         case 'ENV':
-          this.drawENVInfo(chartIndicator.ENV, data[chartSign]);
+          this.drawENVInfo(chartIndicator.ENV, data[chartSign], startPlace);
           break;
         case 'CG':
-          this.drawCGInfo(data[chartSign]);
+          this.drawCGInfo(data[chartSign], startPlace);
           break;
         default:
           break;
@@ -904,6 +916,7 @@ export class CandlestickPlotter extends Plotter {
 
   draw(layout) {
     const rangeData = layout.getRangeData();
+    const { right, left } = layout.getPlace();
     const { dataSource } = this.manager;
     const context = this.mainContext;
     const currentData = dataSource.getCurrentData();
@@ -933,6 +946,7 @@ export class CandlestickPlotter extends Plotter {
       // 蜡烛图最大最小值
       if (highPlace < maxMin.max.y) {
         maxMin.max = {
+          direction: leftLineX > ((right - left) / 2 + left) ? 'right' : 'left',
           x: leftLineX,
           y: highPlace,
           value: data.high,
@@ -940,6 +954,7 @@ export class CandlestickPlotter extends Plotter {
       }
       if (lowPlace > maxMin.min.y) {
         maxMin.min = {
+          direction: leftLineX > ((right - left) / 2 + left) ? 'right' : 'left',
           x: leftLineX,
           y: lowPlace,
           value: data.low,

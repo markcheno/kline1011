@@ -80,15 +80,15 @@ export default {
   data() {
     return {
       timer: [
-        { text: '日K', resolution: 'D', type: 6, mode: 2, timer: 86400000 },
-        { text: '周K', resolution: 'W', type: 7, mode: 2, timer: 604800000 },
-        { text: '月K', resolution: '1M', type: 8, mode: 2, timer: 2592000000 },
-        { text: '1分', resolution: '1', type: 1, mode: 2, timer: 60000 },
-        { text: '5分', resolution: '5', type: 2, mode: 2, timer: 300000 },
-        { text: '15分', resolution: '15', type: 3, mode: 2, timer: 900000 },
-        { text: '30分', resolution: '30', type: 4, mode: 2, timer: 1800000 },
-        { text: '1时', resolution: '60', type: 5, mode: 2, timer: 3600000 },
-        { text: '4时', resolution: '240', type: 9, mode: 2, timer: 14400000 },
+        { text: '日K', type: 6 },
+        { text: '周K', type: 7 },
+        { text: '月K', type: 8 },
+        { text: '1分', type: 1 },
+        { text: '5分', type: 2 },
+        { text: '15分', type: 3 },
+        { text: '30分', type: 4 },
+        { text: '1时', type: 5 },
+        { text: '4时', type: 9 },
       ],
       kline: '',
     };

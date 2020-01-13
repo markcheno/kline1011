@@ -17,20 +17,20 @@ export default class Setting {
       chartInfoPlotters: 'CandlestickInfoPlotter',
       boundaryGap: ['20%', '20%'],
       chartIndicator: {
-        // MA: {
-        //   sign: 'close',
-        //   data: ['MA5', 'MA10', 'MA20'],
-        // },
-        // BOLL: {
-        //   sign: 'close',
-        //   N: 20,
-        // },
+        MA: {
+          sign: 'close',
+          data: ['MA5', 'MA10', 'MA20'],
+        },
+        BOLL: {
+          sign: 'close',
+          N: 20,
+        },
         CG: {},
-        // ENV: {
-        //   sign: 'close',
-        //   N: 14,
-        //   n2: 1,
-        // },
+        ENV: {
+          sign: 'close',
+          N: 14,
+          n2: 1,
+        },
       },
       chartConfig: {
         sign: 'Candle',
