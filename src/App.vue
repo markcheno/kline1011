@@ -9,6 +9,23 @@
     >{{item.text}}</button>
     <button @click="changeLine">切换分时图</button>
     <button @click="changeCandle">切换蜡烛图</button>
+    <div>
+      <button>MA指标</button>
+      <button>BOLL指标</button>
+      <button>ENV指标</button>
+      <button>CG指标</button>
+      <button>SAR指标</button>
+    </div>
+    <div>
+      <button>成交量指标</button>
+      <button>MACD指标</button>
+      <button>WR指标</button>
+      <button>VR指标</button>
+      <button>CCI指标</button>
+      <button>BIAS指标</button>
+      <button>KDJ指标</button>
+      <button>RSI指标</button>
+    </div>
     <div id="kline_container"></div>
   </div>
 </template>
