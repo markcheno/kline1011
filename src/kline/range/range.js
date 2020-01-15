@@ -44,6 +44,13 @@ export default class Range {
         signArray.push({ value: 'DIF' });
         signArray.push({ value: 'DEA' });
         break;
+      case 'VR':
+        signArray.push({ value: 'VR' });
+        break;
+      case 'WR':
+        signArray.push({ value: 'WR' });
+        signArray.push({ value: 0 });
+        break;
       default:
         break;
     }
@@ -135,12 +142,19 @@ export default class Range {
 
   // 值换算坐标
   toY(value) {
+    // 一条线时单独处理
+    if (!this.ratio) return this.top + this.height / 2;
     return this.top + Math.floor((this.maxValue - value) * this.ratio);
   }
 
   // 值换算高度
   toHeight(value) {
     return Math.floor(value * this.ratio);
+  }
+
+  // 高度换算值
+  heightToValue(height) {
+    return this.maxValue - this.toValue(this.top + height);
   }
 
   // 更新range
@@ -150,7 +164,11 @@ export default class Range {
     const { top, bottom } = area.getPlace();
     this.height = bottom - top;
     this.top = top;
-    this.ratio = this.height / (this.maxValue - this.minValue);
+    if (Number(this.maxValue) === Number(this.minValue)) {
+      this.ratio = 0;
+    } else {
+      this.ratio = this.height / (this.maxValue - this.minValue);
+    }
     this.updateGradations();
   }
 
@@ -161,12 +179,17 @@ export default class Range {
     /* global math */
     const reduceValue = math.format(this.maxValue - this.minValue, { precision: 14 });
     if (height <= minInterval) minInterval = height;
+    if (Number(reduceValue) === 0) return 0;
+    // const intervalValue = this.heightToValue(minInterval);
+    // return intervalValue;
     let number = reduceValue < 1 ? -(reduceValue.split('.')[1].length + 2) : reduceValue.split('.')[0].length - 2;
     let interval;
     for (; ; number++) {
       interval = Math.pow(10, number);
       if (this.toHeight(interval) > minInterval) { break; }
       interval = 2 * interval;
+      if (this.toHeight(interval) > minInterval) { break; }
+      interval = 2.5 * interval;
       if (this.toHeight(interval) > minInterval) { break; }
       interval = 5 * interval;
       if (this.toHeight(interval) > minInterval) { break; }
@@ -182,8 +205,16 @@ export default class Range {
     const { decimalDigits } = Manager.instance.setting;
     const interval = this.calcInterval();
     this.gradations = [];
+    // 一条直线时单独处理
+    if (interval === 0) {
+      this.gradations.push({
+        text: Number(0).toFixed(decimalDigits),
+        y: this.top + this.height / 2,
+      });
+      return;
+    }
     // 开始位置取整
-    let start = this.maxValue / interval * interval;
+    let start = Number(this.toValue(this.top + 15));
     do {
       this.gradations.push({
         text: start.toFixed(decimalDigits),
@@ -204,6 +235,10 @@ export default class Range {
         break;
       case 'Volume':
         this.updateVolumeGradations();
+        result = true;
+        break;
+      case 'WR':
+        this.updateWRGradations();
         result = true;
         break;
       default:
@@ -275,7 +310,7 @@ export default class Range {
     });
   }
 
-  // 成交量
+  // 成交量式刻度
   updateVolumeGradations() {
     // minValue,
     const { maxValue, boundaryGap } = this;
@@ -287,6 +322,22 @@ export default class Range {
     this.gradations.push({
       text: Number(topValue).toFixed(0),
       y: this.toY(topValue),
+    });
+  }
+
+  // WR式刻度
+  updateWRGradations() {
+    const { decimalDigits } = Manager.instance.setting;
+    const { minValue, boundaryGap } = this;
+    const boundaryGapBottom = boundaryGap[1].split('%')[0] / 100;
+    const bottomValue = (1 - boundaryGapBottom) * minValue;
+    this.gradations = [];
+    const WRGradations = [0, bottomValue / 2, bottomValue];
+    WRGradations.forEach(item => {
+      this.gradations.push({
+        text: Number(item).toFixed(decimalDigits),
+        y: this.toY(item),
+      });
     });
   }
 }

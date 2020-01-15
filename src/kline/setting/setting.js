@@ -10,11 +10,10 @@ export default class Setting {
     };
     this.timelineAreaHeight = 30;
     // candle 蜡烛图 line 分时图
-    this.chartType = 'candle';
+    this.chartType = 'line';
     this.candlechart = [{
       name: 'mainChartLayout',
       chartPlotters: 'CandlestickPlotter',
-      chartInfoPlotters: 'CandlestickInfoPlotter',
       boundaryGap: ['20%', '20%'],
       chartIndicator: {
         MA: {
@@ -39,7 +38,6 @@ export default class Setting {
     this.lineChart = [{
       name: 'lineChartLayout',
       chartPlotters: 'LineChartPlotter',
-      chartInfoPlotters: 'LineChartInfoPlotter',
       boundaryGap: ['20%', '50%'],
       chartConfig: {
         sign: 'Line',

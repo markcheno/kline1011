@@ -60,6 +60,18 @@ export default class Theme {
         infoColor: '#333',
         infoFont: '12px sans-serif',
       },
+      VR: {
+        lineWidth: 1.5,
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+        VRColor: '#CD853F',
+      },
+      WR: {
+        lineWidth: 1.5,
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+        WRColor: '#FFA500',
+      },
     };
     this.Font = {
       Default: '12px Tahoma',

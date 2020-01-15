@@ -55,6 +55,8 @@ export default class Manager {
     const chartType = this.setting.getChartType();
     const isShowVolume = symbol === 6;
     chartType === 'candle' && this.setting.addChart(layoutIndicator.MACD);
+    chartType === 'candle' && this.setting.addChart(layoutIndicator.VR);
+    chartType === 'candle' && this.setting.addChart(layoutIndicator.WR);
     if (isShowVolume) {
       this.setting.addChart(layoutIndicator.volume);
     }

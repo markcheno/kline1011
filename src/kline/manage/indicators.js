@@ -3,7 +3,6 @@ const layoutIndicator = {
   volume: {
     name: 'volumeChartLayout',
     chartPlotters: 'VolumePlotter',
-    chartInfoPlotters: 'VolumeInfoPlotter',
     boundaryGap: ['25%', '0%'],
     chartConfig: {
       sign: 'Volume',
@@ -12,7 +11,6 @@ const layoutIndicator = {
   MACD: {
     name: 'MACDChartLayout',
     chartPlotters: 'MACDPlotter',
-    chartInfoPlotters: 'MACDInfoPLotter',
     boundaryGap: ['30%', '30%'],
     chartConfig: {
       sign: 'MACD',
@@ -21,6 +19,24 @@ const layoutIndicator = {
         long: 26,
         middle: 9,
       },
+    },
+  },
+  VR: {
+    name: 'VRChartLayout',
+    chartPlotters: 'VRPlotter',
+    boundaryGap: ['10%', '10%'],
+    chartConfig: {
+      sign: 'VR',
+      N: 26,
+    },
+  },
+  WR: {
+    name: 'WRChartLayout',
+    chartPlotters: 'WRPlotter',
+    boundaryGap: ['20%', '20%'],
+    chartConfig: {
+      sign: 'WR',
+      N: 14,
     },
   },
 };
@@ -245,6 +261,70 @@ function calcMACDIndicator(option) {
   return Math.max(maxShortSize, maxLongSize, maxMiddleSIze);
 }
 
+// 计算VR指标 N:周期
+function calcVRIndicator(option) {
+  const { allData, appendLength, VRconfig, decimalDigits } = option;
+  const { N } = VRconfig;
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = appendLength - 1 + N;
+  }
+  let incTotal = 0;
+  let decTotal = 0;
+  let eqTotal = 0;
+  for (let i = start; i <= end; i++) {
+    const dataItem = allData[i];
+    const startVR = allData[i - N];
+    if (dataItem.open < dataItem.close) {
+      incTotal += dataItem.volume;
+    } else if (dataItem.open > dataItem.close) {
+      decTotal += dataItem.volume;
+    } else {
+      eqTotal += dataItem.volume;
+    }
+    if (startVR) {
+      if (startVR.open < startVR.close) {
+        incTotal -= startVR.volume;
+      } else if (startVR.open > startVR.close) {
+        decTotal -= startVR.volume;
+      } else {
+        eqTotal -= startVR.volume;
+      }
+    }
+    const vr = decTotal + eqTotal / 2 === 0 ? 0 : (incTotal + eqTotal / 2) / (decTotal + eqTotal / 2);
+    allData[i].VR = vr.toFixed(decimalDigits);
+  }
+  return N;
+}
+
+// 计算WR N 周期
+function calcWRIndicator(option) {
+  const { allData, appendLength, WRconfig, decimalDigits } = option;
+  const { N } = WRconfig;
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = appendLength - 1 + N;
+  }
+  for (let i = start; i <= end; i++) {
+    const dataItem = allData[i];
+    let NIndex = Math.max(0, i - N + 1);
+    let { low, high } = dataItem;
+    const { close } = dataItem;
+    for (; NIndex <= i; NIndex++) {
+      const NItem = allData[NIndex];
+      const NLow = NItem.low;
+      const Nhigh = NItem.high;
+      if (NLow < low) low = NLow;
+      if (Nhigh > high) high = Nhigh;
+    }
+    const wr = ((high - close) * 100) / (high - low);
+    allData[i].WR = 0 - wr.toFixed(decimalDigits);
+  }
+  return N;
+}
+
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
@@ -268,6 +348,22 @@ function calcIndicator(option) {
       case 'Line':
         needReloadLastIndex = calcAverageLine({
           allData,
+          decimalDigits,
+        });
+        break;
+      case 'VR':
+        needReloadLastIndex = calcVRIndicator({
+          allData,
+          appendLength,
+          VRconfig: item.chartConfig,
+          decimalDigits,
+        });
+        break;
+      case 'WR':
+        needReloadLastIndex = calcWRIndicator({
+          allData,
+          appendLength,
+          WRconfig: item.chartConfig,
           decimalDigits,
         });
         break;

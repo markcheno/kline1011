@@ -757,6 +757,48 @@ export class ChartInfoPlotters extends Plotter {
     startPlace.startX = textX;
   }
 
+  // VR 信息
+  drawVRInfo(chartConfig, data, startPlace) {
+    const context = this.overlayContext;
+    const VRTheme = this.theme.Line.VR;
+    const VRValues = ['VR'].map(item => ({
+      value: `${item}:${data[item]}`,
+      color: VRTheme.VRColor,
+    }));
+    VRValues.unshift({ value: `VR(${chartConfig.N})`, color: VRTheme.infoColor });
+    const { startX, textY } = startPlace
+    let textX = startX;
+    context.font = VRTheme.infoFont;
+    context.textAlign = 'left';
+    VRValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+    startPlace.startX = textX;
+  }
+
+  // WR 信息
+  drawWRInfo(chartConfig, data, startPlace) {
+    const context = this.overlayContext;
+    const WRTheme = this.theme.Line.WR;
+    const WRValues = ['WR'].map(item => ({
+      value: `${item}:${data[item]}`,
+      color: WRTheme.WRColor,
+    }));
+    WRValues.unshift({ value: `WR(${chartConfig.N})`, color: WRTheme.infoColor });
+    const { startX, textY } = startPlace
+    let textX = startX;
+    context.font = WRTheme.infoFont;
+    context.textAlign = 'left';
+    WRValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+    startPlace.startX = textX;
+  }
+
   // MA 信息
   drawMAInfo(MAData, data, startPlace) {
     const context = this.overlayContext;
@@ -867,6 +909,12 @@ export class ChartInfoPlotters extends Plotter {
         break;
       case 'MACD':
         this.drawMACDInfo(chartConfig, data, startPlace);
+        break;
+      case 'VR':
+        this.drawVRInfo(chartConfig, data, startPlace);
+        break;
+      case 'WR':
+        this.drawWRInfo(chartConfig, data, startPlace);
         break;
       default:
         break;
@@ -1433,6 +1481,12 @@ export class MACDPlotter extends Plotter {
     const DEAarray = [];
     const MACDpositiveArray = [];
     const MACDnegativeArray = [];
+    // 绘制分割线
+    context.strokeStyle = this.GridColor;
+    this.drawLine(context, {
+      from: { x: left + 0.5, y: top + 0.5 },
+      to: { x: right + 0.5, y: top + 0.5 },
+    });
     for (let i = 0; i < currentData.length; i++) {
       const data = currentData[i];
       const { DIF, DEA, MACD } = data;
@@ -1440,12 +1494,6 @@ export class MACDPlotter extends Plotter {
       const DEAplace = rangeData.toY(DEA);
       const MACDplace = rangeData.toY(MACD);
       const MACDZeroPlace = rangeData.toY(0);
-      // 绘制分割线
-      context.strokeStyle = this.GridColor;
-      this.drawLine(context, {
-        from: { x: left + 0.5, y: top + 0.5 },
-        to: { x: right + 0.5, y: top + 0.5 },
-      });
       DIFarray.push({
         x: start,
         y: DIFplace,
@@ -1470,5 +1518,91 @@ export class MACDPlotter extends Plotter {
     this.drawSerialLines(context, DIFarray);
     context.strokeStyle = this.MACDtheme.DEA;
     this.drawSerialLines(context, DEAarray);
+  }
+}
+
+// 绘制VR
+export class VRPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.VRtheme = theme.Line.VR;
+  }
+
+  draw(layout) {
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
+    const { dataSource } = this.manager;
+    const { left, right, top } = chartArea.getPlace();
+    const context = this.mainContext;
+    const currentData = dataSource.getCurrentData();
+    const columnWidth = dataSource.getColumnWidth();
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let start = candleLeftOffest + itemCenterOffset;
+    const VRPlace = [];
+    // 绘制分割线
+    context.strokeStyle = this.GridColor;
+    this.drawLine(context, {
+      from: { x: left + 0.5, y: top + 0.5 },
+      to: { x: right + 0.5, y: top + 0.5 },
+    });
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { VR } = data;
+      const VRplace = rangeData.toY(VR);
+      VRPlace.push({
+        x: start,
+        y: VRplace,
+      });
+      start += columnWidth;
+    }
+    context.lineWidth = this.VRtheme.lineWidth;
+    context.strokeStyle = this.VRtheme.VRColor;
+    this.drawSerialLines(context, VRPlace);
+  }
+}
+
+// 绘制WR
+export class WRPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.WRtheme = theme.Line.WR;
+  }
+
+  draw(layout) {
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
+    const { dataSource } = this.manager;
+    const { left, right, top } = chartArea.getPlace();
+    const context = this.mainContext;
+    const currentData = dataSource.getCurrentData();
+    const columnWidth = dataSource.getColumnWidth();
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let start = candleLeftOffest + itemCenterOffset;
+    const WRPlace = [];
+    // 绘制分割线
+    context.strokeStyle = this.GridColor;
+    this.drawLine(context, {
+      from: { x: left + 0.5, y: top + 0.5 },
+      to: { x: right + 0.5, y: top + 0.5 },
+    });
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { WR } = data;
+      const WRplace = rangeData.toY(WR);
+      WRPlace.push({
+        x: start,
+        y: WRplace,
+      });
+      start += columnWidth;
+    }
+    context.lineWidth = this.WRtheme.lineWidth;
+    context.strokeStyle = this.WRtheme.WRColor;
+    this.drawSerialLines(context, WRPlace);
   }
 }
