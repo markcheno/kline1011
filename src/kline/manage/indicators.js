@@ -62,6 +62,7 @@ function calcAverageLine(option) {
       item.average = (priceToTal / (index + 1)).toFixed(decimalDigits);
     }
   });
+  return 0;
 }
 
 // 计算基础数 EMA 指数移动平均线 indicator: 指标名称 N: 周期
@@ -123,7 +124,7 @@ function calcMAIndicator(option) {
       calc(item, i, allData[i]);
     });
   }
-  return maxMASize;
+  return end;
 }
 
 // 计算 BOLL 指标
@@ -159,7 +160,7 @@ function calcBOLLIndicator(option) {
     dataItem[type].UP = (MID + 2 * BOLL).toFixed(decimalDigits);
     dataItem[type].LOW = (MID - 2 * BOLL).toFixed(decimalDigits);
   }
-  return middleReloadIndex;
+  return end;
 }
 
 // 计算 ENV 指标
@@ -185,7 +186,7 @@ function calcENVIndicator(option) {
     dataItem[type].EnvUp = EnvUp.toFixed(decimalDigits);
     dataItem[type].EnvLow = EnvLow.toFixed(decimalDigits);
   }
-  return middleReloadIndex;
+  return end;
 }
 
 // 计算 CG 指标
@@ -305,7 +306,7 @@ function calcVRIndicator(option) {
     const vr = decTotal + eqTotal / 2 === 0 ? 0 : (incTotal + eqTotal / 2) / (decTotal + eqTotal / 2);
     allData[i].VR = vr.toFixed(decimalDigits);
   }
-  return N;
+  return end;
 }
 
 // 计算WR N 周期
@@ -332,7 +333,7 @@ function calcWRIndicator(option) {
     const wr = ((high - close) * 100) / (high - low);
     allData[i].WR = 0 - wr.toFixed(decimalDigits);
   }
-  return N;
+  return end;
 }
 
 // 计算RSI 指标
@@ -343,7 +344,7 @@ function calcRSIIndicator(option) {
   const maxSize = Math.max(N1, N2);
   let end = allData.length - 1;
   if (appendLength) {
-    end = appendLength - 1 + maxSize;
+    end = appendLength - 1 + maxSize * 10;
   }
   const calcRSI = (period, key) => {
     for (let i = start; i <= end; i++) {
@@ -382,6 +383,7 @@ function calcRSIIndicator(option) {
   };
   calcRSI(N1, '1');
   calcRSI(N2, '2');
+  return end;
 }
 
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
@@ -405,13 +407,13 @@ function calcIndicator(option) {
         });
         break;
       case 'Line':
-        needReloadLastIndex = calcAverageLine({
+        needMainReloadLastIndex = calcAverageLine({
           allData,
           decimalDigits,
         });
         break;
       case 'VR':
-        needReloadLastIndex = calcVRIndicator({
+        needMainReloadLastIndex = calcVRIndicator({
           allData,
           appendLength,
           VRconfig: item.chartConfig,
@@ -419,7 +421,7 @@ function calcIndicator(option) {
         });
         break;
       case 'WR':
-        needReloadLastIndex = calcWRIndicator({
+        needMainReloadLastIndex = calcWRIndicator({
           allData,
           appendLength,
           WRconfig: item.chartConfig,
@@ -427,7 +429,7 @@ function calcIndicator(option) {
         });
         break;
       case 'RSI':
-        needReloadLastIndex = calcRSIIndicator({
+        needMainReloadLastIndex = calcRSIIndicator({
           allData,
           appendLength,
           RSIConfig: item.chartConfig,
