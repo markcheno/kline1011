@@ -112,7 +112,7 @@ function calcMAIndicator(option) {
   let maxMASize = 0;
   if (appendLength) {
     maxMASize = Math.max(...MASize);
-    end = appendLength - 1 + maxMASize;
+    end = Math.min(appendLength - 1 + maxMASize, end);
   }
   const total = {};
   MAArray.forEach(item => {
@@ -153,7 +153,7 @@ function calcBOLLIndicator(option) {
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
-    end = appendLength - 1 + middleReloadIndex;
+    end = Math.min(appendLength - 1 + middleReloadIndex, end);
   }
   for (let i = start; i <= end; i++) {
     const dataItem = allData[i];
@@ -187,7 +187,7 @@ function calcENVIndicator(option) {
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
-    end = appendLength - 1 + middleReloadIndex;
+    end = Math.min(appendLength - 1 + middleReloadIndex, end);
   }
   for (let i = start; i <= end; i++) {
     const dataItem = allData[i];
@@ -290,7 +290,7 @@ function calcVRIndicator(option) {
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
-    end = appendLength - 1 + N;
+    end = Math.min(appendLength - 1 + N, end);
   }
   let incTotal = 0;
   let decTotal = 0;
@@ -327,7 +327,7 @@ function calcWRIndicator(option) {
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
-    end = appendLength - 1 + N;
+    end = Math.min(appendLength - 1 + N, end);
   }
   for (let i = start; i <= end; i++) {
     const dataItem = allData[i];
@@ -355,7 +355,7 @@ function calcRSIIndicator(option) {
   const maxSize = Math.max(N1, N2);
   let end = allData.length - 1;
   if (appendLength) {
-    end = appendLength - 1 + maxSize * 10;
+    end = Math.min(appendLength - 1 + maxSize * 10, end);
   }
   const calcRSI = (period, key) => {
     for (let i = start; i <= end; i++) {
@@ -404,7 +404,7 @@ function calcKDJIndicator(option) {
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
-    end = appendLength - 1 + N * 10;
+    end = Math.min(appendLength - 1 + N * 10, end);
   }
   for (let i = start; i <= end; i++) {
     const dataItem = allData[i];

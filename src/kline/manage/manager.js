@@ -58,7 +58,7 @@ export default class Manager {
     // chartType === 'candle' && this.setting.addChart(layoutIndicator.VR);
     // chartType === 'candle' && this.setting.addChart(layoutIndicator.WR);
     // chartType === 'candle' && this.setting.addChart(layoutIndicator.RSI);
-    chartType === 'candle' && this.setting.addChart(layoutIndicator.KDJ);
+    // chartType === 'candle' && this.setting.addChart(layoutIndicator.KDJ);
     if (isShowVolume) {
       this.setting.addChart(layoutIndicator.volume);
     }
