@@ -79,6 +79,14 @@ export default class Theme {
         RSI1: '#F4A460',
         RSI2: '#FFD700',
       },
+      KDJ: {
+        lineWidth: 1.5,
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+        K: '#FFA500',
+        D: '#800080',
+        J: '#00BFFF',
+      },
     };
     this.Font = {
       Default: '12px Tahoma',

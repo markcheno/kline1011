@@ -55,6 +55,11 @@ export default class Range {
         signArray.push({ value: 'RSI1' });
         signArray.push({ value: 'RSI2' });
         break;
+      case 'KDJ':
+        signArray.push({ value: 'K' });
+        signArray.push({ value: 'D' });
+        signArray.push({ value: 'J' });
+        break;
       default:
         break;
     }

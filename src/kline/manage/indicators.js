@@ -49,6 +49,17 @@ const layoutIndicator = {
       N2: 14,
     },
   },
+  KDJ: {
+    name: 'KDJChartLayout',
+    chartPlotters: 'KDJPlotter',
+    boundaryGap: ['20%', '20%'],
+    chartConfig: {
+      sign: 'KDJ',
+      N: 9,
+      m1: 3,
+      m2: 3,
+    },
+  },
 };
 
 // 计算分时图上的均线
@@ -386,6 +397,50 @@ function calcRSIIndicator(option) {
   return end;
 }
 
+// 计算KDJ 指标
+function calcKDJIndicator(option) {
+  const { allData, appendLength, KDJConfig, decimalDigits } = option;
+  const { N, m1, m2 } = KDJConfig;
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = appendLength - 1 + N * 10;
+  }
+  for (let i = start; i <= end; i++) {
+    const dataItem = allData[i];
+    if (i) {
+      const preDataItem = allData[i - 1];
+      const prev_k = preDataItem.K;
+      const prev_d = preDataItem.D;
+      let rsv = 0;
+      let h = dataItem.high;
+      let l = dataItem.low;
+      const c = dataItem.close;
+      // 设置周期内, 最高收盘价, 最低收盘价
+      const startIndex = i - N + 1;
+      for (let j = i, min = Math.max(startIndex, 0); j >= min; j--) {
+        const startHigh = allData[j].high;
+        const startLow = allData[j].low;
+        if (startHigh > h) h = startHigh;
+        if (startLow < l) l = startLow;
+      }
+      if (h !== l) rsv = (c - l) / (h - l) * 100;
+      else rsv = 46;
+      const KDJ_K = prev_k * (m1 - 1) / m1 + rsv * 1 / m1;
+      const KDJ_D = prev_d * (m2 - 1) / m2 + KDJ_K * 1 / m2;
+      const KDJ_J = 3 * KDJ_K - 2 * KDJ_D;
+      dataItem.K = KDJ_K.toFixed(decimalDigits);
+      dataItem.D = KDJ_D.toFixed(decimalDigits);
+      dataItem.J = KDJ_J.toFixed(decimalDigits);
+    } else {
+      dataItem.K = Number(46).toFixed(decimalDigits);
+      dataItem.D = Number(46).toFixed(decimalDigits);
+      dataItem.J = Number(46).toFixed(decimalDigits);
+    }
+  }
+  return end;
+}
+
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
@@ -433,6 +488,14 @@ function calcIndicator(option) {
           allData,
           appendLength,
           RSIConfig: item.chartConfig,
+          decimalDigits,
+        });
+        break;
+      case 'KDJ':
+        needMainReloadLastIndex = calcKDJIndicator({
+          allData,
+          appendLength,
+          KDJConfig: item.chartConfig,
           decimalDigits,
         });
         break;

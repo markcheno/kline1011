@@ -820,6 +820,27 @@ export class ChartInfoPlotters extends Plotter {
     startPlace.startX = textX;
   }
 
+  // KDJ 信息
+  drawKDJInfo(chartConfig, data, startPlace) {
+    const context = this.overlayContext;
+    const KDJTheme = this.theme.Line.KDJ;
+    const KDJValues = ['K', 'D', 'J'].map(item => ({
+      value: `${item}:${data[item]}`,
+      color: KDJTheme[item],
+    }));
+    KDJValues.unshift({ value: `KDJ(${chartConfig.N}, ${chartConfig.m1}, ${chartConfig.m2})`, color: KDJTheme.infoColor });
+    const { startX, textY } = startPlace
+    let textX = startX;
+    context.font = KDJTheme.infoFont;
+    context.textAlign = 'left';
+    KDJValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+    startPlace.startX = textX;
+  }
+
   // MA 信息
   drawMAInfo(MAData, data, startPlace) {
     const context = this.overlayContext;
@@ -939,6 +960,9 @@ export class ChartInfoPlotters extends Plotter {
         break;
       case 'RSI':
         this.drawRSIInfo(chartConfig, data, startPlace);
+        break;
+      case 'KDJ':
+        this.drawKDJInfo(chartConfig, data, startPlace);
         break;
       default:
         break;
@@ -1677,5 +1701,61 @@ export class RSIPlotter extends Plotter {
     this.drawSerialLines(context, RSI1Place);
     context.strokeStyle = this.RSITheme.RSI2;
     this.drawSerialLines(context, RSI2Place);
+  }
+}
+
+// 绘制KDJ
+export class KDJPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.KDJTheme = theme.Line.KDJ;
+  }
+
+  draw(layout) {
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
+    const { dataSource } = this.manager;
+    const { left, right, top } = chartArea.getPlace();
+    const context = this.mainContext;
+    const currentData = dataSource.getCurrentData();
+    const columnWidth = dataSource.getColumnWidth();
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let start = candleLeftOffest + itemCenterOffset;
+    const KPlace = [];
+    const DPlace = [];
+    const JPLace = [];
+    // 绘制分割线
+    context.strokeStyle = this.GridColor;
+    this.drawLine(context, {
+      from: { x: left + 0.5, y: top + 0.5 },
+      to: { x: right + 0.5, y: top + 0.5 },
+    });
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { K, D, J } = data;
+      KPlace.push({
+        x: start,
+        y: rangeData.toY(K),
+      });
+      DPlace.push({
+        x: start,
+        y: rangeData.toY(D),
+      });
+      JPLace.push({
+        x: start,
+        y: rangeData.toY(J),
+      });
+      start += columnWidth;
+    }
+    context.lineWidth = this.KDJTheme.lineWidth;
+    context.strokeStyle = this.KDJTheme.K;
+    this.drawSerialLines(context, KPlace);
+    context.strokeStyle = this.KDJTheme.D;
+    this.drawSerialLines(context, DPlace);
+    context.strokeStyle = this.KDJTheme.J;
+    this.drawSerialLines(context, JPLace);
   }
 }
