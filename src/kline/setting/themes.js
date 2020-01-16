@@ -93,6 +93,14 @@ export default class Theme {
         infoFont: '12px sans-serif',
         CCI: '#FFA500',
       },
+      BIAS: {
+        lineWidth: 1.5,
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+        BIAS1: '#808080',
+        BIAS2: '#F4A460',
+        BIAS3: '#FF00FF',
+      },
     };
     this.Font = {
       Default: '12px Tahoma',

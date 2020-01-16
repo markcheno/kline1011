@@ -862,6 +862,27 @@ export class ChartInfoPlotters extends Plotter {
     startPlace.startX = textX;
   }
 
+  // BIAS 信息
+  drawBIASInfo(chartConfig, data, startPlace) {
+    const context = this.overlayContext;
+    const BIASTheme = this.theme.Line.BIAS;
+    const KDJValues = ['BIAS1', 'BIAS2', 'BIAS3'].map(item => ({
+      value: `${item}:${data[item]}`,
+      color: BIASTheme[item],
+    }));
+    KDJValues.unshift({ value: `BIAS(${chartConfig.N1}, ${chartConfig.N2}, ${chartConfig.N3})`, color: BIASTheme.infoColor });
+    const { startX, textY } = startPlace
+    let textX = startX;
+    context.font = BIASTheme.infoFont;
+    context.textAlign = 'left';
+    KDJValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+    startPlace.startX = textX;
+  }
+
   // MA 信息
   drawMAInfo(MAData, data, startPlace) {
     const context = this.overlayContext;
@@ -987,6 +1008,9 @@ export class ChartInfoPlotters extends Plotter {
         break;
       case 'CCI':
         this.drawCCIInfo(chartConfig, data, startPlace);
+        break;
+      case 'BIAS':
+        this.drawBIASInfo(chartConfig, data, startPlace);
         break;
       default:
         break;
@@ -1785,7 +1809,7 @@ export class KDJPlotter extends Plotter {
 }
 
 // 绘制CCI
-export class CCIPLotter extends Plotter {
+export class CCIPlotter extends Plotter {
   constructor(name) {
     super(name);
     const { theme } = this.manager;
@@ -1823,5 +1847,61 @@ export class CCIPLotter extends Plotter {
     context.lineWidth = this.CCITheme.lineWidth;
     context.strokeStyle = this.CCITheme.CCI;
     this.drawSerialLines(context, CCIPlace);
+  }
+}
+
+// 绘制BIAS
+export class BIASPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.BIASTheme = theme.Line.BIAS;
+  }
+
+  draw(layout) {
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
+    const { dataSource } = this.manager;
+    const { left, right, top } = chartArea.getPlace();
+    const context = this.mainContext;
+    const currentData = dataSource.getCurrentData();
+    const columnWidth = dataSource.getColumnWidth();
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let start = candleLeftOffest + itemCenterOffset;
+    const BIAS1Place = [];
+    const BIAS2Place = [];
+    const BIAS3Place = [];
+    // 绘制分割线
+    context.strokeStyle = this.GridColor;
+    this.drawLine(context, {
+      from: { x: left + 0.5, y: top + 0.5 },
+      to: { x: right + 0.5, y: top + 0.5 },
+    });
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { BIAS1, BIAS2, BIAS3 } = data;
+      BIAS1 && BIAS1Place.push({
+        x: start,
+        y: rangeData.toY(BIAS1),
+      });
+      BIAS2 && BIAS2Place.push({
+        x: start,
+        y: rangeData.toY(BIAS2),
+      });
+      BIAS3 && BIAS3Place.push({
+        x: start,
+        y: rangeData.toY(BIAS3),
+      });
+      start += columnWidth;
+    }
+    context.lineWidth = this.BIASTheme.lineWidth;
+    context.strokeStyle = this.BIASTheme.BIAS1;
+    this.drawSerialLines(context, BIAS1Place);
+    context.strokeStyle = this.BIASTheme.BIAS2;
+    this.drawSerialLines(context, BIAS2Place);
+    context.strokeStyle = this.BIASTheme.BIAS3;
+    this.drawSerialLines(context, BIAS3Place);
   }
 }

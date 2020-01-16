@@ -62,11 +62,22 @@ const layoutIndicator = {
   },
   CCI: {
     name: 'CCIChartLayout',
-    chartPlotters: 'CCIPLotter',
+    chartPlotters: 'CCIPlotter',
     boundaryGap: ['20%', '20%'],
     chartConfig: {
       sign: 'CCI',
       N: 14,
+    },
+  },
+  BIAS: {
+    name: 'BIASChartLayout',
+    chartPlotters: 'BIASPlotter',
+    boundaryGap: ['20%', '20%'],
+    chartConfig: {
+      sign: 'BIAS',
+      N1: 6,
+      N2: 12,
+      N3: 24,
     },
   },
 };
@@ -529,6 +540,40 @@ function calcCCIIndicator(option) {
   return end;
 }
 
+// 计算BIAS 指标
+function calcBIASIndicator(option) {
+  const { type, allData, appendLength, BIASConfig, decimalDigits } = option;
+  const { N1, N2, N3 } = BIASConfig;
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = Math.min(appendLength - 1 + Math.max(N1, N2, N3), end);
+  }
+  const middleReloadIndex = calcMAIndicator(Object.assign(option, {
+    MAConfig: {
+      sign: 'close',
+      data: [`MA${N1}`, `MA${N2}`, `MA${N3}`],
+    },
+  }));
+  // 计算对应的BIAS
+  const getBIAS = (i, index, N, dataItem) => {
+    if (i < N - 1) {
+      dataItem[`BIAS${index + 1}`] = null;
+    } else {
+      const { close } = dataItem;
+      const ma = dataItem[type][`MA${N}`];
+      const bias = ((close - ma) / ma) * 100;
+      dataItem[`BIAS${index + 1}`] = bias.toFixed(decimalDigits);
+    }
+  };
+  for (let i = start; i <= end; i++) {
+    [N1, N2, N3].forEach((item, index) => {
+      getBIAS(i, index, item, allData[i]);
+    });
+  }
+  return Math.max(middleReloadIndex, end);
+}
+
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
@@ -592,6 +637,15 @@ function calcIndicator(option) {
           allData,
           appendLength,
           CCIConfig: item.chartConfig,
+          decimalDigits,
+        });
+        break;
+      case 'BIAS':
+        needMainReloadLastIndex = calcBIASIndicator({
+          type,
+          allData,
+          appendLength,
+          BIASConfig: item.chartConfig,
           decimalDigits,
         });
         break;

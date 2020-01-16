@@ -63,6 +63,11 @@ export default class Range {
       case 'CCI':
         signArray.push({ value: 'CCI' });
         break;
+      case 'BIAS':
+        signArray.push({ value: 'BIAS1' });
+        signArray.push({ value: 'BIAS2' });
+        signArray.push({ value: 'BIAS3' });
+        break;
       default:
         break;
     }
