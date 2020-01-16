@@ -27,6 +27,7 @@ module.exports = {
     'no-continue': 'off',
     'no-loop-func': 'off',
     'for-direction': 'off',
+    'camelcase': 'off',
   },
   parserOptions: {
     parser: 'babel-eslint',

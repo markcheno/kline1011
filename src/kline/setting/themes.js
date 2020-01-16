@@ -72,6 +72,13 @@ export default class Theme {
         infoFont: '12px sans-serif',
         WRColor: '#FFA500',
       },
+      RSI: {
+        lineWidth: 1.5,
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+        RSI1: '#F4A460',
+        RSI2: '#FFD700',
+      },
     };
     this.Font = {
       Default: '12px Tahoma',

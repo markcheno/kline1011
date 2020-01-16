@@ -54,9 +54,10 @@ export default class Manager {
     const symbol = this.setting.getSymbol().id;
     const chartType = this.setting.getChartType();
     const isShowVolume = symbol === 6;
-    chartType === 'candle' && this.setting.addChart(layoutIndicator.MACD);
-    chartType === 'candle' && this.setting.addChart(layoutIndicator.VR);
-    chartType === 'candle' && this.setting.addChart(layoutIndicator.WR);
+    // chartType === 'candle' && this.setting.addChart(layoutIndicator.MACD);
+    // chartType === 'candle' && this.setting.addChart(layoutIndicator.VR);
+    // chartType === 'candle' && this.setting.addChart(layoutIndicator.WR);
+    chartType === 'candle' && this.setting.addChart(layoutIndicator.RSI);
     if (isShowVolume) {
       this.setting.addChart(layoutIndicator.volume);
     }

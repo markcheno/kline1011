@@ -39,6 +39,16 @@ const layoutIndicator = {
       N: 14,
     },
   },
+  RSI: {
+    name: 'RSIChartLayout',
+    chartPlotters: 'RSIPlotter',
+    boundaryGap: ['20%', '20%'],
+    chartConfig: {
+      sign: 'RSI',
+      N1: 7,
+      N2: 14,
+    },
+  },
 };
 
 // 计算分时图上的均线
@@ -325,6 +335,55 @@ function calcWRIndicator(option) {
   return N;
 }
 
+// 计算RSI 指标
+function calcRSIIndicator(option) {
+  const { allData, appendLength, RSIConfig, decimalDigits } = option;
+  const { N1, N2 } = RSIConfig;
+  const start = 0;
+  const maxSize = Math.max(N1, N2);
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = appendLength - 1 + maxSize;
+  }
+  const calcRSI = (period, key) => {
+    for (let i = start; i <= end; i++) {
+      let RSI = 0;
+      if (i) {
+        const dataItem = allData[i];
+        const preDataItem = allData[i - 1];
+        const interval = dataItem.close - preDataItem.close;
+        const { pre_incVal, pre_decVal } = preDataItem;
+        let current_incVal = 0;
+        let current_decVal = 0;
+        if (interval >= 0) {
+          current_incVal = interval;
+        } else {
+          current_decVal = Math.abs(interval);
+        }
+        let sma_incVal = 0;
+        let sma_decVal = 0;
+        if (i === 1) {
+          sma_incVal = current_incVal;
+          sma_decVal = current_decVal;
+        } else {
+          sma_incVal = pre_incVal * (period - 1) / period + current_incVal * 1 / period;
+          sma_decVal = pre_decVal * (period - 1) / period + current_decVal * 1 / period;
+        }
+        if (sma_incVal + sma_decVal === 0) {
+          RSI = 0;
+        } else {
+          RSI = sma_incVal / (sma_incVal + sma_decVal) * 100;
+        }
+        allData[i].pre_incVal = sma_incVal;
+        allData[i].pre_decVal = sma_decVal;
+      }
+      allData[i][`RSI${key}`] = RSI.toFixed(decimalDigits);
+    }
+  };
+  calcRSI(N1, '1');
+  calcRSI(N2, '2');
+}
+
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
@@ -364,6 +423,14 @@ function calcIndicator(option) {
           allData,
           appendLength,
           WRconfig: item.chartConfig,
+          decimalDigits,
+        });
+        break;
+      case 'RSI':
+        needReloadLastIndex = calcRSIIndicator({
+          allData,
+          appendLength,
+          RSIConfig: item.chartConfig,
           decimalDigits,
         });
         break;

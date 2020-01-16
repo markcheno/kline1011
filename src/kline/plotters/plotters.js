@@ -799,6 +799,27 @@ export class ChartInfoPlotters extends Plotter {
     startPlace.startX = textX;
   }
 
+  // RSI 信息
+  drawRSIInfo(chartConfig, data, startPlace) {
+    const context = this.overlayContext;
+    const RSITheme = this.theme.Line.RSI;
+    const RSIValues = ['RSI1', 'RSI2'].map(item => ({
+      value: `${item}:${data[item]}`,
+      color: RSITheme[item],
+    }));
+    RSIValues.unshift({ value: `RSI(${chartConfig.N1}, ${chartConfig.N2})`, color: RSITheme.infoColor });
+    const { startX, textY } = startPlace
+    let textX = startX;
+    context.font = RSITheme.infoFont;
+    context.textAlign = 'left';
+    RSIValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+    startPlace.startX = textX;
+  }
+
   // MA 信息
   drawMAInfo(MAData, data, startPlace) {
     const context = this.overlayContext;
@@ -915,6 +936,9 @@ export class ChartInfoPlotters extends Plotter {
         break;
       case 'WR':
         this.drawWRInfo(chartConfig, data, startPlace);
+        break;
+      case 'RSI':
+        this.drawRSIInfo(chartConfig, data, startPlace);
         break;
       default:
         break;
@@ -1604,5 +1628,54 @@ export class WRPlotter extends Plotter {
     context.lineWidth = this.WRtheme.lineWidth;
     context.strokeStyle = this.WRtheme.WRColor;
     this.drawSerialLines(context, WRPlace);
+  }
+}
+
+// 绘制RSI
+export class RSIPlotter extends Plotter {
+  constructor(name) {
+    super(name);
+    const { theme } = this.manager;
+    this.GridColor = theme.Color.Grid;
+    this.RSITheme = theme.Line.RSI;
+  }
+
+  draw(layout) {
+    const chartArea = layout.getChartArea();
+    const rangeData = layout.getRangeData();
+    const { dataSource } = this.manager;
+    const { left, right, top } = chartArea.getPlace();
+    const context = this.mainContext;
+    const currentData = dataSource.getCurrentData();
+    const columnWidth = dataSource.getColumnWidth();
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    let start = candleLeftOffest + itemCenterOffset;
+    const RSI1Place = [];
+    const RSI2Place = [];
+    // 绘制分割线
+    context.strokeStyle = this.GridColor;
+    this.drawLine(context, {
+      from: { x: left + 0.5, y: top + 0.5 },
+      to: { x: right + 0.5, y: top + 0.5 },
+    });
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { RSI1, RSI2 } = data;
+      RSI1Place.push({
+        x: start,
+        y: rangeData.toY(RSI1),
+      });
+      RSI2Place.push({
+        x: start,
+        y: rangeData.toY(RSI2),
+      });
+      start += columnWidth;
+    }
+    context.lineWidth = this.RSITheme.lineWidth;
+    context.strokeStyle = this.RSITheme.RSI1;
+    this.drawSerialLines(context, RSI1Place);
+    context.strokeStyle = this.RSITheme.RSI2;
+    this.drawSerialLines(context, RSI2Place);
   }
 }
