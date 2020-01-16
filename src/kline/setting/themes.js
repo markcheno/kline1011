@@ -87,6 +87,12 @@ export default class Theme {
         D: '#800080',
         J: '#00BFFF',
       },
+      CCI: {
+        lineWidth: 1.5,
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+        CCI: '#FFA500',
+      },
     };
     this.Font = {
       Default: '12px Tahoma',

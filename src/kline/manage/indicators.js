@@ -60,6 +60,15 @@ const layoutIndicator = {
       m2: 3,
     },
   },
+  CCI: {
+    name: 'CCIChartLayout',
+    chartPlotters: 'CCIPLotter',
+    boundaryGap: ['20%', '20%'],
+    chartConfig: {
+      sign: 'CCI',
+      N: 14,
+    },
+  },
 };
 
 // 计算分时图上的均线
@@ -441,6 +450,85 @@ function calcKDJIndicator(option) {
   return end;
 }
 
+// 计算 CCI MA
+function getCCIMA(option, period) {
+  const { allData, start, end } = option;
+  const cciMas = [];
+  const count = Math.min(end - start + 1, period);
+  let typ = 0;
+  let ma = 0;
+  for (let i = start; i <= end; i++) {
+    const item = allData[i];
+    const { close, low, high } = item;
+    if (i < count) {
+      typ = typ + (close + high + low) / 3;
+      ma = typ / (i + 1);
+    } else {
+      const preItem = allData[i - count];
+      const preClose = preItem.close;
+      const preLow = preItem.low;
+      const preHigh = preItem.high;
+      typ = typ - ((preClose + preLow + preHigh) / 3);
+      typ = typ + ((close + high + low) / 3);
+      ma = typ / count;
+    }
+    cciMas.push(ma);
+  }
+  return cciMas;
+}
+
+// 计算CCI MD
+function getCCIMD(option, period, cciMas) {
+  const { allData, start, end } = option;
+  const cciMds = [];
+  const count = Math.min(end - start + 1, period);
+  for (let i = 0; i <= end; i++) {
+    let md = 0;
+    let sum = 0;
+    const ma = cciMas[i];
+    const min = Math.max(i - count + 1, 0);
+    let num = 0;
+    for (let j = i; j >= min; j--) {
+      const { close, low, high } = allData[j];
+      const typ = (close + low + high) / 3;
+      sum += Math.abs(typ - ma);
+      num++;
+    }
+    md = sum / num;
+    cciMds.push(md);
+  }
+  return cciMds;
+}
+
+// 计算CCI 指标
+function calcCCIIndicator(option) {
+  const { allData, appendLength, CCIConfig, decimalDigits } = option;
+  const { N } = CCIConfig;
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = Math.min(appendLength - 1 + N, end);
+  }
+  const mas = getCCIMA({ start, end, allData }, N);
+  const mds = getCCIMD({ start, end, allData }, N, mas);
+  for (let i = 0; i <= end; i++) {
+    const { close, high, low } = allData[i];
+    const typ = (close + high + low) / 3;
+    const ma = mas[i];
+    const md = mds[i];
+    let cci = 0;
+    if (md === 0) {
+      cci = 0;
+    } else if (typ === ma) {
+      cci = 0;
+    } else {
+      cci = ((typ - ma) / md) / 0.015;
+    }
+    allData[i].CCI = cci.toFixed(decimalDigits);
+  }
+  return end;
+}
+
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
@@ -496,6 +584,14 @@ function calcIndicator(option) {
           allData,
           appendLength,
           KDJConfig: item.chartConfig,
+          decimalDigits,
+        });
+        break;
+      case 'CCI':
+        needMainReloadLastIndex = calcCCIIndicator({
+          allData,
+          appendLength,
+          CCIConfig: item.chartConfig,
           decimalDigits,
         });
         break;

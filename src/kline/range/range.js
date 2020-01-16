@@ -60,6 +60,9 @@ export default class Range {
         signArray.push({ value: 'D' });
         signArray.push({ value: 'J' });
         break;
+      case 'CCI':
+        signArray.push({ value: 'CCI' });
+        break;
       default:
         break;
     }
