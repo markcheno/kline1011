@@ -590,7 +590,6 @@ function calcSARIndivator(option) {
   // 如果极限小于系数, 全部返回0
   if (limit < alpha || period <= 0) {
     for (; i <= end; i++) {
-      console.log('1start', i);
       if (!allData[i][type]) allData[i][type] = {};
       if (i < period) continue;
       allData[i][type].SAR = null;
@@ -605,7 +604,6 @@ function calcSARIndivator(option) {
   let currentAlpha = alpha;
   i = start;
   for (; i <= end; i++) {
-    console.log('2start', i);
     if (!allData[i][type]) allData[i][type] = {};
     if (i < period) {
       // 计算周期开始前所有最低值最小的和所有最大值最大的
