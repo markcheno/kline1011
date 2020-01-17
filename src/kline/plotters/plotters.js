@@ -904,6 +904,7 @@ export class ChartInfoPlotters extends Plotter {
     const context = this.overlayContext;
     const BIASTheme = this.theme.Line.BIAS;
     const KDJValues = ['BIAS1', 'BIAS2', 'BIAS3'].map(item => ({
+      originValue: data[item],
       value: `${item}:${data[item]}`,
       color: BIASTheme[item],
     }));
@@ -914,8 +915,10 @@ export class ChartInfoPlotters extends Plotter {
     context.textAlign = 'left';
     KDJValues.forEach(item => {
       context.fillStyle = item.color;
-      context.fillText(item.value, textX, textY);
-      textX += context.measureText(item.value).width + 10;
+      if (item.originValue !== null) {
+        context.fillText(item.value, textX, textY);
+        textX += context.measureText(item.value).width + 10;
+      }
     });
     startPlace.startX = textX;
   }

@@ -118,16 +118,17 @@ export default class Range {
     let min = Number.MAX_SAFE_INTEGER;
     let max = Number.MIN_SAFE_INTEGER;
     data.forEach(dataItem => {
-      const valueArray = signArray.map(signItem => {
+      const valueArray = [];
+      signArray.forEach(signItem => {
         let value;
         const signItemValue = signItem.value;
         const signItemParent = signItem.parent;
         if (signItemParent) {
-          value = typeof signItemValue === 'string' ? (dataItem[signItemParent][signItemValue] || 0) : signItemValue;
+          value = typeof signItemValue === 'string' ? dataItem[signItemParent][signItemValue] : signItemValue;
         } else {
-          value = typeof signItemValue === 'string' ? (dataItem[signItemValue] || 0) : signItemValue;
+          value = typeof signItemValue === 'string' ? dataItem[signItemValue] : signItemValue;
         }
-        return value;
+        value !== null && valueArray.push(value);
       });
       let minNow = Math.min(...valueArray);
       let maxNow = Math.max(...valueArray);
