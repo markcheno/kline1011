@@ -46,6 +46,12 @@ export default class Theme {
         infoColor: '#333',
         infoFont: '12px sans-serif',
       },
+      SAR: {
+        upColor: '#ed5555',
+        downColor: '#2fa69a',
+        infoColor: '#333',
+        infoFont: '12px sans-serif',
+      },
       CG: {
         lineWidth: 1.5,
         CGLine: '#1E90FF',

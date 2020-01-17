@@ -532,6 +532,40 @@ export class ChartIndicatorPlotter extends Plotter {
     });
   }
 
+  // 绘制SAR指标
+  drawSAR(type) {
+    const { currentData, itemCenterOffset, columnWidth, rangeData, theme } = this;
+    const context = this.mainContext;
+    const SARTheme = theme.Line.SAR;
+    const SARUpPlaces = [];
+    const SARDownPlaces = [];
+    let start = this.candleLeftOffest + itemCenterOffset;
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { SAR, SAROption } = data[type];
+      if (!SAR) continue;
+      if (SAROption.up) SARUpPlaces.push({ x: start, y: rangeData.toY(SAR) })
+      else SARDownPlaces.push({ x: start, y: rangeData.toY(SAR) });
+      start += columnWidth;
+    }
+    const r = columnWidth / 4;
+    // 绘制圆形
+    context.beginPath();
+    context.strokeStyle = SARTheme.upColor;
+    SARUpPlaces.forEach(item => {
+      context.moveTo(item.x + r, item.y);
+      context.arc(item.x, item.y, r, 0, 2 * Math.PI)
+    })
+    context.stroke()
+    context.beginPath();
+    context.strokeStyle = SARTheme.downColor;
+    SARDownPlaces.forEach(item => {
+      context.moveTo(item.x + r, item.y);
+      context.arc(item.x, item.y, r, 0, 2 * Math.PI)
+    })
+    context.stroke()
+  }
+
   draw(layout) {
     this.rangeData = layout.getRangeData();
     const chartIndicator = layout.getChartIndicator();
@@ -549,6 +583,9 @@ export class ChartIndicatorPlotter extends Plotter {
           break;
         case 'CG':
           this.drawCG(layout.chartConfig.sign);
+          break;
+        case 'SAR':
+          this.drawSAR(layout.chartConfig.sign);
           break;
         default:
           break;
@@ -973,6 +1010,31 @@ export class ChartInfoPlotters extends Plotter {
     startPlace.startX = textX;
   }
 
+  // SAR 指标信息
+  drawSARInfo(SARData, data, startPlace) {
+    const context = this.overlayContext;
+    const SARTheme = this.theme.Line.SAR;
+    const { N, STEP, MVALUE } = SARData;
+    const { SAR, SAROption } = data;
+    const SARValues = [{
+      value: `SAR(${N},${STEP},${MVALUE})`,
+      color: SARTheme.infoColor,
+    }, {
+      value: `SAR:${SAR}`,
+      color: SAROption.up ? SARTheme.upColor : SARTheme.downColor,
+    }];
+    const { startX, textY } = startPlace
+    let textX = startX;
+    context.font = SARTheme.infoFont;
+    context.textAlign = 'left';
+    SARValues.forEach(item => {
+      context.fillStyle = item.color;
+      context.fillText(item.value, textX, textY);
+      textX += context.measureText(item.value).width + 10;
+    });
+    startPlace.startX = textX;
+  }
+
   draw(layout, index) {
     const { dataSource } = this.manager;
     this.chartArea = layout.getChartArea();
@@ -1030,6 +1092,9 @@ export class ChartInfoPlotters extends Plotter {
           break;
         case 'CG':
           this.drawCGInfo(data[chartSign], startPlace);
+          break;
+        case 'SAR':
+          this.drawSARInfo(chartIndicator.SAR, data[chartSign], startPlace);
           break;
         default:
           break;

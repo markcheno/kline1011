@@ -574,6 +574,113 @@ function calcBIASIndicator(option) {
   return Math.max(middleReloadIndex, end);
 }
 
+// 计算SAR 指标
+function calcSARIndivator(option) {
+  const { type, allData, appendLength, SARConfig, decimalDigits } = option;
+  const { N, STEP, MVALUE } = SARConfig;
+  const alpha = STEP / 100;
+  const limit = MVALUE / 100;
+  const period = N;
+  const start = 0;
+  let end = allData.length - 1;
+  if (appendLength) {
+    end = Math.min(appendLength - 1 + N, end);
+  }
+  let i = start;
+  // 如果极限小于系数, 全部返回0
+  if (limit < alpha || period <= 0) {
+    for (; i <= end; i++) {
+      console.log('1start', i);
+      if (!allData[i][type]) allData[i][type] = {};
+      if (i < period) continue;
+      allData[i][type].SAR = null;
+      allData[i][type].SAROption = { up: 0, ep: 0, alpha: 0 };
+    }
+  }
+  let up = false;
+  let periodLowMin = allData[start].low;
+  let periodHighMax = allData[start].high;
+  let sar = 0;
+  let ep = 0;
+  let currentAlpha = alpha;
+  i = start;
+  for (; i <= end; i++) {
+    console.log('2start', i);
+    if (!allData[i][type]) allData[i][type] = {};
+    if (i < period) {
+      // 计算周期开始前所有最低值最小的和所有最大值最大的
+      const { low, high } = allData[i];
+      if (low < periodLowMin) periodLowMin = low;
+      if (high > periodHighMax) periodHighMax = high;
+      allData[i][type].SAR = null;
+      allData[i][type].SAROption = { up: 0, ep: 0, alpha: 0 };
+      continue;
+    } else if (i === period) {
+      // 忽略前周期条的第一条, 确定第一个SAR值
+      // 取周期后第一条的上一条, 和数组内的第一个数据的开盘价比对, 要确认是上涨还是下跌
+      const perviClose = allData[i - 1].close;
+      const firstOpen = allData[start].open;
+      const distance = perviClose - firstOpen;
+      if (distance > 0) {
+        // 上涨
+        up = true;
+        sar = periodLowMin;
+        const currentHigh = allData[i].high;
+        ep = Math.max(periodHighMax, currentHigh);
+      } else {
+        // 下跌
+        up = false;
+        sar = periodHighMax;
+        const currentLow = allData[i].low;
+        ep = Math.min(periodLowMin, currentLow);
+      }
+      allData[i][type].SAR = sar.toFixed(decimalDigits);
+      allData[i][type].SAROption = { up, ep, alpha };
+    } else {
+      // 周期后的第一条之后的其他数值的计算
+      const current = allData[i];
+      // eslint-disable-next-line no-lonely-if
+      if (up) {
+        // 继续上涨
+        const currentHigh = current.high;
+        const lastHigh = allData[i - 1].high;
+        sar += currentAlpha * (lastHigh - sar);
+        currentAlpha = Math.min(currentAlpha + alpha, limit);
+        ep = Math.max(ep, currentHigh);
+        // 算出来的当前SAR比当前的最低价还要低, 就翻转
+        if (current.low < sar) {
+          // 此时翻转, 即下跌
+          up = false;
+          sar = ep;
+          ep = current.low;
+          // 系数归到默认
+          currentAlpha = alpha;
+        }
+        allData[i][type].SAR = sar.toFixed(decimalDigits);
+        allData[i][type].SAROption = { up, ep, alpha: currentAlpha };
+      } else {
+        // 继续下跌
+        const currentLow = current.low;
+        const lastLow = allData[i - 1].low;
+        sar += currentAlpha * (lastLow - sar);
+        currentAlpha = Math.min(currentAlpha + alpha, limit);
+        ep = Math.min(ep, currentLow);
+        // 算出来的当前SAR比当前的最高价高, 就翻转
+        if (current.high > sar) {
+          // 此时翻转, 即上涨
+          up = true;
+          sar = ep;
+          ep = current.high;
+          currentAlpha = alpha;
+        }
+        allData[i][type].SAR = sar.toFixed(decimalDigits);
+        allData[i][type].SAROption = { up, ep, alpha: currentAlpha };
+      }
+    }
+  }
+  return end;
+}
+
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
@@ -687,6 +794,15 @@ function calcIndicator(option) {
             type,
             allData,
             appendLength,
+            decimalDigits,
+          });
+          break;
+        case 'SAR':
+          maxReloadIndex = calcSARIndivator({
+            type,
+            allData,
+            appendLength,
+            SARConfig: chartIndicator.SAR,
             decimalDigits,
           });
           break;

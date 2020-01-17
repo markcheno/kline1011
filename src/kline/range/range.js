@@ -105,6 +105,12 @@ export default class Range {
             });
           });
           break;
+        case 'SAR':
+          signArray.push({
+            parent: chartType,
+            value: 'SAR',
+          });
+          break;
         default:
           break;
       }
