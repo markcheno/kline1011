@@ -54,4 +54,12 @@ export default class Kline {
   switchCandle() {
     this.manager.switchCandle();
   }
+
+  addMainIndicator(indicator) {
+    this.manager.addMainIndicator(indicator);
+  }
+
+  removeMainIndicator(indicator) {
+    this.manager.removeMainIndicator(indicator);
+  }
 }

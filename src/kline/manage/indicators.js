@@ -1,6 +1,6 @@
 // 指标相关
 const layoutIndicator = {
-  volume: {
+  Volume: {
     name: 'volumeChartLayout',
     chartPlotters: 'VolumePlotter',
     boundaryGap: ['25%', '0%'],
@@ -82,6 +82,30 @@ const layoutIndicator = {
   },
 };
 
+// 主图指标
+const mainIndicator = {
+  MA: {
+    sign: 'close',
+    data: ['MA5', 'MA10', 'MA20'],
+  },
+  BOLL: {
+    sign: 'close',
+    N: 20,
+  },
+  CG: {},
+  ENV: {
+    sign: 'close',
+    N: 14,
+    n2: 1,
+  },
+  SAR: {
+    N: 4,
+    STEP: 2,
+    MVALUE: 20,
+  },
+};
+
+
 // 计算分时图上的均线
 function calcAverageLine(option) {
   const { allData, decimalDigits } = option;
@@ -123,9 +147,9 @@ function calcEMAIndicator(option, indicatorOption, N) {
 
 // 计算 MA 指标
 function calcMAIndicator(option) {
-  const { type, allData, appendLength, decimalDigits, MAConfig } = option;
-  const MAArray = MAConfig.data;
-  const MASign = MAConfig.sign;
+  const { type, allData, appendLength, decimalDigits, indicatorConfig } = option;
+  const MAArray = indicatorConfig.data;
+  const MASign = indicatorConfig.sign;
   const MASize = MAArray.map(item => item.replace('MA', ''));
   const start = 0;
   let end = allData.length - 1;
@@ -160,16 +184,16 @@ function calcMAIndicator(option) {
 
 // 计算 BOLL 指标
 function calcBOLLIndicator(option) {
-  const { type, allData, appendLength, decimalDigits, BOLLConfig } = option;
+  const { type, allData, appendLength, decimalDigits, indicatorConfig } = option;
   // 计算中轨线 MID
   const middleReloadIndex = calcMAIndicator(Object.assign(option, {
-    MAConfig: {
-      sign: BOLLConfig.sign,
-      data: [`MA${BOLLConfig.N}`],
+    indicatorConfig: {
+      sign: indicatorConfig.sign,
+      data: [`MA${indicatorConfig.N}`],
     },
   }));
   // 获得对应index 的中轨线
-  const getMidByIndex = (index) => Number(allData[index][type][`MA${BOLLConfig.N}`]);
+  const getMidByIndex = (index) => Number(allData[index][type][`MA${indicatorConfig.N}`]);
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
@@ -180,9 +204,9 @@ function calcBOLLIndicator(option) {
     const MID = getMidByIndex(i);
     let distanceTotal = 0;
     let count = 0;
-    for (let NIndex = i - BOLLConfig.N + 1; NIndex <= i; NIndex++) {
+    for (let NIndex = i - indicatorConfig.N + 1; NIndex <= i; NIndex++) {
       if (allData[NIndex]) {
-        distanceTotal += Math.pow((allData[NIndex][BOLLConfig.sign] - MID), 2);
+        distanceTotal += Math.pow((allData[NIndex][indicatorConfig.sign] - MID), 2);
         count++;
       }
     }
@@ -196,12 +220,12 @@ function calcBOLLIndicator(option) {
 
 // 计算 ENV 指标
 function calcENVIndicator(option) {
-  const { type, allData, appendLength, decimalDigits, ENVConfig } = option;
+  const { type, allData, appendLength, decimalDigits, indicatorConfig } = option;
   // 计算对应N的 MA
   const middleReloadIndex = calcMAIndicator(Object.assign(option, {
-    MAConfig: {
-      sign: ENVConfig.sign,
-      data: [`MA${ENVConfig.N}`],
+    indicatorConfig: {
+      sign: indicatorConfig.sign,
+      data: [`MA${indicatorConfig.N}`],
     },
   }));
   const start = 0;
@@ -211,9 +235,9 @@ function calcENVIndicator(option) {
   }
   for (let i = start; i <= end; i++) {
     const dataItem = allData[i];
-    const MA = dataItem[type][`MA${ENVConfig.N}`];
-    const EnvUp = MA * (1 + ENVConfig.n2 / 100);
-    const EnvLow = MA * (1 - ENVConfig.n2 / 100);
+    const MA = dataItem[type][`MA${indicatorConfig.N}`];
+    const EnvUp = MA * (1 + indicatorConfig.n2 / 100);
+    const EnvLow = MA * (1 - indicatorConfig.n2 / 100);
     dataItem[type].EnvUp = EnvUp.toFixed(decimalDigits);
     dataItem[type].EnvLow = EnvLow.toFixed(decimalDigits);
   }
@@ -239,7 +263,7 @@ function calcCGIndicator(option) {
   };
   // 计算MA55
   const middleReloadIndex = calcMAIndicator(Object.assign(option, {
-    MAConfig: {
+    indicatorConfig: {
       sign: 'close',
       data: ['MA55'],
     },
@@ -274,8 +298,8 @@ function calcCGIndicator(option) {
 
 // 计算MACD 指标 short：短周期 long：长周期 middle：中周期
 function calcMACDIndicator(option) {
-  const { allData, appendLength, MACDConfig } = option;
-  const MACDperiod = MACDConfig.data;
+  const { allData, appendLength, chartConfig } = option;
+  const MACDperiod = chartConfig.data;
   const start = 0;
   // 计算得出append时需要重新计算的EMA个数
   const getReloadSise = (N) => {
@@ -305,8 +329,8 @@ function calcMACDIndicator(option) {
 
 // 计算VR指标 N:周期
 function calcVRIndicator(option) {
-  const { allData, appendLength, VRconfig, decimalDigits } = option;
-  const { N } = VRconfig;
+  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { N } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
@@ -342,8 +366,8 @@ function calcVRIndicator(option) {
 
 // 计算WR N 周期
 function calcWRIndicator(option) {
-  const { allData, appendLength, WRconfig, decimalDigits } = option;
-  const { N } = WRconfig;
+  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { N } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
@@ -369,8 +393,8 @@ function calcWRIndicator(option) {
 
 // 计算RSI 指标
 function calcRSIIndicator(option) {
-  const { allData, appendLength, RSIConfig, decimalDigits } = option;
-  const { N1, N2 } = RSIConfig;
+  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { N1, N2 } = chartConfig;
   const start = 0;
   const maxSize = Math.max(N1, N2);
   let end = allData.length - 1;
@@ -419,8 +443,8 @@ function calcRSIIndicator(option) {
 
 // 计算KDJ 指标
 function calcKDJIndicator(option) {
-  const { allData, appendLength, KDJConfig, decimalDigits } = option;
-  const { N, m1, m2 } = KDJConfig;
+  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { N, m1, m2 } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
@@ -513,8 +537,8 @@ function getCCIMD(option, period, cciMas) {
 
 // 计算CCI 指标
 function calcCCIIndicator(option) {
-  const { allData, appendLength, CCIConfig, decimalDigits } = option;
-  const { N } = CCIConfig;
+  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { N } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
@@ -542,15 +566,15 @@ function calcCCIIndicator(option) {
 
 // 计算BIAS 指标
 function calcBIASIndicator(option) {
-  const { type, allData, appendLength, BIASConfig, decimalDigits } = option;
-  const { N1, N2, N3 } = BIASConfig;
+  const { type, allData, appendLength, chartConfig, decimalDigits } = option;
+  const { N1, N2, N3 } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
   if (appendLength) {
     end = Math.min(appendLength - 1 + Math.max(N1, N2, N3), end);
   }
   const middleReloadIndex = calcMAIndicator(Object.assign(option, {
-    MAConfig: {
+    indicatorConfig: {
       sign: 'close',
       data: [`MA${N1}`, `MA${N2}`, `MA${N3}`],
     },
@@ -576,8 +600,8 @@ function calcBIASIndicator(option) {
 
 // 计算SAR 指标
 function calcSARIndivator(option) {
-  const { type, allData, appendLength, SARConfig, decimalDigits } = option;
-  const { N, STEP, MVALUE } = SARConfig;
+  const { type, allData, appendLength, indicatorConfig, decimalDigits } = option;
+  const { N, STEP, MVALUE } = indicatorConfig;
   const alpha = STEP / 100;
   const limit = MVALUE / 100;
   const period = N;
@@ -679,138 +703,112 @@ function calcSARIndivator(option) {
   return end;
 }
 
+// 计算对应的主视图指标
+function calcMainIndicator(indicator, option) {
+  const { type, allData, appendLength, indicatorConfig, decimalDigits } = option;
+  let maxReloadIndex = -1;
+  // 计算主视图指标所需数据
+  const data = {
+    type,
+    allData,
+    appendLength,
+    indicatorConfig,
+    decimalDigits,
+  };
+  switch (indicator) {
+    case 'MA':
+      maxReloadIndex = calcMAIndicator(data);
+      break;
+    case 'BOLL':
+      maxReloadIndex = calcBOLLIndicator(data);
+      break;
+    case 'ENV':
+      maxReloadIndex = calcENVIndicator(data);
+      break;
+    case 'CG':
+      maxReloadIndex = calcCGIndicator(data);
+      break;
+    case 'SAR':
+      maxReloadIndex = calcSARIndivator(data);
+      break;
+    default:
+      break;
+  }
+  return maxReloadIndex;
+}
+
+function calcChartIndicator(chart, option) {
+  const { allData, appendLength, decimalDigits } = option;
+  const type = chart.chartConfig.sign;
+  let maxReloadIndex = -1;
+  const data = {
+    allData,
+    appendLength,
+    chartConfig: chart.chartConfig,
+    decimalDigits,
+  };
+  switch (type) {
+    case 'MACD':
+      maxReloadIndex = calcMACDIndicator(data);
+      break;
+    case 'Line':
+      maxReloadIndex = calcAverageLine(data);
+      break;
+    case 'VR':
+      maxReloadIndex = calcVRIndicator(data);
+      break;
+    case 'WR':
+      maxReloadIndex = calcWRIndicator(data);
+      break;
+    case 'RSI':
+      maxReloadIndex = calcRSIIndicator(data);
+      break;
+    case 'KDJ':
+      maxReloadIndex = calcKDJIndicator(data);
+      break;
+    case 'CCI':
+      maxReloadIndex = calcCCIIndicator(data);
+      break;
+    case 'BIAS':
+      maxReloadIndex = calcBIASIndicator(data);
+      break;
+    default:
+      break;
+  }
+  return maxReloadIndex;
+}
+
 // 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
   const { decimalDigits } = setting;
   const chart = setting.getChart();
   // 指标重新计算时, 需重新计算的allData的最大last的下标
-  let needMainReloadLastIndex = -1;
   let needReloadLastIndex = -1;
+  const reloadIndexArray = [];
   chart.forEach(item => {
     const type = item.chartConfig.sign;
     const { chartIndicator } = item;
-    switch (type) {
-      case 'MACD':
-        needMainReloadLastIndex = calcMACDIndicator({
-          allData,
-          appendLength,
-          MACDConfig: item.chartConfig,
-          decimalDigits,
-        });
-        break;
-      case 'Line':
-        needMainReloadLastIndex = calcAverageLine({
-          allData,
-          decimalDigits,
-        });
-        break;
-      case 'VR':
-        needMainReloadLastIndex = calcVRIndicator({
-          allData,
-          appendLength,
-          VRconfig: item.chartConfig,
-          decimalDigits,
-        });
-        break;
-      case 'WR':
-        needMainReloadLastIndex = calcWRIndicator({
-          allData,
-          appendLength,
-          WRconfig: item.chartConfig,
-          decimalDigits,
-        });
-        break;
-      case 'RSI':
-        needMainReloadLastIndex = calcRSIIndicator({
-          allData,
-          appendLength,
-          RSIConfig: item.chartConfig,
-          decimalDigits,
-        });
-        break;
-      case 'KDJ':
-        needMainReloadLastIndex = calcKDJIndicator({
-          allData,
-          appendLength,
-          KDJConfig: item.chartConfig,
-          decimalDigits,
-        });
-        break;
-      case 'CCI':
-        needMainReloadLastIndex = calcCCIIndicator({
-          allData,
-          appendLength,
-          CCIConfig: item.chartConfig,
-          decimalDigits,
-        });
-        break;
-      case 'BIAS':
-        needMainReloadLastIndex = calcBIASIndicator({
-          type,
-          allData,
-          appendLength,
-          BIASConfig: item.chartConfig,
-          decimalDigits,
-        });
-        break;
-      default:
-        break;
-    }
+    // 计算副图指标
+    needReloadLastIndex = calcChartIndicator(item, {
+      allData,
+      appendLength,
+      decimalDigits,
+    });
+    reloadIndexArray.push(needReloadLastIndex);
     chartIndicator && Object.keys(chartIndicator).forEach(indicatorItem => {
-      let maxReloadIndex = -1;
-      switch (indicatorItem) {
-        case 'MA':
-          maxReloadIndex = calcMAIndicator({
-            type,
-            allData,
-            appendLength,
-            MAConfig: chartIndicator.MA,
-            decimalDigits,
-          });
-          break;
-        case 'BOLL':
-          maxReloadIndex = calcBOLLIndicator({
-            type,
-            allData,
-            appendLength,
-            BOLLConfig: chartIndicator.BOLL,
-            decimalDigits,
-          });
-          break;
-        case 'ENV':
-          maxReloadIndex = calcENVIndicator({
-            type,
-            allData,
-            appendLength,
-            ENVConfig: chartIndicator.ENV,
-            decimalDigits,
-          });
-          break;
-        case 'CG':
-          maxReloadIndex = calcCGIndicator({
-            type,
-            allData,
-            appendLength,
-            decimalDigits,
-          });
-          break;
-        case 'SAR':
-          maxReloadIndex = calcSARIndivator({
-            type,
-            allData,
-            appendLength,
-            SARConfig: chartIndicator.SAR,
-            decimalDigits,
-          });
-          break;
-        default:
-          break;
-      }
-      needReloadLastIndex = Math.max(needReloadLastIndex, maxReloadIndex);
+      // 计算主图指标
+      needReloadLastIndex = calcMainIndicator(indicatorItem, {
+        type,
+        allData,
+        appendLength,
+        indicatorConfig: chartIndicator[indicatorItem],
+        decimalDigits,
+      });
+      reloadIndexArray.push(needReloadLastIndex);
     });
   });
-  return Math.max(needReloadLastIndex, needMainReloadLastIndex);
+  return Math.max(...reloadIndexArray);
 }
 
-export { layoutIndicator, calcIndicator };
+export { layoutIndicator, calcIndicator, mainIndicator, calcMainIndicator };

@@ -1,3 +1,5 @@
+import { layoutIndicator, mainIndicator } from '../manage/indicators';
+
 export default class Setting {
   constructor() {
     this.symbol = null;
@@ -15,27 +17,7 @@ export default class Setting {
       name: 'mainChartLayout',
       chartPlotters: 'CandlestickPlotter',
       boundaryGap: ['20%', '20%'],
-      chartIndicator: {
-        // MA: {
-        //   sign: 'close',
-        //   data: ['MA5', 'MA10', 'MA20'],
-        // },
-        // BOLL: {
-        //   sign: 'close',
-        //   N: 20,
-        // },
-        // CG: {},
-        // ENV: {
-        //   sign: 'close',
-        //   N: 14,
-        //   n2: 1,
-        // },
-        SAR: {
-          N: 4,
-          STEP: 2,
-          MVALUE: 20,
-        },
-      },
+      chartIndicator: {},
       chartConfig: {
         sign: 'Candle',
       },
@@ -51,14 +33,45 @@ export default class Setting {
   }
 
   // 添加视图
-  addChart(item) {
-    const chart = this.chartType === 'candle' ? this.candlechart : this.lineChart;
+  addChart(key) {
+    const chartType = this.getChartType();
+    if (chartType === 'line' && key !== 'Volume') return;
+    const chart = chartType === 'candle' ? this.candlechart : this.lineChart;
     // 去重
     let isRepeat = false;
+    const indicator = layoutIndicator[key];
     chart.forEach(element => {
-      if (element.name === item.name) isRepeat = true;
+      if (element.name === indicator.name) isRepeat = true;
     });
-    isRepeat || chart.unshift(item);
+    isRepeat || chart.unshift(indicator);
+  }
+
+  // 添加主视图上的指标
+  addMainChartIndicator(key) {
+    // 目前只支持蜡烛图上添加指标
+    if (this.getChartType === 'line') return;
+    const chart = this.candlechart.find(element => element.name === 'mainChartLayout');
+    const { chartIndicator } = chart;
+    const indicator = mainIndicator[key];
+    if (!indicator) return;
+    chartIndicator[key] = indicator;
+  }
+
+  // 移除主视图上的指标
+  removeMainChartIndicator(key) {
+    if (this.getChartType === 'line') return;
+    // 目前只支持蜡烛图上移除指标
+    const chart = this.candlechart.find(element => element.name === 'mainChartLayout');
+    const { chartIndicator } = chart;
+    delete chartIndicator[key];
+  }
+
+  // 移除主视图上的所有指标
+  removeAllMainIndicator() {
+    if (this.getChartType === 'line') return;
+    // 目前只支持蜡烛图上移除指标
+    const chart = this.candlechart.find(element => element.name === 'mainChartLayout');
+    chart.chartIndicator = {};
   }
 
   getChart() {

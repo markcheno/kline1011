@@ -3,7 +3,6 @@ import Setting from '../setting/setting';
 import Theme from '../setting/themes';
 import DataSource from '../data/dataSource';
 import Control from './control';
-import { layoutIndicator } from './indicators';
 // 保存kline的实例
 export default class Manager {
   static instance
@@ -51,25 +50,62 @@ export default class Manager {
 
   // 初始化副图指标
   initIndicatorChart() {
+    const layoutIndicator = this.getOption().layoutIndicator || [];
     const symbol = this.setting.getSymbol().id;
-    const chartType = this.setting.getChartType();
     const isShowVolume = symbol === 6;
-    // chartType === 'candle' && this.setting.addChart(layoutIndicator.MACD);
-    // chartType === 'candle' && this.setting.addChart(layoutIndicator.VR);
-    // chartType === 'candle' && this.setting.addChart(layoutIndicator.WR);
-    // chartType === 'candle' && this.setting.addChart(layoutIndicator.RSI);
-    // chartType === 'candle' && this.setting.addChart(layoutIndicator.KDJ);
-    // chartType === 'candle' && this.setting.addChart(layoutIndicator.CCI);
-    chartType === 'candle' && this.setting.addChart(layoutIndicator.BIAS);
+    layoutIndicator.forEach(element => {
+      this.setting.addChart(element);
+    });
+    // chartType === 'candle' && this.setting.addChart('MACD');
+    // chartType === 'candle' && this.setting.addChart('VR');
+    // chartType === 'candle' && this.setting.addChart('WR');
+    // chartType === 'candle' && this.setting.addChart('RSI');
+    // chartType === 'candle' && this.setting.addChart('KDJ');
+    // chartType === 'candle' && this.setting.addChart('CCI');
+    // chartType === 'candle' && this.setting.addChart('BIAS');
     if (isShowVolume) {
-      this.setting.addChart(layoutIndicator.volume);
+      this.setting.addChart('Volume');
     }
+  }
+
+  // 初始化主图指标
+  initMainIndicator() {
+    const mainIndicator = this.getOption().mainIndicator || [];
+    mainIndicator.forEach(element => {
+      this.setting.addMainChartIndicator(element);
+    });
+  }
+
+  // 添加主图指标
+  addMainIndicator(indicator) {
+    const chartType = this.setting.getChartType();
+    if (chartType === 'line') return;
+    this.setting.addMainChartIndicator(indicator);
+    this.dataSource.calcMainIndicator(indicator);
+    this.redrawMain();
+  }
+
+  // 移除对应主图指标
+  removeMainIndicator(indicator) {
+    const chartType = this.setting.getChartType();
+    if (chartType === 'line') return;
+    this.setting.removeMainChartIndicator(indicator);
+    this.redrawMain();
+  }
+
+  // 移除所有的主图指标
+  removeAllMainIndicator() {
+    const chartType = this.setting.getChartType();
+    if (chartType === 'line') return;
+    this.setting.removeAllMainIndicator();
+    this.redrawMain();
   }
 
   // 初始化布局
   initLayout() {
     // 初始化副图指标
     this.initIndicatorChart();
+    this.initMainIndicator();
     this.layout = new MainLayout('mainLayout');
   }
 

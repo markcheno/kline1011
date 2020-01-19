@@ -1,5 +1,5 @@
 import Manager from '../manage/manager';
-import { calcIndicator } from '../manage/indicators';
+import { calcIndicator, calcMainIndicator } from '../manage/indicators';
 
 export default class DataSource {
   // 更新数据策略
@@ -75,6 +75,12 @@ export default class DataSource {
   initData(data) {
     const { chartType } = Manager.instance.setting;
     this.dataFilterHandle(chartType, data);
+    // 更新指标线
+    calcIndicator({
+      allData: this.data,
+      appendLength: 0,
+      setting: Manager.instance.setting,
+    });
     // 更新range width
     this.updateRangeWidth(this.getAllData());
     if (chartType === 'candle') {
@@ -183,11 +189,6 @@ export default class DataSource {
       this.lastIndex = maxIndex - 1;
       this.data = line;
     }
-    calcIndicator({
-      allData: this.data,
-      appendLength: 0,
-      setting: Manager.instance.setting,
-    });
   }
 
   // 初始化当前蜡烛视图数据
@@ -359,5 +360,18 @@ export default class DataSource {
   // 更新十字线选中数据
   updateCrossCursorSelectAt(place) {
     this.crossCursorSelectAt = { ...place, index: -1 };
+  }
+
+  // 计算主视图指标
+  calcMainIndicator(indicator) {
+    const { decimalDigits } = Manager.instance.setting;
+    const chart = Manager.instance.setting.candlechart.find(element => element.name === 'mainChartLayout');
+    calcMainIndicator(indicator, {
+      type: chart.chartConfig.sign,
+      allData: this.getAllData(),
+      appendLength: 0,
+      indicatorConfig: chart.chartIndicator[indicator],
+      decimalDigits,
+    });
   }
 }

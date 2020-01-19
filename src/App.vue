@@ -10,11 +10,12 @@
     <button @click="changeLine">切换分时图</button>
     <button @click="changeCandle">切换蜡烛图</button>
     <div>
-      <button>MA指标</button>
-      <button>BOLL指标</button>
-      <button>ENV指标</button>
-      <button>CG指标</button>
-      <button>SAR指标</button>
+      <button
+        v-for="(item, index) in mainIndicatorList"
+        :class="{ isActive: item.isAdd }"
+        :key="index"
+        @click="addRemoveMainIndicator(item)"
+      >{{item.text}}</button>
     </div>
     <div>
       <button>成交量指标</button>
@@ -107,6 +108,27 @@ export default {
         { text: '1时', type: 5 },
         { text: '4时', type: 9 },
       ],
+      mainIndicatorList: [{
+        text: 'MA指标',
+        name: 'MA',
+        isAdd: true,
+      }, {
+        text: 'BOLL指标',
+        name: 'BOLL',
+        isAdd: false,
+      }, {
+        text: 'ENV指标',
+        name: 'ENV',
+        isAdd: false,
+      }, {
+        text: 'CG指标',
+        name: 'CG',
+        isAdd: false,
+      }, {
+        text: 'SAR指标',
+        name: 'SAR',
+        isAdd: false,
+      }],
       kline: '',
     };
   },
@@ -117,6 +139,8 @@ export default {
       width: 1200,
       height: 650,
       datafeed: new Datafeed(),
+      mainIndicator: ['MA'],
+      layoutIndicator: ['CCI', 'MACD'],
       symbol: {
         id: 12,
         name: '现货黄金',
@@ -127,6 +151,17 @@ export default {
     // this.socketHandle(socket);
   },
   methods: {
+    addMainIndicator(indicator) {
+      this.kline.addMainIndicator(indicator);
+    },
+    removeMainIndicator(indicator) {
+      this.kline.removeMainIndicator(indicator);
+    },
+    addRemoveMainIndicator(item) {
+      const { name, isAdd } = item;
+      item.isAdd = !item.isAdd;
+      isAdd ? this.removeMainIndicator(name) : this.addMainIndicator(name);
+    },
     changeSymbol(symbol) {
       this.kline.switchSymbol(symbol);
     },
@@ -191,5 +226,10 @@ export default {
 
 #kline_container {
   margin: auto;
+}
+
+button.isActive {
+  background: red;
+  color: #ffffff;
 }
 </style>
