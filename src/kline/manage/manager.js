@@ -49,22 +49,18 @@ export default class Manager {
   }
 
   // 初始化副图指标
-  initIndicatorChart() {
+  initLayoutIndicator() {
     const layoutIndicator = this.getOption().layoutIndicator || [];
-    const symbol = this.setting.getSymbol().id;
-    const isShowVolume = symbol === 6;
-    layoutIndicator.forEach(element => {
-      this.setting.addChart(element);
-    });
-    // chartType === 'candle' && this.setting.addChart('MACD');
-    // chartType === 'candle' && this.setting.addChart('VR');
-    // chartType === 'candle' && this.setting.addChart('WR');
-    // chartType === 'candle' && this.setting.addChart('RSI');
-    // chartType === 'candle' && this.setting.addChart('KDJ');
-    // chartType === 'candle' && this.setting.addChart('CCI');
-    // chartType === 'candle' && this.setting.addChart('BIAS');
-    if (isShowVolume) {
+    const chartType = this.setting.getChartType();
+    if (chartType === 'line') {
+      // 分时图如果支持成交量展示, 固定展示成交量
+      // 先移除 再添加
+      this.setting.removeChart('Volume');
       this.setting.addChart('Volume');
+    } else {
+      layoutIndicator.forEach(element => {
+        this.setting.addChart(element);
+      });
     }
   }
 
@@ -104,7 +100,7 @@ export default class Manager {
   // 初始化布局
   initLayout() {
     // 初始化副图指标
-    this.initIndicatorChart();
+    this.initLayoutIndicator();
     this.initMainIndicator();
     this.layout = new MainLayout('mainLayout');
   }
@@ -220,8 +216,12 @@ export default class Manager {
     that.requestOption.noData = noData;
     // 首次加载与loadmore加载分开处理
     if (firstDataRequest) {
-      that.initLayout();
+      // 初始化数据
       dataSource.initData(data);
+      // 初始化布局
+      that.initLayout();
+      // 初始化数据和布局相关的信息
+      dataSource.initDataConfig();
       that.layoutResize();
       that.redrawMain();
       // 分时图初始化需显示十字线

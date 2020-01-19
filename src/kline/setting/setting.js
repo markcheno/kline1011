@@ -10,6 +10,8 @@ export default class Setting {
       left: 0,
       right: 0,
     };
+    // 是否支持暂时成交量视图, 取决于指标配置与传入的数据是否支持
+    this.isSupportVolume = false;
     this.timelineAreaHeight = 30;
     // candle 蜡烛图 line 分时图
     this.chartType = 'line';
@@ -32,10 +34,29 @@ export default class Setting {
     }];
   }
 
+  // 不支持成交量展示
+  disabledSupportVolume() {
+    this.isSupportVolume = false;
+  }
+
+  // 支持成交量展示
+  enabledSupportVolume() {
+    this.isSupportVolume = true;
+  }
+
+  // 获取成交量是否支持展示状态
+  getSupportVolumeStatus() {
+    return this.isSupportVolume;
+  }
+
   // 添加视图
   addChart(key) {
     const chartType = this.getChartType();
+    const isSupportVolume = this.getSupportVolumeStatus();
+    // 分时图只支持成交量视图
     if (chartType === 'line' && key !== 'Volume') return;
+    // 判断当前数据是否支持展示成交量视图
+    if (!isSupportVolume && key === 'Volume') return;
     const chart = chartType === 'candle' ? this.candlechart : this.lineChart;
     // 去重
     let isRepeat = false;
@@ -44,6 +65,15 @@ export default class Setting {
       if (element.name === indicator.name) isRepeat = true;
     });
     isRepeat || chart.unshift(indicator);
+  }
+
+  // 移除视图
+  removeChart(key) {
+    const chartType = this.getChartType();
+    const chart = chartType === 'candle' ? this.candlechart : this.lineChart;
+    const indicator = layoutIndicator[key];
+    const indicatorIndex = chart.findIndex((item => item.name === indicator.name));
+    indicatorIndex === -1 || chart.splice(indicatorIndex, 1);
   }
 
   // 添加主视图上的指标

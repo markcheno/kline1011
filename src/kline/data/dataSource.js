@@ -71,10 +71,17 @@ export default class DataSource {
     this.maxCountInLayout = Math.ceil(width / columnWidth);
   }
 
-  // 初始加载数据
+  // 初始处理数据
   initData(data) {
+    // 处理数据
+    this.dataFilterHandle(data);
+    // 判断数据是否支持展示成交量
+    this.judgeIsSupportVolume();
+  }
+
+  // 初始化数据相关配置
+  initDataConfig() {
     const { chartType } = Manager.instance.setting;
-    this.dataFilterHandle(chartType, data);
     // 更新指标线
     calcIndicator({
       allData: this.data,
@@ -156,7 +163,8 @@ export default class DataSource {
   }
 
   // 区别处理蜡烛图和分时数据
-  dataFilterHandle(chartType, data) {
+  dataFilterHandle(data) {
+    const { chartType } = Manager.instance.setting;
     if (chartType === 'candle') {
       this.data = data;
     } else if (chartType === 'line') {
@@ -373,5 +381,13 @@ export default class DataSource {
       indicatorConfig: chart.chartIndicator[indicator],
       decimalDigits,
     });
+  }
+
+  // 判断数据是否支持展示成交量
+  judgeIsSupportVolume() {
+    const allData = this.getAllData();
+    const { setting } = Manager.instance;
+    const isSupportVolume = allData.some((item) => !!Number(item.volume));
+    isSupportVolume ? setting.enabledSupportVolume() : setting.disabledSupportVolume();
   }
 }
