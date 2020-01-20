@@ -62,4 +62,12 @@ export default class Kline {
   removeMainIndicator(indicator) {
     this.manager.removeMainIndicator(indicator);
   }
+
+  addLayoutIndicator(indicator) {
+    this.manager.addLayoutIndicator(indicator);
+  }
+
+  removeLayoutIndicator(indicator) {
+    this.manager.removeLayoutIndicator(indicator);
+  }
 }

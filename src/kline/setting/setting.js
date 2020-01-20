@@ -76,6 +76,15 @@ export default class Setting {
     indicatorIndex === -1 || chart.splice(indicatorIndex, 1);
   }
 
+  // 移除所有的副图指标
+  removeAllChart() {
+    if (this.getChartType === 'line') return;
+    // 目前只支持蜡烛图上移除指标
+    const chart = this.candlechart.find(element => element.name === 'mainChartLayout');
+    this.candlechart = [];
+    this.candlechart.push(chart);
+  }
+
   // 添加主视图上的指标
   addMainChartIndicator(key) {
     // 目前只支持蜡烛图上添加指标

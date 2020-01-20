@@ -105,7 +105,6 @@ const mainIndicator = {
   },
 };
 
-
 // 计算分时图上的均线
 function calcAverageLine(option) {
   const { allData, decimalDigits } = option;
@@ -737,7 +736,7 @@ function calcMainIndicator(indicator, option) {
   return maxReloadIndex;
 }
 
-function calcChartIndicator(chart, option) {
+function calcLayoutIndicator(chart, option) {
   const { allData, appendLength, decimalDigits } = option;
   const type = chart.chartConfig.sign;
   let maxReloadIndex = -1;
@@ -790,7 +789,7 @@ function calcIndicator(option) {
     const type = item.chartConfig.sign;
     const { chartIndicator } = item;
     // 计算副图指标
-    needReloadLastIndex = calcChartIndicator(item, {
+    needReloadLastIndex = calcLayoutIndicator(item, {
       allData,
       appendLength,
       decimalDigits,
@@ -811,4 +810,4 @@ function calcIndicator(option) {
   return Math.max(...reloadIndexArray);
 }
 
-export { layoutIndicator, calcIndicator, mainIndicator, calcMainIndicator };
+export { layoutIndicator, calcIndicator, mainIndicator, calcMainIndicator, calcLayoutIndicator };

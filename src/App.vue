@@ -18,14 +18,12 @@
       >{{item.text}}</button>
     </div>
     <div>
-      <button>成交量指标</button>
-      <button>MACD指标</button>
-      <button>WR指标</button>
-      <button>VR指标</button>
-      <button>CCI指标</button>
-      <button>BIAS指标</button>
-      <button>KDJ指标</button>
-      <button>RSI指标</button>
+      <button
+        v-for="(item, index) in layoutIndicatorList"
+        :class="{ isActive: item.isAdd }"
+        :key="index"
+        @click="addRemoveLayoutIndicator(item)"
+      >{{item.text}}</button>
     </div>
     <div id="kline_container"></div>
   </div>
@@ -129,6 +127,39 @@ export default {
         name: 'SAR',
         isAdd: false,
       }],
+      layoutIndicatorList: [{
+        text: 'Volume指标',
+        name: 'Volume',
+        isAdd: true,
+      }, {
+        text: 'MACD指标',
+        name: 'MACD',
+        isAdd: false,
+      }, {
+        text: 'WR指标',
+        name: 'WR',
+        isAdd: false,
+      }, {
+        text: 'VR指标',
+        name: 'VR',
+        isAdd: false,
+      }, {
+        text: 'CCI指标',
+        name: 'CCI',
+        isAdd: false,
+      }, {
+        text: 'BIAS指标',
+        name: 'BIAS',
+        isAdd: false,
+      }, {
+        text: 'KDJ指标',
+        name: 'KDJ',
+        isAdd: false,
+      }, {
+        text: 'RSI指标',
+        name: 'RSI',
+        isAdd: false,
+      }],
       kline: '',
     };
   },
@@ -140,7 +171,7 @@ export default {
       height: 650,
       datafeed: new Datafeed(),
       mainIndicator: ['MA'],
-      layoutIndicator: ['CCI', 'MACD'],
+      layoutIndicator: ['Volume'],
       symbol: {
         id: 12,
         name: '现货黄金',
@@ -151,16 +182,33 @@ export default {
     // this.socketHandle(socket);
   },
   methods: {
+    // 添加主图指标
     addMainIndicator(indicator) {
       this.kline.addMainIndicator(indicator);
     },
+    // 移除主图指标
     removeMainIndicator(indicator) {
       this.kline.removeMainIndicator(indicator);
     },
+    // 添加移除主图指标
     addRemoveMainIndicator(item) {
       const { name, isAdd } = item;
       item.isAdd = !item.isAdd;
       isAdd ? this.removeMainIndicator(name) : this.addMainIndicator(name);
+    },
+    // 添加副图指标
+    addLayoutIndicator(indicator) {
+      this.kline.addLayoutIndicator(indicator);
+    },
+    // 移除副图指标
+    removeLayoutIndicator(indicator) {
+      this.kline.removeLayoutIndicator(indicator);
+    },
+    // 添加移除副图指标
+    addRemoveLayoutIndicator(item) {
+      const { name, isAdd } = item;
+      item.isAdd = !item.isAdd;
+      isAdd ? this.removeLayoutIndicator(name) : this.addLayoutIndicator(name);
     },
     changeSymbol(symbol) {
       this.kline.switchSymbol(symbol);

@@ -1,5 +1,5 @@
 import Manager from '../manage/manager';
-import { calcIndicator, calcMainIndicator } from '../manage/indicators';
+import { calcIndicator, calcMainIndicator, calcLayoutIndicator, layoutIndicator } from '../manage/indicators';
 
 export default class DataSource {
   // 更新数据策略
@@ -82,12 +82,6 @@ export default class DataSource {
   // 初始化数据相关配置
   initDataConfig() {
     const { chartType } = Manager.instance.setting;
-    // 更新指标线
-    calcIndicator({
-      allData: this.data,
-      appendLength: 0,
-      setting: Manager.instance.setting,
-    });
     // 更新range width
     this.updateRangeWidth(this.getAllData());
     if (chartType === 'candle') {
@@ -110,6 +104,7 @@ export default class DataSource {
     });
     // 更新range width
     this.updateRangeWidth(data.slice(0, needReloadLastIndex + 1));
+    this.updateMaxCountInArea();
     this.updateCandleCurrentData(appendLength);
   }
 
@@ -370,6 +365,15 @@ export default class DataSource {
     this.crossCursorSelectAt = { ...place, index: -1 };
   }
 
+  // 初始化计算指标数据
+  initCalcIndicator() {
+    calcIndicator({
+      allData: this.data,
+      appendLength: 0,
+      setting: Manager.instance.setting,
+    });
+  }
+
   // 计算主视图指标
   calcMainIndicator(indicator) {
     const { decimalDigits } = Manager.instance.setting;
@@ -379,6 +383,17 @@ export default class DataSource {
       allData: this.getAllData(),
       appendLength: 0,
       indicatorConfig: chart.chartIndicator[indicator],
+      decimalDigits,
+    });
+  }
+
+  // 计算副图指标
+  calcLayoutIndicator(indicator) {
+    const { decimalDigits } = Manager.instance.setting;
+    const chart = layoutIndicator[indicator];
+    calcLayoutIndicator(chart, {
+      allData: this.getAllData(),
+      appendLength: 0,
       decimalDigits,
     });
   }

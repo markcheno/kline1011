@@ -48,6 +48,16 @@ export default class Manager {
     this.canvas.overlayContext = overlayContext;
   }
 
+  // 初始化指标
+  initIndicator() {
+    // 初始化副图指标
+    this.initLayoutIndicator();
+    // 初始化主图
+    this.initMainIndicator();
+    // 初始化计算指标数据
+    this.dataSource.initCalcIndicator();
+  }
+
   // 初始化副图指标
   initLayoutIndicator() {
     const layoutIndicator = this.getOption().layoutIndicator || [];
@@ -62,6 +72,39 @@ export default class Manager {
         this.setting.addChart(element);
       });
     }
+  }
+
+  // 添加副图指标
+  addLayoutIndicator(indicator) {
+    // 目前只支持蜡烛图添加副图指标
+    const chartType = this.setting.getChartType();
+    if (chartType === 'line') return;
+    this.setting.addChart(indicator);
+    this.dataSource.calcLayoutIndicator(indicator);
+    // 初始化布局
+    this.initLayout();
+    this.redrawMain();
+  }
+
+  // 移除副图指标
+  removeLayoutIndicator(indicator) {
+    // 目前只支持蜡烛图移除副图指标
+    const chartType = this.setting.getChartType();
+    if (chartType === 'line') return;
+    this.setting.removeChart(indicator);
+    // 初始化布局
+    this.initLayout();
+    this.redrawMain();
+  }
+
+  // 移除所有的副图指标
+  removeAllLayoutIndicator() {
+    const chartType = this.setting.getChartType();
+    if (chartType === 'line') return;
+    this.setting.removeAllChart();
+    // 初始化布局
+    this.initLayout();
+    this.redrawMain();
   }
 
   // 初始化主图指标
@@ -99,10 +142,10 @@ export default class Manager {
 
   // 初始化布局
   initLayout() {
-    // 初始化副图指标
-    this.initLayoutIndicator();
-    this.initMainIndicator();
+    // 初始化数据和布局相关的信息
     this.layout = new MainLayout('mainLayout');
+    this.dataSource.initDataConfig();
+    this.layoutResize();
   }
 
   // 调整各个layout, area的大小 与 位置
@@ -218,11 +261,10 @@ export default class Manager {
     if (firstDataRequest) {
       // 初始化数据
       dataSource.initData(data);
+      // 初始化指标
+      that.initIndicator();
       // 初始化布局
       that.initLayout();
-      // 初始化数据和布局相关的信息
-      dataSource.initDataConfig();
-      that.layoutResize();
       that.redrawMain();
       // 分时图初始化需显示十字线
       dataSource.isInitShowCross();
