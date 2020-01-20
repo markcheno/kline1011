@@ -226,13 +226,12 @@ export default class Range {
     // 判断该range刻度是否需要单独处理
     const result = this.isOtheGradations(this.chartConfig.sign);
     if (result) return;
-    const { decimalDigits } = Manager.instance.setting;
     const interval = this.calcInterval();
     this.gradations = [];
     // 一条直线时单独处理
     if (interval === 0) {
       this.gradations.push({
-        text: Number(0).toFixed(decimalDigits),
+        text: 0,
         y: this.top + this.height / 2,
       });
       return;
@@ -241,7 +240,7 @@ export default class Range {
     let start = Number(this.toValue(this.top + 15));
     do {
       this.gradations.push({
-        text: start.toFixed(decimalDigits),
+        text: start,
         y: this.toY(start) + 0.5,
       });
       start -= interval;
@@ -273,7 +272,6 @@ export default class Range {
 
   // 不同chart对最大最小值会有不同的处理, 比如MACD
   dealMaxAndMinByType(data) {
-    const { decimalDigits } = Manager.instance.setting;
     const { boundaryGap } = this;
     const { min, max } = data;
     const topBoundaryGap = boundaryGap[0].split('%')[0] / 100;
@@ -286,8 +284,8 @@ export default class Range {
       });
     }
     return {
-      min: (min - reduce * bottomBoundaryGap).toFixed(decimalDigits),
-      max: (max + reduce * topBoundaryGap).toFixed(decimalDigits),
+      min: min - reduce * bottomBoundaryGap,
+      max: max + reduce * topBoundaryGap,
     };
   }
 
@@ -351,7 +349,6 @@ export default class Range {
 
   // WR式刻度
   updateWRGradations() {
-    const { decimalDigits } = Manager.instance.setting;
     const { minValue, boundaryGap } = this;
     const boundaryGapBottom = boundaryGap[1].split('%')[0] / 100;
     const bottomValue = (1 - boundaryGapBottom) * minValue;
@@ -359,7 +356,7 @@ export default class Range {
     const WRGradations = [0, bottomValue / 2, bottomValue];
     WRGradations.forEach(item => {
       this.gradations.push({
-        text: Number(item).toFixed(decimalDigits),
+        text: item,
         y: this.toY(item),
       });
     });

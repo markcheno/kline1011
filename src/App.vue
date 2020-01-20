@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <button @click="changeSymbol({id: 6, name: '白银T+D'})">白银T+D</button>
-    <button @click="changeSymbol({id: 12, name: '现货黄金'})">现货黄金</button>
+    <button @click="changeSymbol({id: 6, name: '白银T+D', decimalDigits: 0})">白银T+D</button>
+    <button @click="changeSymbol({id: 12, name: '现货黄金', decimalDigits: 2})">现货黄金</button>
     <button
       v-for="(item, index) in timer"
       :key="index"
@@ -37,7 +37,7 @@ import Kline from './kline/entry';
 class Datafeed {
   getBars(params) {
     const { chartType,
-      symbol,
+      symbolId,
       period,
       startTime,
       requestCount,
@@ -45,9 +45,9 @@ class Datafeed {
       firstDataRequest } = params;
     let url = '';
     if (chartType === 'candle') {
-      url = `https://official.gkoudai.com/officialNetworkApi/CandleStickV2?qid=${symbol.id}&type=${period}&ts=${startTime}&count=${requestCount}`;
+      url = `https://official.gkoudai.com/officialNetworkApi/CandleStickV2?qid=${symbolId}&type=${period}&ts=${startTime}&count=${requestCount}`;
     } else if (chartType === 'line') {
-      url = `https://official.gkoudai.com/officialNetworkApi/TimeChartV4?qid=${symbol.id}&type=1`;
+      url = `https://official.gkoudai.com/officialNetworkApi/TimeChartV4?qid=${symbolId}&type=1`;
     }
     $.ajax({
       type: 'GET',
@@ -175,9 +175,9 @@ export default {
       symbol: {
         id: 12,
         name: '现货黄金',
+        decimalDigits: 2,
       },
       period: 6,
-      decimalDigits: 2,
     });
     // this.socketHandle(socket);
   },

@@ -3,7 +3,7 @@ const layoutIndicator = {
   Volume: {
     name: 'volumeChartLayout',
     chartPlotters: 'VolumePlotter',
-    boundaryGap: ['25%', '0%'],
+    boundaryGap: ['20%', '0%'],
     chartConfig: {
       sign: 'Volume',
     },
@@ -107,13 +107,13 @@ const mainIndicator = {
 
 // 计算分时图上的均线
 function calcAverageLine(option) {
-  const { allData, decimalDigits } = option;
+  const { allData } = option;
   let priceToTal = 0;
   allData.forEach((item, index) => {
     if (item) {
       const { close } = item;
       priceToTal += close;
-      item.average = (priceToTal / (index + 1)).toFixed(decimalDigits);
+      item.average = priceToTal / (index + 1);
     }
   });
   return 0;
@@ -146,7 +146,7 @@ function calcEMAIndicator(option, indicatorOption, N) {
 
 // 计算 MA 指标
 function calcMAIndicator(option) {
-  const { type, allData, appendLength, decimalDigits, indicatorConfig } = option;
+  const { type, allData, appendLength, indicatorConfig } = option;
   const MAArray = indicatorConfig.data;
   const MASign = indicatorConfig.sign;
   const MASize = MAArray.map(item => item.replace('MA', ''));
@@ -167,9 +167,9 @@ function calcMAIndicator(option) {
     const startMA = allData[index - size];
     if (startMA) {
       total[item] -= startMA[MASign];
-      element[type][item] = (total[item] / size).toFixed(decimalDigits);
+      element[type][item] = total[item] / size;
     } else {
-      element[type][item] = (total[item] / (index + 1)).toFixed(decimalDigits);
+      element[type][item] = total[item] / (index + 1);
     }
   };
   for (let i = start; i <= end; i++) {
@@ -183,7 +183,7 @@ function calcMAIndicator(option) {
 
 // 计算 BOLL 指标
 function calcBOLLIndicator(option) {
-  const { type, allData, appendLength, decimalDigits, indicatorConfig } = option;
+  const { type, allData, appendLength, indicatorConfig } = option;
   // 计算中轨线 MID
   const middleReloadIndex = calcMAIndicator(Object.assign(option, {
     indicatorConfig: {
@@ -209,17 +209,17 @@ function calcBOLLIndicator(option) {
         count++;
       }
     }
-    const BOLL = Math.sqrt(distanceTotal / count).toFixed(decimalDigits);
+    const BOLL = Math.sqrt(distanceTotal / count);
     dataItem[type].MID = MID;
-    dataItem[type].UP = (MID + 2 * BOLL).toFixed(decimalDigits);
-    dataItem[type].LOW = (MID - 2 * BOLL).toFixed(decimalDigits);
+    dataItem[type].UP = MID + 2 * BOLL;
+    dataItem[type].LOW = MID - 2 * BOLL;
   }
   return end;
 }
 
 // 计算 ENV 指标
 function calcENVIndicator(option) {
-  const { type, allData, appendLength, decimalDigits, indicatorConfig } = option;
+  const { type, allData, appendLength, indicatorConfig } = option;
   // 计算对应N的 MA
   const middleReloadIndex = calcMAIndicator(Object.assign(option, {
     indicatorConfig: {
@@ -237,8 +237,8 @@ function calcENVIndicator(option) {
     const MA = dataItem[type][`MA${indicatorConfig.N}`];
     const EnvUp = MA * (1 + indicatorConfig.n2 / 100);
     const EnvLow = MA * (1 - indicatorConfig.n2 / 100);
-    dataItem[type].EnvUp = EnvUp.toFixed(decimalDigits);
-    dataItem[type].EnvLow = EnvLow.toFixed(decimalDigits);
+    dataItem[type].EnvUp = EnvUp;
+    dataItem[type].EnvLow = EnvLow;
   }
   return end;
 }
@@ -328,7 +328,7 @@ function calcMACDIndicator(option) {
 
 // 计算VR指标 N:周期
 function calcVRIndicator(option) {
-  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { allData, appendLength, chartConfig } = option;
   const { N } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
@@ -358,14 +358,14 @@ function calcVRIndicator(option) {
       }
     }
     const vr = decTotal + eqTotal / 2 === 0 ? 0 : (incTotal + eqTotal / 2) / (decTotal + eqTotal / 2);
-    allData[i].VR = vr.toFixed(decimalDigits);
+    allData[i].VR = vr;
   }
   return end;
 }
 
 // 计算WR N 周期
 function calcWRIndicator(option) {
-  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { allData, appendLength, chartConfig } = option;
   const { N } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
@@ -385,14 +385,14 @@ function calcWRIndicator(option) {
       if (Nhigh > high) high = Nhigh;
     }
     const wr = ((high - close) * 100) / (high - low);
-    allData[i].WR = 0 - wr.toFixed(decimalDigits);
+    allData[i].WR = 0 - wr;
   }
   return end;
 }
 
 // 计算RSI 指标
 function calcRSIIndicator(option) {
-  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { allData, appendLength, chartConfig } = option;
   const { N1, N2 } = chartConfig;
   const start = 0;
   const maxSize = Math.max(N1, N2);
@@ -432,7 +432,7 @@ function calcRSIIndicator(option) {
         allData[i].pre_incVal = sma_incVal;
         allData[i].pre_decVal = sma_decVal;
       }
-      allData[i][`RSI${key}`] = RSI.toFixed(decimalDigits);
+      allData[i][`RSI${key}`] = RSI;
     }
   };
   calcRSI(N1, '1');
@@ -442,7 +442,7 @@ function calcRSIIndicator(option) {
 
 // 计算KDJ 指标
 function calcKDJIndicator(option) {
-  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { allData, appendLength, chartConfig } = option;
   const { N, m1, m2 } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
@@ -472,13 +472,13 @@ function calcKDJIndicator(option) {
       const KDJ_K = prev_k * (m1 - 1) / m1 + rsv * 1 / m1;
       const KDJ_D = prev_d * (m2 - 1) / m2 + KDJ_K * 1 / m2;
       const KDJ_J = 3 * KDJ_K - 2 * KDJ_D;
-      dataItem.K = KDJ_K.toFixed(decimalDigits);
-      dataItem.D = KDJ_D.toFixed(decimalDigits);
-      dataItem.J = KDJ_J.toFixed(decimalDigits);
+      dataItem.K = KDJ_K;
+      dataItem.D = KDJ_D;
+      dataItem.J = KDJ_J;
     } else {
-      dataItem.K = Number(46).toFixed(decimalDigits);
-      dataItem.D = Number(46).toFixed(decimalDigits);
-      dataItem.J = Number(46).toFixed(decimalDigits);
+      dataItem.K = 46;
+      dataItem.D = 46;
+      dataItem.J = 46;
     }
   }
   return end;
@@ -536,7 +536,7 @@ function getCCIMD(option, period, cciMas) {
 
 // 计算CCI 指标
 function calcCCIIndicator(option) {
-  const { allData, appendLength, chartConfig, decimalDigits } = option;
+  const { allData, appendLength, chartConfig } = option;
   const { N } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
@@ -558,14 +558,14 @@ function calcCCIIndicator(option) {
     } else {
       cci = ((typ - ma) / md) / 0.015;
     }
-    allData[i].CCI = cci.toFixed(decimalDigits);
+    allData[i].CCI = cci;
   }
   return end;
 }
 
 // 计算BIAS 指标
 function calcBIASIndicator(option) {
-  const { type, allData, appendLength, chartConfig, decimalDigits } = option;
+  const { type, allData, appendLength, chartConfig } = option;
   const { N1, N2, N3 } = chartConfig;
   const start = 0;
   let end = allData.length - 1;
@@ -586,7 +586,7 @@ function calcBIASIndicator(option) {
       const { close } = dataItem;
       const ma = dataItem[type][`MA${N}`];
       const bias = ((close - ma) / ma) * 100;
-      dataItem[`BIAS${index + 1}`] = bias.toFixed(decimalDigits);
+      dataItem[`BIAS${index + 1}`] = bias;
     }
   };
   for (let i = start; i <= end; i++) {
@@ -599,7 +599,7 @@ function calcBIASIndicator(option) {
 
 // 计算SAR 指标
 function calcSARIndivator(option) {
-  const { type, allData, appendLength, indicatorConfig, decimalDigits } = option;
+  const { type, allData, appendLength, indicatorConfig } = option;
   const { N, STEP, MVALUE } = indicatorConfig;
   const alpha = STEP / 100;
   const limit = MVALUE / 100;
@@ -655,7 +655,7 @@ function calcSARIndivator(option) {
         const currentLow = allData[i].low;
         ep = Math.min(periodLowMin, currentLow);
       }
-      allData[i][type].SAR = sar.toFixed(decimalDigits);
+      allData[i][type].SAR = sar;
       allData[i][type].SAROption = { up, ep, alpha };
     } else {
       // 周期后的第一条之后的其他数值的计算
@@ -677,7 +677,7 @@ function calcSARIndivator(option) {
           // 系数归到默认
           currentAlpha = alpha;
         }
-        allData[i][type].SAR = sar.toFixed(decimalDigits);
+        allData[i][type].SAR = sar;
         allData[i][type].SAROption = { up, ep, alpha: currentAlpha };
       } else {
         // 继续下跌
@@ -694,7 +694,7 @@ function calcSARIndivator(option) {
           ep = current.high;
           currentAlpha = alpha;
         }
-        allData[i][type].SAR = sar.toFixed(decimalDigits);
+        allData[i][type].SAR = sar;
         allData[i][type].SAROption = { up, ep, alpha: currentAlpha };
       }
     }
@@ -704,7 +704,7 @@ function calcSARIndivator(option) {
 
 // 计算对应的主视图指标
 function calcMainIndicator(indicator, option) {
-  const { type, allData, appendLength, indicatorConfig, decimalDigits } = option;
+  const { type, allData, appendLength, indicatorConfig } = option;
   let maxReloadIndex = -1;
   // 计算主视图指标所需数据
   const data = {
@@ -712,7 +712,6 @@ function calcMainIndicator(indicator, option) {
     allData,
     appendLength,
     indicatorConfig,
-    decimalDigits,
   };
   switch (indicator) {
     case 'MA':
@@ -737,14 +736,13 @@ function calcMainIndicator(indicator, option) {
 }
 
 function calcLayoutIndicator(chart, option) {
-  const { allData, appendLength, decimalDigits } = option;
+  const { allData, appendLength } = option;
   const type = chart.chartConfig.sign;
   let maxReloadIndex = -1;
   const data = {
     allData,
     appendLength,
     chartConfig: chart.chartConfig,
-    decimalDigits,
   };
   switch (type) {
     case 'MACD':
@@ -777,10 +775,9 @@ function calcLayoutIndicator(chart, option) {
   return maxReloadIndex;
 }
 
-// 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator, decimalDigits
+// 计算对应的指标 option: 需要计算指标的区间内数据 , chartIndicator
 function calcIndicator(option) {
   const { allData, appendLength, setting } = option;
-  const { decimalDigits } = setting;
   const chart = setting.getChart();
   // 指标重新计算时, 需重新计算的allData的最大last的下标
   let needReloadLastIndex = -1;
@@ -792,7 +789,6 @@ function calcIndicator(option) {
     needReloadLastIndex = calcLayoutIndicator(item, {
       allData,
       appendLength,
-      decimalDigits,
     });
     reloadIndexArray.push(needReloadLastIndex);
     chartIndicator && Object.keys(chartIndicator).forEach(indicatorItem => {
@@ -802,7 +798,6 @@ function calcIndicator(option) {
         allData,
         appendLength,
         indicatorConfig: chartIndicator[indicatorItem],
-        decimalDigits,
       });
       reloadIndexArray.push(needReloadLastIndex);
     });

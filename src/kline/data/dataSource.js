@@ -243,15 +243,18 @@ export default class DataSource {
   updateRangeWidth(data) {
     const manager = Manager.instance;
     const context = manager.canvas.mainContext;
+    const decimalDigits = manager.setting.getSymbolDecimalDigits();
     const Font = manager.theme.Default;
     context.font = Font;
     const { layout } = manager;
     layout.getLayouts().forEach(item => {
       if (item.range) {
         const result = item.getRangeData().calcMaxAndMinByIndicator(data);
+        const min = Number(result.min).toFixed(decimalDigits);
+        const max = Number(result.max).toFixed(decimalDigits);
         const rangeWidth = Math.max(
-          context.measureText(result.min).width,
-          context.measureText(result.max).width,
+          context.measureText(min).width,
+          context.measureText(max).width,
         );
         this.updateMaxRangeWidth(rangeWidth + 30);
       }
@@ -376,25 +379,21 @@ export default class DataSource {
 
   // 计算主视图指标
   calcMainIndicator(indicator) {
-    const { decimalDigits } = Manager.instance.setting;
     const chart = Manager.instance.setting.candlechart.find(element => element.name === 'mainChartLayout');
     calcMainIndicator(indicator, {
       type: chart.chartConfig.sign,
       allData: this.getAllData(),
       appendLength: 0,
       indicatorConfig: chart.chartIndicator[indicator],
-      decimalDigits,
     });
   }
 
   // 计算副图指标
   calcLayoutIndicator(indicator) {
-    const { decimalDigits } = Manager.instance.setting;
     const chart = layoutIndicator[indicator];
     calcLayoutIndicator(chart, {
       allData: this.getAllData(),
       appendLength: 0,
-      decimalDigits,
     });
   }
 

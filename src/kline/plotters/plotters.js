@@ -1,5 +1,5 @@
-/* eslint-disable semi */
 import Manager from '../manage/manager';
+import { formatVolume } from '../manage/util';
 
 // 记录的绘制坐标点
 let pointsPlaces = {
@@ -11,7 +11,8 @@ export class Plotter {
   constructor(name) {
     this.name = name;
     this.manager = Manager.instance;
-    this.chartType = Manager.instance.setting.chartType;
+    this.chartType = Manager.instance.setting.getChartType();
+    this.decimalDigits = Manager.instance.setting.getSymbolDecimalDigits();
     this.mainContext = this.manager.canvas.mainContext;
     this.overlayContext = this.manager.canvas.overlayContext;
   }
@@ -89,16 +90,19 @@ export class Plotter {
 
   // 绘制最大最小
   drawMaxMin(option) {
+    const { decimalDigits } = this;
     const { mainContext, maxMin, PositiveColor, NegativeColor, Font } = option;
     const maxX = maxMin.max.x;
     const maxY = maxMin.max.y;
+    const maxValue = Number(maxMin.max.value).toFixed(decimalDigits);
     const maxDirction = maxMin.max.direction;
     const minX = maxMin.min.x;
     const minY = maxMin.min.y;
+    const minValue = Number(maxMin.min.value).toFixed(decimalDigits);
     const minDirction = maxMin.min.direction;
     mainContext.font = Font;
-    const textMaxWidth = mainContext.measureText(maxMin.max.value).width + 20;
-    const textMinWidth = mainContext.measureText(maxMin.min.value).width + 20;
+    const textMaxWidth = mainContext.measureText(maxValue).width + 20;
+    const textMinWidth = mainContext.measureText(minValue).width + 20;
     mainContext.strokeStyle = PositiveColor;
     mainContext.lineWidth = 2;
     // 矩形初始点
@@ -127,8 +131,9 @@ export class Plotter {
     this.drawReact(mainContext, { x: rectMinLeft, y: minY + 10, width: textMinWidth, height: 20 });
     mainContext.fillStyle = '#ffffff';
     mainContext.textAlign = 'left';
-    mainContext.fillText(maxMin.max.value, rectMaxLeft + 10, maxY - 18);
-    mainContext.fillText(maxMin.min.value, rectMinLeft + 10, minY + 22);
+    mainContext.textBaseline = 'middle';
+    mainContext.fillText(maxValue, rectMaxLeft + 10, maxY - 19);
+    mainContext.fillText(minValue, rectMinLeft + 10, minY + 21);
   }
 }
 
@@ -363,7 +368,7 @@ export class ChartIndicatorPlotter extends Plotter {
     // 绘制MA
     const context = this.mainContext;
     Object.values(MAObj).forEach((item, index) => {
-      context.strokeStyle = MALineColor[index]
+      context.strokeStyle = MALineColor[index];
       this.drawSerialLines(context, item);
     });
   }
@@ -544,7 +549,7 @@ export class ChartIndicatorPlotter extends Plotter {
       const data = currentData[i];
       const { SAR, SAROption } = data[type];
       if (!SAR) continue;
-      if (SAROption.up) SARUpPlaces.push({ x: start, y: rangeData.toY(SAR) })
+      if (SAROption.up) SARUpPlaces.push({ x: start, y: rangeData.toY(SAR) });
       else SARDownPlaces.push({ x: start, y: rangeData.toY(SAR) });
       start += columnWidth;
     }
@@ -554,16 +559,16 @@ export class ChartIndicatorPlotter extends Plotter {
     context.strokeStyle = SARTheme.upColor;
     SARUpPlaces.forEach(item => {
       context.moveTo(item.x + r, item.y);
-      context.arc(item.x, item.y, r, 0, 2 * Math.PI)
-    })
-    context.stroke()
+      context.arc(item.x, item.y, r, 0, 2 * Math.PI);
+    });
+    context.stroke();
     context.beginPath();
     context.strokeStyle = SARTheme.downColor;
     SARDownPlaces.forEach(item => {
       context.moveTo(item.x + r, item.y);
-      context.arc(item.x, item.y, r, 0, 2 * Math.PI)
-    })
-    context.stroke()
+      context.arc(item.x, item.y, r, 0, 2 * Math.PI);
+    });
+    context.stroke();
   }
 
   draw(layout) {
@@ -637,6 +642,7 @@ export class MainInfoPlotter extends Plotter {
     const { maxCountInArea } = dataSource;
     const currentData = dataSource.getCurrentData();
     const chartConfig = MainLayout.getChartConfig();
+    const decimalDigits = this.manager.setting.getSymbolDecimalDigits();
     const chartSign = chartConfig.sign;
     const data = currentData[index];
     const preData = currentData[index - 1];
@@ -654,22 +660,22 @@ export class MainInfoPlotter extends Plotter {
         },
         {
           label: '开盘价',
-          value: data.open,
+          value: Number(data.open).toFixed(decimalDigits),
           color: this.getCandleFontColor('open', data, preData),
         },
         {
           label: '最低价',
-          value: data.low,
+          value: Number(data.low).toFixed(decimalDigits),
           color: this.getCandleFontColor('low', data, preData),
         },
         {
           label: '最高价',
-          value: data.high,
+          value: Number(data.high).toFixed(decimalDigits),
           color: this.getCandleFontColor('high', data, preData),
         },
         {
           label: '收盘价',
-          value: data.close,
+          value: Number(data.close).toFixed(decimalDigits),
           color: this.getCandleFontColor('close', data, preData),
         },
       ];
@@ -708,12 +714,12 @@ export class MainInfoPlotter extends Plotter {
         },
         {
           label: '均价:',
-          value: data.average,
+          value: Number(data.average).toFixed(decimalDigits),
           color: this.AverageLineColor,
         },
         {
           label: '数值:',
-          value: data.close,
+          value: Number(data.close).toFixed(decimalDigits),
           color: this.getLineFontColor(data.close, data.open),
         },
       ];
@@ -740,22 +746,15 @@ export class ChartInfoPlotters extends Plotter {
     super(name);
     const { theme } = this.manager;
     this.theme = theme;
-    this.decimalDigits = this.manager.setting.decimalDigits;
   }
 
   // 成交量 信息
   drawVolumeInfo(data, startPlace) {
-    const formatVolume = volume => {
-      if (volume.split('.')[0].length >= 4 && volume.split('.')[0].length < 9) return `${(volume / 10000).toFixed(2)}万`;
-      if (volume.split('.')[0].length >= 9 && volume.split('.')[0].length < 13) return `${(volume / 100000000).toFixed(2)}亿`;
-      if (volume.split('.')[0].length >= 13) return `${(volume / 1000000000000).toFixed(2)}兆`;
-      return volume;
-    };
     const context = this.overlayContext;
     const { volume } = data;
     const volumeColor = this.theme.Line.Volume;
     const text = `成交量: ${formatVolume(volume.toString())}手`;
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.fillStyle = volumeColor.infoColor;
     context.font = volumeColor.infoFont;
@@ -769,11 +768,11 @@ export class ChartInfoPlotters extends Plotter {
     const context = this.overlayContext;
     const { MACD, DIF, DEA } = data;
     const { short, long, middle } = chartConfig.data;
-    const label = `MACD(${short}, ${long}, ${middle})`
+    const label = `MACD(${short}, ${long}, ${middle})`;
     const MACDtext = `MACD:${Number(MACD).toFixed(2)}`;
     const DIFtext = `DIF:${Number(DIF).toFixed(2)}`;
     const DEAtext = `DEA:${Number(DEA).toFixed(2)}`;
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     const MACDTheme = this.theme.Line.MACD;
     // 副视图中绘制MACD信息
     let textX = startX;
@@ -799,11 +798,11 @@ export class ChartInfoPlotters extends Plotter {
     const context = this.overlayContext;
     const VRTheme = this.theme.Line.VR;
     const VRValues = ['VR'].map(item => ({
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(2)}`,
       color: VRTheme.VRColor,
     }));
     VRValues.unshift({ value: `VR(${chartConfig.N})`, color: VRTheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = VRTheme.infoFont;
     context.textAlign = 'left';
@@ -820,11 +819,11 @@ export class ChartInfoPlotters extends Plotter {
     const context = this.overlayContext;
     const WRTheme = this.theme.Line.WR;
     const WRValues = ['WR'].map(item => ({
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(2)}`,
       color: WRTheme.WRColor,
     }));
     WRValues.unshift({ value: `WR(${chartConfig.N})`, color: WRTheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = WRTheme.infoFont;
     context.textAlign = 'left';
@@ -841,11 +840,11 @@ export class ChartInfoPlotters extends Plotter {
     const context = this.overlayContext;
     const RSITheme = this.theme.Line.RSI;
     const RSIValues = ['RSI1', 'RSI2'].map(item => ({
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(2)}`,
       color: RSITheme[item],
     }));
     RSIValues.unshift({ value: `RSI(${chartConfig.N1}, ${chartConfig.N2})`, color: RSITheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = RSITheme.infoFont;
     context.textAlign = 'left';
@@ -862,11 +861,11 @@ export class ChartInfoPlotters extends Plotter {
     const context = this.overlayContext;
     const CCITheme = this.theme.Line.CCI;
     const CCIValues = ['CCI'].map(item => ({
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(2)}`,
       color: CCITheme.CCI,
     }));
     CCIValues.unshift({ value: `CCI(${chartConfig.N})`, color: CCITheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = CCITheme.infoFont;
     context.textAlign = 'left';
@@ -883,11 +882,11 @@ export class ChartInfoPlotters extends Plotter {
     const context = this.overlayContext;
     const KDJTheme = this.theme.Line.KDJ;
     const KDJValues = ['K', 'D', 'J'].map(item => ({
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(2)}`,
       color: KDJTheme[item],
     }));
     KDJValues.unshift({ value: `KDJ(${chartConfig.N}, ${chartConfig.m1}, ${chartConfig.m2})`, color: KDJTheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = KDJTheme.infoFont;
     context.textAlign = 'left';
@@ -905,11 +904,11 @@ export class ChartInfoPlotters extends Plotter {
     const BIASTheme = this.theme.Line.BIAS;
     const KDJValues = ['BIAS1', 'BIAS2', 'BIAS3'].map(item => ({
       originValue: data[item],
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(2)}`,
       color: BIASTheme[item],
     }));
     KDJValues.unshift({ value: `BIAS(${chartConfig.N1}, ${chartConfig.N2}, ${chartConfig.N3})`, color: BIASTheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = BIASTheme.infoFont;
     context.textAlign = 'left';
@@ -926,12 +925,13 @@ export class ChartInfoPlotters extends Plotter {
   // MA 信息
   drawMAInfo(MAData, data, startPlace) {
     const context = this.overlayContext;
+    const decimalDigits = this.manager.setting.getSymbolDecimalDigits();
     const MAArray = MAData.data;
     const MATheme = this.theme.Line.MA;
     const MAValue = MAArray.map((item, index) => ({
-      color: MATheme.MALineColor[index], value: `${item}: ${data[item]}`,
-    }))
-    const { startX, textY } = startPlace
+      color: MATheme.MALineColor[index], value: `${item}: ${Number(data[item]).toFixed(decimalDigits)}`,
+    }));
+    const { startX, textY } = startPlace;
     const label = 'MA';
     let textX = startX;
     context.font = MATheme.infoFont;
@@ -943,20 +943,21 @@ export class ChartInfoPlotters extends Plotter {
       context.fillStyle = item.color;
       context.fillText(item.value, textX, textY);
       textX += context.measureText(item.value).width + 10;
-    })
+    });
     startPlace.startX = textX;
   }
 
   // BOLL 信息
   drawBOLLInfo(BOLLData, data, startPlace) {
+    const decimalDigits = this.manager.setting.getSymbolDecimalDigits();
     const context = this.overlayContext;
     const BOLLTheme = this.theme.Line.BOLL;
     const BOLLValues = ['UP', 'MID', 'LOW'].map(item => ({
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(decimalDigits)}`,
       color: BOLLTheme[item],
     }));
     BOLLValues.unshift({ value: `BOLL(${BOLLData.N})`, color: BOLLTheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = BOLLTheme.infoFont;
     context.textAlign = 'left';
@@ -970,15 +971,16 @@ export class ChartInfoPlotters extends Plotter {
 
   // ENV 信息
   drawENVInfo(ENVData, data, startPlace) {
+    const decimalDigits = this.manager.setting.getSymbolDecimalDigits();
     const context = this.overlayContext;
     const ENVTheme = this.theme.Line.ENV;
     const { N, n2 } = ENVData;
     const ENVValues = ['EnvUp', 'EnvLow'].map(item => ({
-      value: `${item}:${data[item]}`,
+      value: `${item}:${Number(data[item]).toFixed(decimalDigits)}`,
       color: ENVTheme[item],
-    }))
+    }));
     ENVValues.unshift({ value: `ENV(${N}, ${n2})`, color: ENVTheme.infoColor });
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = ENVTheme.infoFont;
     context.textAlign = 'left';
@@ -992,16 +994,17 @@ export class ChartInfoPlotters extends Plotter {
 
   // CG 指标信息
   drawCGInfo(data, startPlace) {
+    const decimalDigits = this.manager.setting.getSymbolDecimalDigits();
     const context = this.overlayContext;
     const CGTheme = this.theme.Line.CG;
     const CGValues = [{
-      value: `CG指标:${data.MA55}`,
+      value: `CG指标:${Number(data.MA55).toFixed(decimalDigits)}`,
       color: CGTheme.CGLine,
     }, {
-      value: `主趋势线:${Number(data.EMAEMAclose1010).toFixed(this.decimalDigits)}`,
+      value: `主趋势线:${Number(data.EMAEMAclose1010).toFixed(decimalDigits)}`,
       color: CGTheme[data.CGtrendColor],
     }];
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = CGTheme.infoFont;
     context.textAlign = 'left';
@@ -1015,6 +1018,7 @@ export class ChartInfoPlotters extends Plotter {
 
   // SAR 指标信息
   drawSARInfo(SARData, data, startPlace) {
+    const decimalDigits = this.manager.setting.getSymbolDecimalDigits();
     const context = this.overlayContext;
     const SARTheme = this.theme.Line.SAR;
     const { N, STEP, MVALUE } = SARData;
@@ -1023,10 +1027,10 @@ export class ChartInfoPlotters extends Plotter {
       value: `SAR(${N},${STEP},${MVALUE})`,
       color: SARTheme.infoColor,
     }, {
-      value: `SAR:${SAR}`,
+      value: `SAR:${Number(SAR).toFixed(decimalDigits)}`,
       color: SAROption.up ? SARTheme.upColor : SARTheme.downColor,
     }];
-    const { startX, textY } = startPlace
+    const { startX, textY } = startPlace;
     let textX = startX;
     context.font = SARTheme.infoFont;
     context.textAlign = 'left';
@@ -1051,7 +1055,7 @@ export class ChartInfoPlotters extends Plotter {
     const startPlace = {
       startX: left + 5,
       textY: top + 15,
-    }
+    };
     switch (chartSign) {
       case 'Volume':
         this.drawVolumeInfo(data, startPlace);
@@ -1388,6 +1392,7 @@ export class RangePlotter extends Plotter {
   }
 
   draw(layout) {
+    const layoutName = layout.getName();
     const rangeArea = layout.getRangeArea();
     const rangeData = layout.getRangeData();
     const context = this.mainContext;
@@ -1423,7 +1428,16 @@ export class RangePlotter extends Plotter {
         to: { x: right, y: item.y },
       });
       context.fillStyle = this.GridColor;
-      context.fillText(item.text, center, item.y);
+      // range上显示文字及精度根据不同的chart, 有着不同的处理
+      let text;
+      if (layoutName === 'lineChartLayout' || layoutName === 'mainChartLayout') {
+        text = Number(item.text).toFixed(this.decimalDigits);
+      } else if (layoutName === 'volumeChartLayout') {
+        text = `${formatVolume(item.text)}手`;
+      } else {
+        text = Number(item.text).toFixed(2);
+      }
+      context.fillText(text, center, item.y);
     });
   }
 }
@@ -1438,20 +1452,13 @@ export class RangeInfoPlotter extends Plotter {
 
   draw(layout, option) {
     const { index, y } = option;
-    const { decimalDigits, chartType } = this.manager.setting;
+    const chartType = this.manager.setting.getChartType();
+    const layoutName = layout.getName();
     const rangeArea = layout.getRangeArea();
     const rangeData = layout.getRangeData();
     const context = this.overlayContext;
-    let value;
-    if (chartType === 'candle') {
-      value = rangeData.toValue(y).toFixed(decimalDigits);
-    } else if (chartType === 'line') {
-      const data = this.manager.dataSource.getCurrentData();
-      value = data[index].close;
-    }
     const { left, right } = rangeArea.getPlace();
     const width = right - left;
-    const textWidth = context.measureText(value).width;
     context.font = this.Font;
     context.fillStyle = this.GridColor;
     context.textAlign = 'left';
@@ -1462,6 +1469,22 @@ export class RangeInfoPlotter extends Plotter {
       height: 20,
     });
     context.fillStyle = '#ffffff';
+    // range上显示文字及精度根据不同的chart, 有着不同的处理
+    let value;
+    if (chartType === 'candle') {
+      value = rangeData.toValue(y);
+    } else if (chartType === 'line') {
+      const data = this.manager.dataSource.getCurrentData();
+      value = data[index].close;
+    }
+    if (layoutName === 'lineChartLayout' || layoutName === 'mainChartLayout') {
+      value = Number(value).toFixed(this.decimalDigits);
+    } else if (layoutName === 'volumeChartLayout') {
+      value = Number(value).toFixed(0);
+    } else {
+      value = Number(value).toFixed(2);
+    }
+    const textWidth = context.measureText(value).width;
     context.fillText(value, left + (width - textWidth) / 2, y + 4);
   }
 }

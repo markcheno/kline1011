@@ -24,10 +24,10 @@ export default class Manager {
   }
 
   setOption(option) {
+    // 初始化设置
     this.setting.init({
       symbol: option.symbol,
       period: option.period,
-      decimalDigits: option.decimalDigits,
     });
     this.option = option;
   }
@@ -242,7 +242,7 @@ export default class Manager {
     const { startTime, firstDataRequest } = requestParam;
     datafeed.getBars({
       chartType: setting.chartType,
-      symbol: setting.getSymbol(),
+      symbolId: setting.getSymbolId(),
       period: setting.getPeriod(),
       startTime,
       requestCount,

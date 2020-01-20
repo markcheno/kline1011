@@ -2,14 +2,13 @@ import { layoutIndicator, mainIndicator } from '../manage/indicators';
 
 export default class Setting {
   constructor() {
-    this.symbol = null;
-    this.period = null;
-    // 保留小数点
-    this.decimalDigits = 2;
-    this.chartPadding = {
-      left: 0,
-      right: 0,
+    // 品种基础属性
+    this.symbol = {
+      id: null,
+      name: '',
+      decimalDigits: 0,
     };
+    this.period = null;
     // 是否支持暂时成交量视图, 取决于指标配置与传入的数据是否支持
     this.isSupportVolume = false;
     this.timelineAreaHeight = 30;
@@ -117,23 +116,24 @@ export default class Setting {
     return this.chartType === 'candle' ? this.candlechart : this.lineChart;
   }
 
+  // 初始化设置
   init(option) {
-    const { symbol, period, decimalDigits } = option;
+    const { symbol, period } = option;
     this.setPeriod(period);
     this.setSymbol(symbol);
-    this.setDecimalDigits(decimalDigits);
   }
 
+  // 设置品种相关设置
   setSymbol(symbol) {
-    this.symbol = symbol;
+    this.symbol = symbol || {
+      id: null,
+      name: '',
+      decimalDigits: 0,
+    };
   }
 
   setPeriod(period) {
     this.period = period;
-  }
-
-  setDecimalDigits(decimalDigits) {
-    this.decimalDigits = decimalDigits;
   }
 
   getChartType() {
@@ -144,8 +144,16 @@ export default class Setting {
     this.chartType = type;
   }
 
-  getSymbol() {
-    return this.symbol;
+  getSymbolId() {
+    return this.symbol.id;
+  }
+
+  getSymbolName() {
+    return this.symbol.name;
+  }
+
+  getSymbolDecimalDigits() {
+    return this.symbol.decimalDigits || 0;
   }
 
   getPeriod() {

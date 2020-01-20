@@ -10,7 +10,6 @@ export default class Kline {
     this.width = 1200;
     this.height = 650;
     this.datafeed = {};
-    this.decimalDigits = 0;
     Object.assign(this, option);
     this.init();
     return this;
