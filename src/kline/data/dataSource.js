@@ -298,22 +298,26 @@ export default class DataSource {
 
   // 视图往右移动 first-- last++
   chartToRightMove(x, area, maxOffest) {
-    if (this.candleLeftOffest >= 0) {
+    const { candleLeftOffest } = this;
+    if (candleLeftOffest > 0) {
+      const moveIndex = Math.floor(candleLeftOffest / maxOffest);
       area.updateMoveStartPlace({ x: area.mouseDownPlace.x + x });
-      this.candleLeftOffest = maxOffest;
+      this.candleLeftOffest = maxOffest + (candleLeftOffest % maxOffest);
       this.savedCandleLeftOffest = this.candleLeftOffest;
-      this.firstIndex -= 1;
+      this.firstIndex = Math.max(this.firstIndex + moveIndex, 0);
     }
     this.validateLastIndex();
   }
 
   // 视图往左移动 first++ last--
   chartToLeftMove(x, area, maxOffest) {
-    if (this.candleLeftOffest <= maxOffest) {
+    const { candleLeftOffest } = this;
+    if (candleLeftOffest < maxOffest) {
+      const moveIndex = Math.floor(candleLeftOffest / maxOffest);
       area.updateMoveStartPlace({ x: area.mouseDownPlace.x + x });
-      this.candleLeftOffest = 0;
+      this.candleLeftOffest = candleLeftOffest % maxOffest;
       this.savedCandleLeftOffest = this.candleLeftOffest;
-      this.firstIndex += 1;
+      this.firstIndex += moveIndex;
     }
     this.validateLastIndex();
   }
