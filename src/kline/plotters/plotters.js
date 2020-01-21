@@ -1620,7 +1620,6 @@ export class SelectionPlotter extends Plotter {
   draw(layout) {
     const context = this.overlayContext;
     const { crossCursorSelectAt } = this.manager.dataSource;
-    console.log('crossCursorSelectAt', crossCursorSelectAt.x, crossCursorSelectAt.y);
     context.strokeStyle = this.lineColor;
     // 取最近的图点
     const xInfo = this.searchInsert(crossCursorSelectAt.x);
