@@ -9,4 +9,14 @@ function formatDate(time) {
   return time;
 }
 
-export { formatVolume, formatDate };
+function getPixelRatio(context) {
+  const backingStore = context.backingStorePixelRatio
+        || context.webkitBackingStorePixelRatio
+        || context.mozBackingStorePixelRatio
+        || context.msBackingStorePixelRatio
+        || context.oBackingStorePixelRatio
+        || context.backingStorePixelRatio || 1;
+  return (window.devicePixelRatio || 1) / backingStore;
+}
+
+export { formatVolume, formatDate, getPixelRatio };

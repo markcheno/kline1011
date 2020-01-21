@@ -59,7 +59,7 @@ export default class DataSource {
 
   // 计算最大蜡烛图个数
   updateMaxCountInArea() {
-    const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
+    const width = Manager.instance.canvas.width - this.rangeWidth;
     const columnWidth = this.getColumnWidth();
     this.maxCountInArea = Math.ceil(width / columnWidth) + 1;
   }
@@ -133,7 +133,7 @@ export default class DataSource {
       }
       Manager.instance.redrawMain();
       if (islocked) {
-        const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
+        const width = Manager.instance.canvas.width - this.rangeWidth;
         this.crossCursorSelectAt.x = width;
         Manager.instance.redrawOver();
       }
@@ -143,7 +143,7 @@ export default class DataSource {
   isInitShowCross() {
     const { chartType } = Manager.instance.setting;
     if (chartType === 'line') {
-      const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth;
+      const width = Manager.instance.canvas.width - this.rangeWidth;
       this.crossCursorSelectAt.x = width;
       Manager.instance.redrawOver();
     }
@@ -286,7 +286,7 @@ export default class DataSource {
     if (direction === 'right') {
       // 最左边界
       if (this.firstIndex <= 0) {
-        const maxLeftOffset = (Manager.instance.canvas.mainCanvas.width - this.rangeWidth) / 2;
+        const maxLeftOffset = (Manager.instance.canvas.width - this.rangeWidth) / 2;
         this.candleLeftOffest = Math.min(this.savedCandleLeftOffest + x, maxLeftOffset);
         this.validateLastIndex();
         this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
@@ -322,7 +322,7 @@ export default class DataSource {
     const { candleLeftOffest } = this;
     let index = 0;
     if (candleLeftOffest > 0) {
-      const width = Manager.instance.canvas.mainCanvas.width - this.rangeWidth - candleLeftOffest;
+      const width = Manager.instance.canvas.width - this.rangeWidth - candleLeftOffest;
       const columnWidth = this.getColumnWidth();
       index = this.firstIndex + Math.ceil(width / columnWidth) - 1;
     } else {

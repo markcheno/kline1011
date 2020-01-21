@@ -3,6 +3,7 @@ import Setting from '../setting/setting';
 import Theme from '../setting/themes';
 import DataSource from '../data/dataSource';
 import Control from './control';
+import { getPixelRatio } from './util';
 // 保存kline的实例
 export default class Manager {
   static instance
@@ -151,15 +152,16 @@ export default class Manager {
   // 调整各个layout, area的大小 与 位置
   layoutResize() {
     const left = 0;
-    const right = this.canvas.mainCanvas.width;
+    const right = this.canvas.width;
     const top = 0;
-    const bottom = this.canvas.mainCanvas.height;
+    const bottom = this.canvas.height;
     this.layout.updateLayout({ left, right, top, bottom });
   }
 
   // 跳转大小
   onSize(w, h) {
-    const devicePixelRatio = 1;
+    const { mainContext, overlayContext } = this.canvas;
+    const devicePixelRatio = getPixelRatio(mainContext);
     const width = w || window.innerWidth;
     const height = h || window.innerHeight;
     const { element } = this.getOption();
@@ -172,6 +174,11 @@ export default class Manager {
     this.canvas.mainCanvas.height = height * devicePixelRatio;
     this.canvas.overlayCanvas.width = width * devicePixelRatio;
     this.canvas.overlayCanvas.height = height * devicePixelRatio;
+    // 实际的绘制宽高
+    this.canvas.width = width;
+    this.canvas.height = height;
+    mainContext.scale(devicePixelRatio, devicePixelRatio);
+    overlayContext.scale(devicePixelRatio, devicePixelRatio);
     this.dataSource.updateMaxCountInLayout();
   }
 
