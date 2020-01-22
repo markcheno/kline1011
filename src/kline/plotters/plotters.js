@@ -573,8 +573,11 @@ export class ChartIndicatorPlotter extends Plotter {
 
   draw(layout) {
     this.rangeData = layout.getRangeData();
+    const dataSource = this.manager.getDataSource();
+    const isCandleShowLine = dataSource.getCandleShowLineStatus();
     const chartIndicator = layout.getChartIndicator();
-    if (!chartIndicator) return;
+    // 最小缩放倍数下不显示主图指标
+    if (!chartIndicator || isCandleShowLine) return;
     Object.keys(chartIndicator).forEach(item => {
       switch (item) {
         case 'MA':
@@ -638,7 +641,10 @@ export class MainInfoPlotter extends Plotter {
       );
     if (!MainLayout) return;
     const context = this.overlayContext;
-    const { dataSource } = this.manager;
+    const dataSource = this.manager.getDataSource();
+    const isCandleShowLine = dataSource.getCandleShowLineStatus();
+    // 蜡烛图最小倍数下, 不显示主视图信息
+    if (MainLayout.name === 'mainChartLayout' && isCandleShowLine) return;
     const { maxCountInArea } = dataSource;
     const currentData = dataSource.getCurrentData();
     const chartConfig = MainLayout.getChartConfig();
@@ -1043,9 +1049,10 @@ export class ChartInfoPlotters extends Plotter {
   }
 
   draw(layout, index) {
-    const { dataSource } = this.manager;
     this.chartArea = layout.getChartArea();
-    // const context = this.overlayContext;
+    const dataSource = this.manager.getDataSource();
+    const isCandleShowLine = dataSource.getCandleShowLineStatus();
+    const layoutName = layout.getName();
     const currentData = dataSource.getCurrentData();
     const { left, top } = this.chartArea.getPlace();
     const chartConfig = layout.getChartConfig();
@@ -1084,6 +1091,8 @@ export class ChartInfoPlotters extends Plotter {
       default:
         break;
     }
+    // 蜡烛图最小缩放倍数下, 不展示主指标数据
+    if (layoutName === 'mainChartLayout' && isCandleShowLine) return;
     // chart 上的指标信息
     const chartIndicator = layout.getChartIndicator();
     chartIndicator && Object.keys(chartIndicator).forEach(indicatorItem => {
@@ -1118,10 +1127,12 @@ export class CandlestickPlotter extends Plotter {
     this.NegativeColor = theme.Color.Negative;
     this.PositiveColor = theme.Color.Positive;
     this.GridColor = theme.Color.Grid;
+    this.StrokeColor = theme.Line.strokeColor;
+    this.StrokeLineWidth = theme.Line.strokeLineWidth;
     this.Font = theme.Font.Default;
     this.maxMin = {
-      min: { x: -1, y: Number.MIN_SAFE_INTEGER, value: 0 },
-      max: { x: -1, y: Number.MAX_SAFE_INTEGER, value: 0 },
+      max: { x: -1, y: 0, value: Number.MIN_SAFE_INTEGER },
+      min: { x: -1, y: 0, value: Number.MAX_SAFE_INTEGER },
     };
   }
 
@@ -1131,10 +1142,75 @@ export class CandlestickPlotter extends Plotter {
   }
 
   draw(layout) {
+    const dataSource = this.manager.getDataSource();
+    const isCandleShowLine = dataSource.getCandleShowLineStatus();
+    isCandleShowLine ? this.drawCandleLine(layout) : this.drawCandle(layout);
+  }
+
+  // 绘制最小倍数下的蜡烛图
+  drawCandleLine(layout) {
     const rangeData = layout.getRangeData();
     const { right, left } = layout.getPlace();
-    const { dataSource } = this.manager;
     const context = this.mainContext;
+    const dataSource = this.manager.getDataSource();
+    const currentData = dataSource.getCurrentData();
+    const candleLeftOffest = dataSource.getCandleLeftOffest();
+    const columnWidth = dataSource.getColumnWidth();
+    const itemCenterOffset = dataSource.getColumnCenter();
+    const { maxMin } = this;
+    let columnLeft = candleLeftOffest;
+    // 从前往后绘制
+    const candleLines = [];
+    pointsPlaces = { x: [], y: [] };
+    for (let i = 0; i < currentData.length; i++) {
+      const data = currentData[i];
+      const { close } = data;
+      const closePlace = rangeData.toY(close);
+      const leftLineX = columnLeft + itemCenterOffset;
+      pointsPlaces.x.push(leftLineX);
+      // 蜡烛图最大最小值
+      if (close > maxMin.max.value) {
+        maxMin.max = {
+          direction: leftLineX > ((right - left) / 2 + left) ? 'right' : 'left',
+          x: leftLineX,
+          y: closePlace,
+          value: close,
+        };
+      }
+      if (close < maxMin.min.value) {
+        maxMin.min = {
+          direction: leftLineX > ((right - left) / 2 + left) ? 'right' : 'left',
+          x: leftLineX,
+          y: closePlace,
+          value: close,
+        };
+      }
+      candleLines.push({
+        x: leftLineX,
+        y: closePlace,
+      });
+      columnLeft += columnWidth;
+    }
+    this.hideLinePoint();
+    // 绘制最小倍数下的蜡烛图
+    context.strokeStyle = this.StrokeColor;
+    context.lineWidth = this.StrokeLineWidth;
+    this.drawSerialLines(context, candleLines);
+    this.drawMaxMin({
+      mainContext: context,
+      maxMin: this.maxMin,
+      PositiveColor: this.PositiveColor,
+      NegativeColor: this.NegativeColor,
+      Font: this.Font,
+    });
+  }
+
+  // 绘制普通的蜡烛图
+  drawCandle(layout) {
+    const rangeData = layout.getRangeData();
+    const { right, left } = layout.getPlace();
+    const context = this.mainContext;
+    const dataSource = this.manager.getDataSource();
     const currentData = dataSource.getCurrentData();
     const candleLeftOffest = dataSource.getCandleLeftOffest();
     const columnWidth = dataSource.getColumnWidth();
@@ -1160,20 +1236,20 @@ export class CandlestickPlotter extends Plotter {
       const rectWidth = 2 * itemCenterOffset;
       const lineRectWidth = 1;
       // 蜡烛图最大最小值
-      if (highPlace < maxMin.max.y) {
+      if (high > maxMin.max.value) {
         maxMin.max = {
           direction: leftLineX > ((right - left) / 2 + left) ? 'right' : 'left',
           x: leftLineX,
           y: highPlace,
-          value: data.high,
+          value: high,
         };
       }
-      if (lowPlace > maxMin.min.y) {
+      if (low < maxMin.min.value) {
         maxMin.min = {
           direction: leftLineX > ((right - left) / 2 + left) ? 'right' : 'left',
           x: leftLineX,
           y: lowPlace,
-          value: data.low,
+          value: low,
         };
       }
       // 涨

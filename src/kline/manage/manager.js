@@ -315,4 +315,8 @@ export default class Manager {
   onMouseUp() {
     this.checkDataRequestStatus();
   }
+
+  getDataSource() {
+    return this.dataSource;
+  }
 }

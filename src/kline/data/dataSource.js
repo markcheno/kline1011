@@ -11,8 +11,8 @@ export default class DataSource {
   };
 
   static candleStick = {
-    itemWidth: [1, 3, 3, 5, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29],
-    spaceWidth: [1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 7, 7, 7],
+    itemWidth: [2, 3, 5, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29],
+    spaceWidth: [1, 2, 2, 3, 3, 3, 3, 3, 3, 5, 5, 5, 5, 7, 7, 7],
   };
 
   constructor() {
@@ -198,16 +198,18 @@ export default class DataSource {
   initCandleCurrentData() {
     this.lastIndex = this.data.length - 1;
     // 初始化时, 右侧间隔预留了一点距离
-    this.firstIndex = this.lastIndex - this.maxCountInArea + 3;
+    this.firstIndex = Math.max(0, this.lastIndex - this.maxCountInArea + 3);
     this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
   // 更新当前蜡烛视图数据
   updateCandleCurrentData(appendLength) {
+    const columnWidth = this.getColumnWidth();
+    const offsetIndex = Math.floor(this.candleLeftOffest / columnWidth);
     this.lastIndex += appendLength;
-    this.firstIndex = this.lastIndex - this.maxCountInArea + 1;
+    this.firstIndex = this.firstIndex + appendLength - offsetIndex + 1;
     // 重新计算偏移量
-    this.candleLeftOffest = this.candleLeftOffest % this.getColumnWidth();
+    this.candleLeftOffest = this.candleLeftOffest % columnWidth;
     this.currentData = this.data.slice(this.firstIndex, this.lastIndex + 1);
   }
 
@@ -407,5 +409,11 @@ export default class DataSource {
     const { setting } = Manager.instance;
     const isSupportVolume = allData.some((item) => !!Number(item.volume));
     isSupportVolume ? setting.enabledSupportVolume() : setting.disabledSupportVolume();
+  }
+
+  // 获取是否为蜡烛图最小缩放
+  // 在最小缩放倍数时, 将蜡烛图显示为一根线
+  getCandleShowLineStatus() {
+    return this.scale === 0;
   }
 }
